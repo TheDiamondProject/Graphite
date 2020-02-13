@@ -47,12 +47,12 @@ public:
      * Construct a new `graphite::data::writer` object using the specified
      * `graphite::data::data` object.
      */
-    writer(std::shared_ptr<data> data);
+    writer(std::shared_ptr<graphite::data::data> data);
 
     /**
      * Returns the internal data object.
      */
-    std::shared_ptr<data> data();
+    std::shared_ptr<graphite::data::data> data();
     
     /**
      * Returns the current size of the underlying `graphite::data::data:: object.
@@ -150,7 +150,7 @@ public:
     
 private:
     graphite::data::data::byte_order m_native_bo { data::byte_order::lsb };
-    std::shared_ptr<data> m_data { nullptr };
+    std::shared_ptr<graphite::data::data> m_data { nullptr };
     uint64_t m_pos { 0 };
     
     template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>

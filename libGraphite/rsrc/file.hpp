@@ -101,13 +101,6 @@ private:
     std::vector<std::shared_ptr<type>> m_types { nullptr };
     std::shared_ptr<graphite::data::data> m_data { nullptr };
     format m_format { classic };
-
-
-    /**
-     * Parse the contents of the resource file as a _classic_ resource file.
-     */
-    void parse_classic();
-
 };
 
 };
