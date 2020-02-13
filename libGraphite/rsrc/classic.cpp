@@ -19,8 +19,8 @@
 // SOFTWARE.
 
 #include <iostream>
-#include "rsrc/classic.hpp"
-#include "encoding/macroman/macroman.hpp"
+#include "libGraphite/rsrc/classic.hpp"
+#include "libGraphite/encoding/macroman/macroman.hpp"
 
 // MARK: - Parsing / Reading
 

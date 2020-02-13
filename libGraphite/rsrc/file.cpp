@@ -18,11 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "rsrc/file.hpp"
-#include "data/reader.hpp"
-#include "rsrc/classic.hpp"
-#include "rsrc/extended.hpp"
-#include "rsrc/rez.hpp"
+#include "libGraphite/rsrc/file.hpp"
+#include "libGraphite/data/reader.hpp"
+#include "libGraphite/rsrc/classic.hpp"
+#include "libGraphite/rsrc/extended.hpp"
+#include "libGraphite/rsrc/rez.hpp"
 
 // MARK: - Construct
 

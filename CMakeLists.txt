@@ -26,10 +26,10 @@ set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/bin)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 set(CMAKE_CXX_STANDARD 14)
 
-include_directories("${PROJECT_SOURCE_DIR}/Graphite")
+include_directories("${PROJECT_SOURCE_DIR}")
 
 file(GLOB_RECURSE graphite_sources
-	Graphite/*.cpp
+	libGraphite/*.cpp
 ) 
 add_library(Graphite ${graphite_sources})
 

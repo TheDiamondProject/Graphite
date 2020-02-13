@@ -21,12 +21,10 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "rsrc/file.hpp"
-#include "data/reader.hpp"
-#include "data/writer.hpp"
+#include "libGraphite/rsrc/resource.hpp"
 
-#if !defined(GRAPHITE_RSRC_EXTENDED)
-#define GRAPHITE_RSRC_EXTENDED
+#if !defined(GRAPHITE_RSRC_TYPE)
+#define GRAPHITE_RSRC_TYPE
 
 namespace graphite
 {
@@ -34,21 +32,41 @@ namespace graphite
 namespace rsrc
 {
 
-namespace extended
+/**
+ * 
+ */
+class type
 {
+public:
+	/**
+	 * Construct a new a resource type container with the specified
+	 * type code.
+	 */
+	type(const std::string& code);
 
-/**
- * Parse the specified/provided data object that represents a resource file 
- * into a list of resource types.
- */
-std::vector<std::shared_ptr<graphite::rsrc::type>> parse(std::shared_ptr<graphite::data::reader> reader);
+	/**
+	 * Returns the type code of the receiver.
+	 */
+	std::string code() const;
 
-/**
- * Build a data object that represents a resource file from the provided list
- * of resource types.
- */
-void write(const std::string& path, std::vector<std::shared_ptr<graphite::rsrc::type>> types);
+	/**
+	 * Returns a count of the number of resources associated to this type.
+	 */
+	std::size_t count() const;
 
+	/**
+	 * Add a new resource to the receiver.
+	 */
+	void add_resource(std::shared_ptr<resource> resource);
+
+	/**
+	 * Returns an vector containing all of the resources 
+	 */
+	std::vector<std::shared_ptr<resource>> resources() const;
+
+private:
+	std::string m_code;
+	std::vector<std::shared_ptr<resource>> m_resources;
 };
 
 };

@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 
-#include "encoding/macroman/macroman.hpp"
+#include "libGraphite/encoding/macroman/macroman.hpp"
 
 // MARK: - Encoding Tables
 

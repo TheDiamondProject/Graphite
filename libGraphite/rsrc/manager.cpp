@@ -18,20 +18,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <iostream>
-#include "rsrc/rez.hpp"
-#include "encoding/macroman/macroman.hpp"
+#include <iterator>
+#include "libGraphite/rsrc/manager.hpp"
+#include "libGraphite/rsrc/file.hpp"
 
-// MARK: - Parsing / Reading
+// MARK: - Singleton
 
-std::vector<std::shared_ptr<graphite::rsrc::type>> graphite::rsrc::rez::parse(std::shared_ptr<graphite::data::reader> reader)
+graphite::rsrc::manager::manager()
 {
-    return {};
+    
 }
 
-// MARK: - Writing
-
-void graphite::rsrc::rez::write(const std::string& path, std::vector<std::shared_ptr<graphite::rsrc::type>> types)
+graphite::rsrc::manager& graphite::rsrc::manager::shared_manager()
 {
-	
+    static rsrc::manager manager;
+    return manager;
+}
+
+// MARK: - File Management
+
+void graphite::rsrc::manager::import_file(std::shared_ptr<graphite::rsrc::file> file)
+{
+    m_files.push_back(file);
+}
+
+// MARK: - Resource Look Up
+
+std::shared_ptr<graphite::rsrc::resource> graphite::rsrc::manager::find(const std::string& type, const int64_t& id) const
+{
+//    for (auto i = m_files.rbegin(); i != m_files.rend(); ++i) {
+//        auto res = (*i)->find(type, id);
+//        if (res != nullptr) {
+//            return res;
+//        }
+//    }
+    return nullptr;
 }

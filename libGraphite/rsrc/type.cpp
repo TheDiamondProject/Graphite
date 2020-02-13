@@ -18,59 +18,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <string>
-#include <vector>
-#include <memory>
-#include "rsrc/resource.hpp"
+#include "libGraphite/rsrc/type.hpp"
 
-#if !defined(GRAPHITE_RSRC_TYPE)
-#define GRAPHITE_RSRC_TYPE
+// MARK: - Constructor
 
-namespace graphite
+graphite::rsrc::type::type(const std::string& code)
+	: m_code(code)
 {
+	
+}
 
-namespace rsrc
+// MARK: - Metadata Accessors
+
+std::string graphite::rsrc::type::code() const
 {
+	return m_code;
+}
 
-/**
- * 
- */
-class type
+// MARK: - Resource Management
+
+std::size_t graphite::rsrc::type::count() const
 {
-public:
-	/**
-	 * Construct a new a resource type container with the specified
-	 * type code.
-	 */
-	type(const std::string& code);
+	return m_resources.size();
+}
 
-	/**
-	 * Returns the type code of the receiver.
-	 */
-	std::string code() const;
+void graphite::rsrc::type::add_resource(std::shared_ptr<graphite::rsrc::resource> resource)
+{
+	m_resources.push_back(resource);
+}
 
-	/**
-	 * Returns a count of the number of resources associated to this type.
-	 */
-	std::size_t count() const;
-
-	/**
-	 * Add a new resource to the receiver.
-	 */
-	void add_resource(std::shared_ptr<resource> resource);
-
-	/**
-	 * Returns an vector containing all of the resources 
-	 */
-	std::vector<std::shared_ptr<resource>> resources() const;
-
-private:
-	std::string m_code;
-	std::vector<std::shared_ptr<resource>> m_resources;
-};
-
-};
-
-};
-
-#endif
+std::vector<std::shared_ptr<graphite::rsrc::resource>> graphite::rsrc::type::resources() const
+{
+	return m_resources;
+}

@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "data/reader.hpp"
-#include "data/data.hpp"
-#include "encoding/macroman/macroman.hpp"
+#include "libGraphite/data/reader.hpp"
+#include "libGraphite/data/data.hpp"
+#include "libGraphite/encoding/macroman/macroman.hpp"
 #include <stdexcept>
 #include <iostream>
 #include <fstream>

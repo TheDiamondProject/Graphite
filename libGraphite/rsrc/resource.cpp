@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "rsrc/resource.hpp"
-#include "rsrc/type.hpp"
+#include "libGraphite/rsrc/resource.hpp"
+#include "libGraphite/rsrc/type.hpp"
 
 // MARK: - Constructor
 

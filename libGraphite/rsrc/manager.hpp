@@ -21,8 +21,7 @@
 #include <string>
 #include <vector>
 #include <memory>
-
-#include "rsrc/file.hpp"
+#include "libGraphite/rsrc/file.hpp"
 
 #if !defined(GRAPHITE_RSRC_MANAGER)
 #define GRAPHITE_RSRC_MANAGER

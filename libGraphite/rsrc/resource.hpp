@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "data/data.hpp"
+#include "libGraphite/data/data.hpp"
 
 #if !defined(GRAPHITE_RSRC_RESOURCE)
 #define GRAPHITE_RSRC_RESOURCE

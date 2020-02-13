@@ -18,36 +18,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "rsrc/type.hpp"
+#include <string>
+#include <vector>
+#include <memory>
+#include "libGraphite/rsrc/file.hpp"
+#include "libGraphite/data/reader.hpp"
+#include "libGraphite/data/writer.hpp"
 
-// MARK: - Constructor
+#if !defined(GRAPHITE_RSRC_REZ)
+#define GRAPHITE_RSRC_REZ
 
-graphite::rsrc::type::type(const std::string& code)
-	: m_code(code)
+namespace graphite
 {
-	
-}
 
-// MARK: - Metadata Accessors
-
-std::string graphite::rsrc::type::code() const
+namespace rsrc
 {
-	return m_code;
-}
 
-// MARK: - Resource Management
-
-std::size_t graphite::rsrc::type::count() const
+namespace rez
 {
-	return m_resources.size();
-}
 
-void graphite::rsrc::type::add_resource(std::shared_ptr<graphite::rsrc::resource> resource)
-{
-	m_resources.push_back(resource);
-}
+/**
+ * Parse the specified/provided data object that represents a resource file 
+ * into a list of resource types.
+ */
+std::vector<std::shared_ptr<graphite::rsrc::type>> parse(std::shared_ptr<graphite::data::reader> reader);
 
-std::vector<std::shared_ptr<graphite::rsrc::resource>> graphite::rsrc::type::resources() const
-{
-	return m_resources;
-}
+/**
+ * Build a data object that represents a resource file from the provided list
+ * of resource types.
+ */
+void write(const std::string& path, std::vector<std::shared_ptr<graphite::rsrc::type>> types);
+
+};
+
+};
+
+};
+
+#endif

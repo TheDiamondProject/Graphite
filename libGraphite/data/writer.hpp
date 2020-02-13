@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 #include <memory>
-#include "data/data.hpp"
+#include "libGraphite/data/data.hpp"
 
 #if !defined(GRAPHITE_DATA_WRITER)
 #define GRAPHITE_DATA_WRITER

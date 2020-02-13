@@ -21,12 +21,12 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "rsrc/file.hpp"
-#include "data/reader.hpp"
-#include "data/writer.hpp"
+#include "libGraphite/rsrc/file.hpp"
+#include "libGraphite/data/reader.hpp"
+#include "libGraphite/data/writer.hpp"
 
-#if !defined(GRAPHITE_RSRC_REZ)
-#define GRAPHITE_RSRC_REZ
+#if !defined(GRAPHITE_RSRC_CLASSIC)
+#define GRAPHITE_RSRC_CLASSIC
 
 namespace graphite
 {
@@ -34,7 +34,7 @@ namespace graphite
 namespace rsrc
 {
 
-namespace rez
+namespace classic
 {
 
 /**
