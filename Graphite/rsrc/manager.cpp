@@ -1,0 +1,56 @@
+// Copyright (c) 2020 Tom Hancocks
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+#include <iterator>
+#include "rsrc/manager.hpp"
+#include "rsrc/file.hpp"
+
+// MARK: - Singleton
+
+graphite::rsrc::manager::manager()
+{
+    
+}
+
+graphite::rsrc::manager& graphite::rsrc::manager::shared_manager()
+{
+    static rsrc::manager manager;
+    return manager;
+}
+
+// MARK: - File Management
+
+void graphite::rsrc::manager::import_file(std::shared_ptr<graphite::rsrc::file> file)
+{
+    m_files.push_back(file);
+}
+
+// MARK: - Resource Look Up
+
+std::shared_ptr<graphite::rsrc::resource> graphite::rsrc::manager::find(const std::string& type, const int64_t& id) const
+{
+//    for (auto i = m_files.rbegin(); i != m_files.rend(); ++i) {
+//        auto res = (*i)->find(type, id);
+//        if (res != nullptr) {
+//            return res;
+//        }
+//    }
+    return nullptr;
+}
