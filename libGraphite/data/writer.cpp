@@ -63,6 +63,13 @@ T graphite::data::writer::swap(
     return v;
 }
 
+// MARK: - Data
+
+std::shared_ptr<graphite::data::data> graphite::data::writer::data()
+{
+    return m_data;
+}
+
 // MARK: - Size
 
 std::size_t graphite::data::writer::size() const

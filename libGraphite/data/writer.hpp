@@ -48,6 +48,11 @@ public:
      * `graphite::data::data` object.
      */
     writer(std::shared_ptr<data> data);
+
+    /**
+     * Returns the internal data object.
+     */
+    std::shared_ptr<data> data();
     
     /**
      * Returns the current size of the underlying `graphite::data::data:: object.
