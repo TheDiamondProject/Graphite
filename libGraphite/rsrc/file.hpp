@@ -95,6 +95,11 @@ public:
      */
     format current_format() const;
 
+    /**
+     * Add a resource into the receiver.
+     */
+    void add_resource(const std::string& type, int64_t id, const std::string& name, std::shared_ptr<graphite::data::data> data)
+
     
 private:
     std::string m_path { "" };

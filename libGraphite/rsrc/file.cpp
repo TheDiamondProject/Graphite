@@ -111,3 +111,11 @@ void graphite::rsrc::file::write(const std::string& path, enum graphite::rsrc::f
 	}
 	
 }
+
+// MARK: - Resource Managemnet
+
+void graphite::rsrc::file::add_resource(const std::string& type, int64_t id, const std::string& name, std::shared_ptr<graphite::data::data> data)
+{
+    
+}
+
