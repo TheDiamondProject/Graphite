@@ -27,7 +27,7 @@
 // MARK: - Construct
 
 graphite::rsrc::file::file(const std::string& path)
-	: m_path(path)
+    : m_path(path)
 {
 	read(path);
 }
@@ -114,8 +114,28 @@ void graphite::rsrc::file::write(const std::string& path, enum graphite::rsrc::f
 
 // MARK: - Resource Managemnet
 
-void graphite::rsrc::file::add_resource(const std::string& type, int64_t id, const std::string& name, std::shared_ptr<graphite::data::data> data)
+void graphite::rsrc::file::add_resource(const std::string& code, int64_t id, const std::string& name, std::shared_ptr<graphite::data::data> data)
 {
+    // Get the container
+    auto type = type_container(code);
+    if (!type) {
+        throw std::runtime_error("Failed to find or create resource type container for " + code);
+    }
     
+    // Add the resource...
+    auto resource = std::make_shared<graphite::rsrc::resource>(id, type, name, data);
+    type->add_resource(resource);
 }
 
+std::shared_ptr<graphite::rsrc::type> graphite::rsrc::file::type_container(const std::string& code)
+{
+    for (auto type : m_types) {
+        if (type->code() == code) {
+            return type;
+        }
+    }
+    
+    auto type = std::make_shared<graphite::rsrc::type>(code);
+    m_types.push_back(type);
+    return type;
+}

@@ -98,12 +98,17 @@ public:
     /**
      * Add a resource into the receiver.
      */
-    void add_resource(const std::string& type, int64_t id, const std::string& name, std::shared_ptr<graphite::data::data> data)
+    void add_resource(const std::string& type, int64_t id, const std::string& name, std::shared_ptr<graphite::data::data> data);
 
+    /**
+     * Retrieve a type container for the specified type code. If a container
+     * does not exist then create one.
+     */
+    std::shared_ptr<graphite::rsrc::type> type_container(const std::string& code);
     
 private:
     std::string m_path { "" };
-    std::vector<std::shared_ptr<type>> m_types { nullptr };
+    std::vector<std::shared_ptr<type>> m_types;
     std::shared_ptr<graphite::data::data> m_data { nullptr };
     format m_format { classic };
 };

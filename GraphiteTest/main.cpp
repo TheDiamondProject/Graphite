@@ -19,10 +19,17 @@
 // SOFTWARE.
 
 #include "libGraphite/rsrc/file.hpp"
+#include "libGraphite/data/writer.hpp"
 
 int main(int argc, char const *argv[])
 {
-	graphite::rsrc::file file("/Applications/EV Nova.app/Contents/Resources/Nova Files/Nova Data 1.ndat");
-	file.write("/Users/tomhancocks/Desktop/test.ndat", graphite::rsrc::file::format::extended);
+    auto rf = std::make_shared<graphite::rsrc::file>();
+    
+    auto writer = std::make_shared<graphite::data::writer>();
+    writer->write_cstr("Hello, World!");
+    rf->add_resource("test", 128, "test resource", writer->data());
+
+    // The resource file should be assembled at this point and just needs writting to disk.
+    rf->write("/Users/tomhancocks/Desktop/out.ndat", graphite::rsrc::file::format::classic);
 	return 0;
 }

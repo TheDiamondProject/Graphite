@@ -119,7 +119,7 @@ public:
     /**
      * Write a C-String into the data.
      */
-    void write_cstr(const std::string& str, std::size_t size = -1);
+    void write_cstr(const std::string& str, std::size_t size = 0);
     
     /**
      * Write a Pascal String into the data.
@@ -136,7 +136,7 @@ public:
      * Write the specified `graphite::data::data` object into the output
      * data stream.
      */
-    void write_data(std::shared_ptr<data> data);
+    void write_data(std::shared_ptr<graphite::data::data> data);
 
     /**
      * Pad the contents of the underlying data object to the specified number of bytes.
