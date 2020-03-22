@@ -4,6 +4,8 @@
 # Build
 bin/
 build/
+cmake-build-debug/
 
-# Xcode Project
+# IDE Project's
 *.xcodeproj
+.idea/
