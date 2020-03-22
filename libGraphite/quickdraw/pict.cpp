@@ -80,15 +80,14 @@ void graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
     // Allocate a private memory buffer before going to the surface.
     // WARNING: Use of raw memory here!
     std::vector<uint8_t> raw;
-    std::vector<uint8_t> px_buffer;
+    std::vector<uint16_t> px_short_buffer;
+    std::vector<uint32_t> px_long_buffer;
 
     if (m_pixmap.pack_type() == 3) {
-        raw = std::vector<uint8_t>(m_pixmap.row_bytes());
-        px_buffer = std::vector<uint8_t>(((source_rect.height() * (m_pixmap.row_bytes() + 1)) >> 1) * sizeof(uint16_t));
+        px_short_buffer = std::vector<uint16_t>((source_rect.height() * (m_pixmap.row_bytes() + 1)) >> 1);
     }
     else if (m_pixmap.pack_type() == 4) {
-        raw = std::vector<uint8_t>((m_pixmap.cmp_count() * m_pixmap.row_bytes()) >> 2);
-        px_buffer = std::vector<uint8_t>(((source_rect.height() * (m_pixmap.row_bytes() + 3)) >> 1) * sizeof(uint32_t));
+        px_long_buffer = std::vector<uint32_t>((source_rect.height() * (m_pixmap.row_bytes() + 3)) >> 1);
     }
 
     uint32_t px_buffer_offset = 0;
@@ -98,6 +97,8 @@ void graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
     uint32_t bounds_width = m_pixmap.bounds().width();
 
     for (uint32_t scanline = 0; scanline < height; ++scanline) {
+        raw.clear();
+
         if (m_pixmap.row_bytes() <= kPACK_BITS_THRESHOLD) {
             // No pack bits compression
             raw = read_bytes(pict_reader, m_pixmap.row_bytes());
@@ -125,52 +126,53 @@ void graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
 
         if (m_pixmap.pack_type() == 3) {
             for (uint32_t x = 0; x < width; ++x) {
-                px_buffer[px_buffer_offset + x] = (0xFF & raw[2 * x + 1]);
-                px_buffer[px_buffer_offset + x + 1] = ((0xFF & raw[2 * x]) << 8);
+                px_short_buffer[px_buffer_offset + x] = (0xFF & raw[2 * x + 1]) | ((0xFF & raw[2 * x]) << 8);
             }
-            px_buffer_offset += width * 2;
         }
         else {
             if (m_pixmap.cmp_count() == 3) {
                 // RGB Formatted Data
                 for (uint32_t x = 0; x < width; x++) {
-                    px_buffer[px_buffer_offset + x] = (raw[2 * bounds_width + x] & 0xFF);   // Blue
-                    px_buffer[px_buffer_offset + x + 1] = (raw[bounds_width + x] & 0xFF);   // Green
-                    px_buffer[px_buffer_offset + x + 2] = (raw[x] & 0xFF);                  // Red
-                    px_buffer[px_buffer_offset + x + 3] = 0xFF;                             // Alpha
+                    px_long_buffer[px_buffer_offset + x] =
+                            0xFF000000
+                            | ((raw[x] & 0xFF) << 16)
+                            | ((raw[bounds_width + x] & 0xFF) << 8)
+                            | (raw[2 * bounds_width + x] & 0xFF);
                 }
             }
             else {
                 // ARGB Formatted Data
                 for (uint32_t x = 0; x < width; x++) {
-                    px_buffer[px_buffer_offset + x] = (raw[3 * bounds_width + x] & 0xFF);   // Blue
-                    px_buffer[px_buffer_offset + x + 1] = (raw[2 *bounds_width + x] & 0xFF);// Green
-                    px_buffer[px_buffer_offset + x + 2] = (raw[bounds_width] & 0xFF);       // Red
-                    px_buffer[px_buffer_offset + x + 3] = raw[x];                           // Alpha
+                    px_long_buffer[px_buffer_offset + x] =
+                            ((raw[x] & 0xFF) << 24)
+                            | ((raw[bounds_width] & 0xFF) << 16)
+                            | ((raw[2 * bounds_width + x] & 0xFF) << 8)
+                            | (raw[3 * bounds_width + x] & 0xFF);
                 }
             }
-            px_buffer_offset += width * 4;
         }
+
+        px_buffer_offset += width;
     }
 
     uint32_t source_length = width * height;
-    std::vector<graphite::qd::color> rgb(source_length, graphite::qd::color::black());
+    std::vector<graphite::qd::color> rgb(source_length, graphite::qd::color::purple());
 
     if (m_pixmap.pack_type() == 3) {
         for (uint32_t p = 0, i = 0; i < source_length; ++i) {
-            uint16_t v = (px_buffer[(i * 2)]) | (px_buffer[(i * 2) + 1] << 8);
-
-            rgb[p++] = graphite::qd::color(static_cast<uint8_t>(((v & 0x7c00) >> 10) << 3),
+            uint16_t v = px_short_buffer[i];
+            rgb[p++] = graphite::qd::color(static_cast<uint8_t>((v & 0x001f) << 3),
                                            static_cast<uint8_t>(((v & 0x03e0) >> 5) << 3),
-                                           static_cast<uint8_t>((v & 0x001f) << 3));
+                                           static_cast<uint8_t>(((v & 0x7c00) >> 10) << 3));
         }
     }
     else if (m_pixmap.pack_type() == 4) {
         for (uint32_t p = 0, i = 0; i < source_length; ++i) {
-            rgb[p++] = graphite::qd::color(static_cast<uint8_t>(px_buffer[(i * 4)]),
-                                           static_cast<uint8_t>(px_buffer[(i * 4) + 1]),
-                                           static_cast<uint8_t>(px_buffer[(i * 4) + 2]),
-                                           static_cast<uint8_t>(px_buffer[(i * 4) + 3]));
+            uint32_t v = px_long_buffer[i];
+            rgb[p++] = graphite::qd::color(static_cast<uint8_t>(v & 0xFF),
+                                           static_cast<uint8_t>((v & 0xFF00) >> 8),
+                                           static_cast<uint8_t>((v & 0xFF0000) >> 16),
+                                           static_cast<uint8_t>((v & 0xFF000000) >> 24));
         }
     }
 

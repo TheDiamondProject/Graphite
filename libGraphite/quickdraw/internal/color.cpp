@@ -12,6 +12,29 @@ graphite::qd::color::color(uint8_t red, uint8_t green, uint8_t blue, uint8_t alp
 
 }
 
+// MARK: - Accessors
+
+uint8_t graphite::qd::color::red_component() const
+{
+    return m_red;
+}
+
+uint8_t graphite::qd::color::green_component() const
+{
+    return m_green;
+}
+
+uint8_t graphite::qd::color::blue_component() const
+{
+    return m_blue;
+}
+
+uint8_t graphite::qd::color::alpha_component() const
+{
+    return m_alpha;
+}
+
+
 // MARK: - Quick Colors
 
 graphite::qd::color graphite::qd::color::black()

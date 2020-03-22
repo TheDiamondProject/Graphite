@@ -18,6 +18,29 @@ graphite::qd::surface::surface(int width, int height, std::vector<graphite::qd::
 
 // MARK: - Surface Access
 
+std::vector<uint32_t> graphite::qd::surface::raw() const
+{
+    auto out = std::vector<uint32_t>();
+    for (auto i = m_data.begin(); i != m_data.end(); ++i) {
+        uint32_t color = ((*i).alpha_component() << 24)
+                | ((*i).red_component() << 16)
+                | ((*i).green_component() << 8)
+                | (*i).blue_component();
+        out.push_back(color);
+    }
+    return out;
+}
+
+int graphite::qd::surface::width() const
+{
+    return m_width;
+}
+
+int graphite::qd::surface::height() const
+{
+    return m_height;
+}
+
 graphite::qd::color graphite::qd::surface::at(int x, int y) const
 {
     return m_data[(y * m_width) + x];

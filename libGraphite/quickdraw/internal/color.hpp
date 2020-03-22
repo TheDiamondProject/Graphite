@@ -31,6 +31,11 @@ namespace graphite { namespace qd {
          */
         color(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha = 255);
 
+        uint8_t red_component() const;
+        uint8_t green_component() const;
+        uint8_t blue_component() const;
+        uint8_t alpha_component() const;
+        
         static color black();
         static color white();
         static color red();
@@ -41,8 +46,7 @@ namespace graphite { namespace qd {
         static color yellow();
         static color lightGrey();
         static color darkGrey();
-
-
+        
     };
 
 }}

@@ -42,6 +42,21 @@ namespace graphite { namespace qd
         surface(int width, int height, std::vector<graphite::qd::color> rgb);
 
         /**
+         * Export the raw surface data.
+         */
+        std::vector<uint32_t> raw() const;
+
+        /**
+         * Returns the width of the surface
+         */
+        int width() const;
+
+        /**
+         * Returns the height of the surface
+         */
+         int height() const;
+
+        /**
          * Returns the color at the specified coordinate within the surface.
          * @param x         The x position in the surface
          * @param y         The y position in the surface

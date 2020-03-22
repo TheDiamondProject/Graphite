@@ -259,7 +259,7 @@ std::string graphite::data::reader::read_pstr(int64_t offset, graphite::data::re
 
 std::shared_ptr<graphite::data::data> graphite::data::reader::read_data(int64_t size, int64_t offset, graphite::data::reader::mode mode)
 {
-    auto data = std::make_shared<graphite::data::data>(m_data->get(), size, m_pos + offset);
+    auto data = std::make_shared<graphite::data::data>(m_data->get(), size, m_data->start() + m_pos + offset);
     move(offset + size);
     return data;
 }
