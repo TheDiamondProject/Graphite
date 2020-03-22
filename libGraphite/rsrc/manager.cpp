@@ -44,13 +44,13 @@ void graphite::rsrc::manager::import_file(std::shared_ptr<graphite::rsrc::file> 
 
 // MARK: - Resource Look Up
 
-std::shared_ptr<graphite::rsrc::resource> graphite::rsrc::manager::find(const std::string& type, const int64_t& id) const
+std::weak_ptr<graphite::rsrc::resource> graphite::rsrc::manager::find(const std::string& type, const int64_t& id) const
 {
-//    for (auto i = m_files.rbegin(); i != m_files.rend(); ++i) {
-//        auto res = (*i)->find(type, id);
-//        if (res != nullptr) {
-//            return res;
-//        }
-//    }
-    return nullptr;
+    for (auto i = m_files.rbegin(); i != m_files.rend(); ++i) {
+        auto res = (*i)->find(type, id);
+        if (!res.expired()) {
+            return res;
+        }
+    }
+    return std::weak_ptr<graphite::rsrc::resource>();
 }

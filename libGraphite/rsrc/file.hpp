@@ -104,7 +104,12 @@ public:
      * Retrieve a type container for the specified type code. If a container
      * does not exist then create one.
      */
-    std::shared_ptr<graphite::rsrc::type> type_container(const std::string& code);
+    std::weak_ptr<graphite::rsrc::type> type_container(const std::string& code);
+
+    /**
+     * Attempt to get the resource of the specified type and id.
+     */
+    std::weak_ptr<resource> find(const std::string& type, const int64_t& id);
     
 private:
     std::string m_path { "" };

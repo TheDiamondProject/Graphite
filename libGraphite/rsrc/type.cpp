@@ -51,3 +51,13 @@ std::vector<std::shared_ptr<graphite::rsrc::resource>> graphite::rsrc::type::res
 {
 	return m_resources;
 }
+
+std::weak_ptr<graphite::rsrc::resource> graphite::rsrc::type::get(int16_t id) const
+{
+    for (auto r = m_resources.begin(); r != m_resources.end(); ++r) {
+        if ((*r)->id() == id) {
+            return *r;
+        }
+    }
+    return std::weak_ptr<graphite::rsrc::resource>();
+}

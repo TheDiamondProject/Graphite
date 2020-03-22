@@ -64,6 +64,11 @@ public:
 	 */
 	std::vector<std::shared_ptr<resource>> resources() const;
 
+	/**
+	 * Returns the resource with the specified ID.
+	 */
+	std::weak_ptr<resource> get(int16_t id) const;
+
 private:
 	std::string m_code;
 	std::vector<std::shared_ptr<resource>> m_resources;

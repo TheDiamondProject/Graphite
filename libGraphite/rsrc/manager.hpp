@@ -65,7 +65,7 @@ public:
     /**
      * Attempt to get the resource of the specified type and id.
      */
-    std::shared_ptr<resource> find(const std::string& type, const int64_t& id) const;
+    std::weak_ptr<resource> find(const std::string& type, const int64_t& id) const;
 
     
 private:

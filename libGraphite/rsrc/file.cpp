@@ -117,17 +117,16 @@ void graphite::rsrc::file::write(const std::string& path, enum graphite::rsrc::f
 void graphite::rsrc::file::add_resource(const std::string& code, int64_t id, const std::string& name, std::shared_ptr<graphite::data::data> data)
 {
     // Get the container
-    auto type = type_container(code);
-    if (!type) {
-        throw std::runtime_error("Failed to find or create resource type container for " + code);
+    if (auto type = type_container(code).lock()) {
+        // Add the resource...
+        auto resource = std::make_shared<graphite::rsrc::resource>(id, type, name, data);
+        type->add_resource(resource);
     }
-    
-    // Add the resource...
-    auto resource = std::make_shared<graphite::rsrc::resource>(id, type, name, data);
-    type->add_resource(resource);
+
+    throw std::runtime_error("Failed to find or create resource type container for " + code);
 }
 
-std::shared_ptr<graphite::rsrc::type> graphite::rsrc::file::type_container(const std::string& code)
+std::weak_ptr<graphite::rsrc::type> graphite::rsrc::file::type_container(const std::string& code)
 {
     for (auto type : m_types) {
         if (type->code() == code) {
@@ -138,4 +137,12 @@ std::shared_ptr<graphite::rsrc::type> graphite::rsrc::file::type_container(const
     auto type = std::make_shared<graphite::rsrc::type>(code);
     m_types.push_back(type);
     return type;
+}
+
+std::weak_ptr<graphite::rsrc::resource> graphite::rsrc::file::find(const std::string& type, const int64_t& id)
+{
+    if (auto container = type_container(type).lock()) {
+        return container->get(id);
+    }
+    return std::weak_ptr<graphite::rsrc::resource>();
 }
