@@ -57,12 +57,6 @@ public:
     
     /**
      * Construct a new `graphite::data::reader` object using the
-     * specified `graphite::data::data` object.
-     */
-    reader(std::shared_ptr<data> data);
-    
-    /**
-     * Construct a new `graphite::data::reader` object using the
      * specified `graphite::data::data` object, constraining the available
      * read region of the data.
      */

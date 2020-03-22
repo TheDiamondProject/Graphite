@@ -52,12 +52,6 @@ graphite::data::reader::reader(const std::string& path)
     file.close();
 }
 
-graphite::data::reader::reader(std::shared_ptr<graphite::data::data> data)
-    : m_data(data)
-{
-    
-}
-
 graphite::data::reader::reader(std::shared_ptr<graphite::data::data> data, uint64_t pos)
     : m_data(data), m_pos(pos)
 {
