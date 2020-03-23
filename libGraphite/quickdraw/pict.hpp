@@ -44,6 +44,8 @@ namespace graphite { namespace qd {
     public:
         pict(std::shared_ptr<graphite::data::data> data);
 
+        static std::shared_ptr<pict> open(int64_t id);
+
         std::weak_ptr<graphite::qd::surface> image_surface() const;
 
     };

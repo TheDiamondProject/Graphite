@@ -2,6 +2,7 @@
 // Created by Tom Hancocks on 20/02/2020.
 //
 
+#include <libGraphite/rsrc/manager.hpp>
 #include "libGraphite/quickdraw/pict.hpp"
 #include "libGraphite/quickdraw/internal/packbits.hpp"
 
@@ -267,6 +268,14 @@ graphite::qd::pict::pict(std::shared_ptr<graphite::data::data> data)
     // Setup a reader for the PICT data, and then parse it.
     data::reader pict_reader(data);
     parse(pict_reader);
+}
+
+std::shared_ptr<graphite::qd::pict> graphite::qd::pict::open(int64_t id)
+{
+    if (auto pict_res = graphite::rsrc::manager::shared_manager().find("PICT", 128).lock()) {
+        return std::make_shared<graphite::qd::pict>(pict_res->data());
+    }
+    return nullptr;
 }
 
 // MARK: - Accessors
