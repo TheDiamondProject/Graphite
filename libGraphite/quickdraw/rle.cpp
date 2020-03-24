@@ -10,7 +10,8 @@ static const auto rle_grid_width = 6;
 
 // MARK: - Constructor
 
-graphite::qd::rle::rle(std::shared_ptr<data::data> data)
+graphite::qd::rle::rle(std::shared_ptr<data::data> data, int64_t id, std::string name)
+    : m_id(id), m_name(name)
 {
     auto reader = data::reader(data);
     parse(reader);
@@ -60,7 +61,7 @@ void graphite::qd::rle::parse(data::reader &reader)
 
     // Ensure that the RLE has a BPP of 16. This is the only format that we support currently.
     if (m_bpp != 16) {
-        throw std::runtime_error("Incorrect color depth for rlëD resource");
+        throw std::runtime_error("Incorrect color depth for rlëD resource: " + std::to_string(m_id) + ", " + m_name);
     }
 
     // Determine what the grid will be. We need to round up to the next whole number and have blank tiles
@@ -97,7 +98,7 @@ void graphite::qd::rle::parse(data::reader &reader)
             case rle::opcode::eof: {
                 // Check that we're not erroneously encountering an EOF.
                 if (current_line != static_cast<int32_t>(m_frame_size.height() - 1)) {
-                    throw std::runtime_error("Incorrect number of scanlines in rlëD resource.");
+                    throw std::runtime_error("Incorrect number of scanlines in rlëD resource: " + std::to_string(m_id) + ", " + m_name);
                 }
 
                 // Have we finished decoding the last frame in the data?

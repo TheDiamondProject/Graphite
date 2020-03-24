@@ -23,6 +23,8 @@ private:
         pixel_run = 0x04,
     };
 
+    int64_t m_id;
+    std::string m_name;
     std::vector<qd::rect> m_frames;
     std::shared_ptr<qd::surface> m_surface;
     qd::size m_frame_size;
@@ -38,7 +40,7 @@ private:
     void write_pixel_variant2(uint32_t pixel, uint8_t mask, uint64_t offset);
 
 public:
-    rle(std::shared_ptr<data::data> data);
+    rle(std::shared_ptr<data::data> data, int64_t id = 0, std::string name = "");
     static std::shared_ptr<rle> load_resource(int64_t id);
 
     std::weak_ptr<qd::surface> surface() const;

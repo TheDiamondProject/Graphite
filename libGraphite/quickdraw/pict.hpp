@@ -30,6 +30,8 @@ namespace graphite { namespace qd {
         };
 
     private:
+        int64_t m_id;
+        std::string m_name;
         std::shared_ptr<graphite::qd::surface> m_surface;
         graphite::qd::rect m_frame;
         double m_x_ratio;
@@ -43,7 +45,7 @@ namespace graphite { namespace qd {
         void read_pack_bits_rect(graphite::data::reader & pict_reader);
 
     public:
-        pict(std::shared_ptr<graphite::data::data> data);
+        pict(std::shared_ptr<graphite::data::data> data, int64_t id = 0, std::string name = "");
 
         static std::shared_ptr<pict> load_resource(int64_t id);
 

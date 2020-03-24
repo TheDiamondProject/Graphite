@@ -160,7 +160,7 @@ void graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
             raw_size = cmp_count * row_bytes / 4;
         }
         default: {
-            throw std::runtime_error("Unsupported pack type " + std::to_string(pack_type) + " encountered in PICT.");
+            throw std::runtime_error("Unsupported pack type " + std::to_string(pack_type) + " encountered in PICT: " + std::to_string(m_id) + ", " + m_name);
         }
     }
 
@@ -264,7 +264,7 @@ void graphite::qd::pict::parse(graphite::data::reader& pict_reader)
 
     // We are only dealing with v2 Pictures for the time being...
     if (pict_reader.read_long() != kPICT_V2_MAGIC) {
-        throw std::runtime_error("Encountered an incompatible PICT");
+        throw std::runtime_error("Encountered an incompatible PICT: " + std::to_string(m_id) + ", " + m_name);
     }
 
     // The very first thing we should find is an extended header opcode. Read this
@@ -288,7 +288,7 @@ void graphite::qd::pict::parse(graphite::data::reader& pict_reader)
     }
 
     if (m_x_ratio <= 0 || m_y_ratio <= 0) {
-        throw std::runtime_error("Invalid PICT resource. Content aspect ratio is not valid.");
+        throw std::runtime_error("Invalid PICT resource. Content aspect ratio is not valid: " + std::to_string(m_id) + ", " + m_name);
     }
 
     pict_reader.move(4);
@@ -335,8 +335,8 @@ void graphite::qd::pict::parse(graphite::data::reader& pict_reader)
 
 // MARK: - Constructors
 
-graphite::qd::pict::pict(std::shared_ptr<graphite::data::data> data)
-    : m_surface(nullptr), m_frame(0, 0, 100, 100)
+graphite::qd::pict::pict(std::shared_ptr<graphite::data::data> data, int64_t id, std::string name)
+    : m_surface(nullptr), m_frame(0, 0, 100, 100), m_id(id), m_name(name)
 {
     // Setup a reader for the PICT data, and then parse it.
     data::reader pict_reader(data);
@@ -346,7 +346,7 @@ graphite::qd::pict::pict(std::shared_ptr<graphite::data::data> data)
 std::shared_ptr<graphite::qd::pict> graphite::qd::pict::load_resource(int64_t id)
 {
     if (auto pict_res = graphite::rsrc::manager::shared_manager().find("PICT", id).lock()) {
-        return std::make_shared<graphite::qd::pict>(pict_res->data());
+        return std::make_shared<graphite::qd::pict>(pict_res->data(), id, pict_res->name());
     }
     return nullptr;
 }
