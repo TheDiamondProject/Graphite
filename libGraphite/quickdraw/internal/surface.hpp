@@ -73,6 +73,15 @@ namespace graphite { namespace qd
         void set(int x, int y, graphite::qd::color color);
 
         /**
+         * Set the color at the specified coordinate within the surface.
+         * @param offset    The absolute offset in the surface data
+         * @param color     The color
+         *
+         * @note            This method of setting colors is _slow_. Use only for single point setting.
+         */
+        void set(int offset, graphite::qd::color color);
+
+        /**
          * Draw a line from point x0,y0 to x1,y1 using the color specified.
          * @param x0
          * @param y0

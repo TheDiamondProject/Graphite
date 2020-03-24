@@ -46,6 +46,11 @@ void graphite::qd::surface::set(int x, int y, graphite::qd::color color)
     m_data[(y * m_width) + x] = color;
 }
 
+void graphite::qd::surface::set(int offset, graphite::qd::color color)
+{
+    m_data[offset] = color;
+}
+
 // MARK: - Drawing Operations
 
 void graphite::qd::surface::draw_line(int x0, int y0, int x1, int y1, graphite::qd::color color)

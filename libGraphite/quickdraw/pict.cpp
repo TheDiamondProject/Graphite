@@ -343,7 +343,7 @@ graphite::qd::pict::pict(std::shared_ptr<graphite::data::data> data)
     parse(pict_reader);
 }
 
-std::shared_ptr<graphite::qd::pict> graphite::qd::pict::open(int64_t id)
+std::shared_ptr<graphite::qd::pict> graphite::qd::pict::load_resource(int64_t id)
 {
     if (auto pict_res = graphite::rsrc::manager::shared_manager().find("PICT", id).lock()) {
         return std::make_shared<graphite::qd::pict>(pict_res->data());
