@@ -53,7 +53,7 @@ public:
     /**
      * Construct a new `graphite::data::data` object with the specified capacity.
      */
-     data(std::size_t capacity, enum data::byte_order bo = msb);
+    data(std::size_t capacity, enum data::byte_order bo = msb);
     
     /**
      * Construct a new `graphite::data::data` object with the provided data.
