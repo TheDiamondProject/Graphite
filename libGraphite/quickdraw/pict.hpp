@@ -21,6 +21,7 @@ namespace graphite { namespace qd {
         {
             nop = 0x0000,
             clip_region = 0x0001,
+            pack_bits_rect = 0x0098,
             direct_bits_rect = 0x009a,
             eof = 0x00ff,
             def_hilite = 0x001e,
@@ -30,7 +31,6 @@ namespace graphite { namespace qd {
 
     private:
         std::shared_ptr<graphite::qd::surface> m_surface;
-        graphite::qd::pixmap m_pixmap;
         graphite::qd::rect m_frame;
         double m_x_ratio;
         double m_y_ratio;
@@ -40,6 +40,7 @@ namespace graphite { namespace qd {
         graphite::qd::rect read_region(graphite::data::reader& pict_reader);
         void read_long_comment(graphite::data::reader& pict_reader);
         void read_direct_bits_rect(graphite::data::reader& pict_reader);
+        void read_pack_bits_rect(graphite::data::reader & pict_reader);
 
     public:
         pict(std::shared_ptr<graphite::data::data> data);

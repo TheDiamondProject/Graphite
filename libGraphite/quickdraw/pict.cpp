@@ -64,74 +64,165 @@ void graphite::qd::pict::read_long_comment(graphite::data::reader& pict_reader)
     pict_reader.move(length);
 }
 
-void graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_reader)
+void graphite::qd::pict::read_pack_bits_rect(graphite::data::reader & pict_reader)
 {
-    m_pixmap = graphite::qd::pixmap(pict_reader.read_data(qd::pixmap::length));
+    graphite::qd::pixel_format color_model = b16_rgb555;
+    int16_t cmp_size;
+    int16_t row_bytes;
+    graphite::qd::rect bounds(0, 0, 0, 0);
 
+    // Determine if we're dealing a PixMap or an old style BitMap
+    bool is_pixmap = pict_reader.read_short(sizeof(uint32_t), data::reader::peek) & 0x8000;
+    if (is_pixmap) {
+        graphite::qd::pixmap pm = graphite::qd::pixmap(pict_reader.read_data(qd::pixmap::length));
+        cmp_size = pm.cmp_size();
+        color_model = pm.pixel_format();
+        row_bytes = pm.row_bytes();
+        bounds = pm.bounds();
+    }
+    else {
+        // Old style bitmap
+        cmp_size = 1;
+        color_model = monochrome;
+        row_bytes = pict_reader.read_short() & 0x7FFF;
+        bounds = read_rect(pict_reader);
+    }
+
+    // Read the source and destination bounds
     auto source_rect = read_rect(pict_reader);
     auto destination_rect = read_rect(pict_reader);
-    pict_reader.move(2);
+
+    auto transfer_mode = pict_reader.read_short();
+
+    // Setup pixel buffer for RGB Values
+    std::vector<uint8_t> raw;
+    std::vector<uint8_t> rgb;
+    std::size_t rgb_buffer_offset = 0;
+    uint16_t packed_bytes_count = 0;
+
+    for (auto scanline = 0; scanline < source_rect.height(); ++scanline) {
+        raw.clear();
+
+        if (row_bytes >= 8) {
+            if (row_bytes > 250) {
+                packed_bytes_count = pict_reader.read_short();
+            }
+            else {
+                packed_bytes_count = static_cast<uint16_t>(pict_reader.read_byte());
+            }
+
+            auto packed_data = read_bytes(pict_reader, packed_bytes_count);
+            qd::packbits::decode(raw, packed_data, sizeof(uint8_t));
+        }
+        else {
+            raw = read_bytes(pict_reader, row_bytes);
+        }
+
+        rgb_buffer_offset += row_bytes;
+        rgb.insert(rgb.end(), raw.begin(), raw.end());
+    }
+
+    uint32_t source_length = source_rect.width() * source_rect.height();
+    std::vector<graphite::qd::color> surface_data(source_length, graphite::qd::color::purple());
+
+    // TODO: This needs to be completed with the rgb data being converted to a surface.
+}
+
+void graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_reader)
+{
+    graphite::qd::pixel_format color_model = b16_rgb555;
+    int16_t pack_type;
+    int16_t cmp_count;
+    int16_t row_bytes;
+    graphite::qd::rect bounds(0, 0, 0, 0);
+
+    // Determine if we're dealing a PixMap or an old style BitMap
+    bool is_pixmap = pict_reader.read_short(sizeof(uint32_t), data::reader::peek) & 0x8000;
+    if (is_pixmap) {
+        graphite::qd::pixmap pm = graphite::qd::pixmap(pict_reader.read_data(qd::pixmap::length));
+        pack_type = pm.pack_type();
+        cmp_count = pm.cmp_count();
+        color_model = pm.pixel_format();
+        row_bytes = pm.row_bytes();
+        bounds = pm.bounds();
+    }
+    else {
+        // Old style bitmap
+        pack_type = 1;
+        cmp_count = 1;
+        color_model = monochrome;
+        row_bytes = pict_reader.read_short() & 0x7FFF;
+        bounds = read_rect(pict_reader);
+    }
+
+    // Read the source and destination bounds
+    auto source_rect = read_rect(pict_reader);
+    auto destination_rect = read_rect(pict_reader);
+
+    auto transfer_mode = pict_reader.read_short();
 
     // Verify the type of PixMap. We can only accept certain types for the time being, until
     // support for decoding/rendering other types is added.
-    if (m_pixmap.pack_type() != 3 && m_pixmap.pack_type() != 4){
-        throw std::runtime_error("Unsupported PixMap pack type " + std::to_string(m_pixmap.pack_type()) + " encountered in PICT.");
+    std::vector<uint8_t> raw;
+    std::size_t raw_size = 0;
+    switch (pack_type) {
+        case 1:
+        case 2:
+        case 3: {
+            raw_size = row_bytes;
+            break;
+        }
+        case 4: {
+            raw_size = cmp_count * row_bytes / 4;
+        }
+        default: {
+            throw std::runtime_error("Unsupported pack type " + std::to_string(pack_type) + " encountered in PICT.");
+        }
     }
 
     // Allocate a private memory buffer before going to the surface.
-    // WARNING: Use of raw memory here!
-    std::vector<uint8_t> raw;
     std::vector<uint16_t> px_short_buffer;
     std::vector<uint32_t> px_long_buffer;
 
-    if (m_pixmap.pack_type() == 3) {
-        px_short_buffer = std::vector<uint16_t>((source_rect.height() * (m_pixmap.row_bytes() + 1)) >> 1);
+    if (pack_type == 3) {
+        px_short_buffer = std::vector<uint16_t>(source_rect.height() * (row_bytes + 1) / 2);
     }
-    else if (m_pixmap.pack_type() == 4) {
-        px_long_buffer = std::vector<uint32_t>((source_rect.height() * (m_pixmap.row_bytes() + 3)) >> 1);
+    else {
+        px_long_buffer = std::vector<uint32_t>(source_rect.height() * (row_bytes + 3) / 4);
     }
 
     uint32_t px_buffer_offset = 0;
     uint16_t packed_bytes_count = 0;
     uint32_t height = source_rect.height();
     uint32_t width = source_rect.width();
-    uint32_t bounds_width = m_pixmap.bounds().width();
+    uint32_t bounds_width = bounds.width();
 
     for (uint32_t scanline = 0; scanline < height; ++scanline) {
         raw.clear();
 
-        if (m_pixmap.row_bytes() <= kPACK_BITS_THRESHOLD) {
-            // No pack bits compression
-            raw = read_bytes(pict_reader, m_pixmap.row_bytes());
-        }
-        else {
-            if (m_pixmap.row_bytes() > 250) {
-                // Pack bits compression is in place, with the length encoded as a short.
+        if (pack_type > 2) {
+            if (row_bytes > 250) {
                 packed_bytes_count = pict_reader.read_short();
             }
             else {
-                // Pack bits compression is in place, with the length encoded as a byte.
-                packed_bytes_count = static_cast<uint16_t>(pict_reader.read_byte());
+                packed_bytes_count = pict_reader.read_byte();
             }
 
             // Create a temporary buffer to read the packed data into, on the stack.
             auto packed_data = read_bytes(pict_reader, packed_bytes_count);
-
-            if (m_pixmap.pack_type() == 3) {
-                qd::packbits::decode(raw, packed_data, sizeof(uint16_t));
-            }
-            else if (m_pixmap.pack_type() == 4) {
-                qd::packbits::decode(raw, packed_data, sizeof(uint8_t));
-            }
+            qd::packbits::decode(raw, packed_data, pack_type == 3 ? sizeof(uint16_t) : sizeof(uint8_t));
+        }
+        else {
+            raw = read_bytes(pict_reader, row_bytes);
         }
 
-        if (m_pixmap.pack_type() == 3) {
+        if (pack_type == 3) {
             for (uint32_t x = 0; x < width; ++x) {
                 px_short_buffer[px_buffer_offset + x] = (0xFF & raw[2 * x + 1]) | ((0xFF & raw[2 * x]) << 8);
             }
         }
         else {
-            if (m_pixmap.cmp_count() == 3) {
+            if (cmp_count == 3) {
                 // RGB Formatted Data
                 for (uint32_t x = 0; x < width; x++) {
                     px_long_buffer[px_buffer_offset + x] =
@@ -141,7 +232,7 @@ void graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
                             | (raw[2 * bounds_width + x] & 0xFF);
                 }
             }
-            else {
+            else if (cmp_count == 4) {
                 // ARGB Formatted Data
                 for (uint32_t x = 0; x < width; x++) {
                     px_long_buffer[px_buffer_offset + x] =
@@ -159,7 +250,7 @@ void graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
     uint32_t source_length = width * height;
     std::vector<graphite::qd::color> rgb(source_length, graphite::qd::color::purple());
 
-    if (m_pixmap.pack_type() == 3) {
+    if (pack_type == 3) {
         for (uint32_t p = 0, i = 0; i < source_length; ++i) {
             uint16_t v = px_short_buffer[i];
             rgb[p++] = graphite::qd::color(static_cast<uint8_t>((v & 0x001f) << 3),
@@ -167,7 +258,7 @@ void graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
                                            static_cast<uint8_t>(((v & 0x7c00) >> 10) << 3));
         }
     }
-    else if (m_pixmap.pack_type() == 4) {
+    else {
         for (uint32_t p = 0, i = 0; i < source_length; ++i) {
             uint32_t v = px_long_buffer[i];
             rgb[p++] = graphite::qd::color(static_cast<uint8_t>(v & 0xFF),
@@ -239,6 +330,10 @@ void graphite::qd::pict::parse(graphite::data::reader& pict_reader)
         switch (op) {
             case opcode::clip_region: {
                 clip_rect = read_region(pict_reader);
+                break;
+            }
+            case opcode::pack_bits_rect: {
+                read_pack_bits_rect(pict_reader);
                 break;
             }
             case opcode::direct_bits_rect: {
