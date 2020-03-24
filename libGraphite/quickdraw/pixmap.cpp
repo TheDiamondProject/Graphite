@@ -22,10 +22,7 @@ graphite::qd::pixmap::pixmap(std::shared_ptr<data::data> px_data)
     // Read each of the member fields for the pixmap.
     m_base_address = px_reader.read_long();
     m_row_bytes = px_reader.read_signed_short() & 0x7FFF;
-    m_bounds = graphite::qd::rect(px_reader.read_signed_short(),
-                                  px_reader.read_signed_short(),
-                                  px_reader.read_signed_short(),
-                                  px_reader.read_signed_short());
+    m_bounds = graphite::qd::rect::read(px_reader, qd::rect::qd);
     m_pm_version = px_reader.read_signed_short();
     m_pack_type = px_reader.read_signed_short();
     m_pack_size = px_reader.read_signed_short();

@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <vector>
+#include <libGraphite/quickdraw/geometry.hpp>
 #include "libGraphite/quickdraw/internal/color.hpp"
 
 namespace graphite { namespace qd
@@ -47,14 +48,9 @@ namespace graphite { namespace qd
         std::vector<uint32_t> raw() const;
 
         /**
-         * Returns the width of the surface
+         * Returns the size of the surface
          */
-        int width() const;
-
-        /**
-         * Returns the height of the surface
-         */
-         int height() const;
+        qd::size size() const;
 
         /**
          * Returns the color at the specified coordinate within the surface.

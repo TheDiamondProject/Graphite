@@ -13,22 +13,6 @@
 
 // MARK: - Helper Functions
 
-static inline graphite::qd::rect read_rect(graphite::data::reader& pict_reader)
-{
-    return graphite::qd::rect(pict_reader.read_signed_short(),
-                              pict_reader.read_signed_short(),
-                              pict_reader.read_signed_short(),
-                              pict_reader.read_signed_short());
-}
-
-static inline graphite::qd::fixed_rect read_fixed_rect(graphite::data::reader& pict_reader)
-{
-    return graphite::qd::fixed_rect(static_cast<double>(pict_reader.read_signed_long() / static_cast<double>(1 << 16)),
-                                    static_cast<double>(pict_reader.read_signed_long() / static_cast<double>(1 << 16)),
-                                    static_cast<double>(pict_reader.read_signed_long() / static_cast<double>(1 << 16)),
-                                    static_cast<double>(pict_reader.read_signed_long() / static_cast<double>(1 << 16)));
-}
-
 static inline std::vector<uint8_t> read_bytes(graphite::data::reader& pict_reader, std::size_t size)
 {
     auto out = std::vector<uint8_t>(size);
@@ -44,12 +28,12 @@ static inline std::vector<uint8_t> read_bytes(graphite::data::reader& pict_reade
 graphite::qd::rect graphite::qd::pict::read_region(graphite::data::reader& pict_reader)
 {
     auto size = pict_reader.read_short();
-    auto rect = read_rect(pict_reader);
+    auto rect = graphite::qd::rect::read(pict_reader, qd::rect::qd);
 
-    rect.left /= m_x_ratio;
-    rect.right /= m_x_ratio;
-    rect.top /= m_y_ratio;
-    rect.bottom /= m_y_ratio;
+    rect.set_x(rect.x() / m_x_ratio);
+    rect.set_y(rect.y() / m_y_ratio);
+    rect.set_width(rect.width() / m_x_ratio);
+    rect.set_height(rect.height() / m_y_ratio);
 
     auto points = (size - 10) >> 2;
     pict_reader.move(points * 2 * sizeof(uint16_t));
@@ -85,12 +69,12 @@ void graphite::qd::pict::read_pack_bits_rect(graphite::data::reader & pict_reade
         cmp_size = 1;
         color_model = monochrome;
         row_bytes = pict_reader.read_short() & 0x7FFF;
-        bounds = read_rect(pict_reader);
+        bounds = qd::rect::read(pict_reader, qd::rect::qd);
     }
 
     // Read the source and destination bounds
-    auto source_rect = read_rect(pict_reader);
-    auto destination_rect = read_rect(pict_reader);
+    auto source_rect = qd::rect::read(pict_reader, qd::rect::qd);
+    auto destination_rect = qd::rect::read(pict_reader, qd::rect::qd);
 
     auto transfer_mode = pict_reader.read_short();
 
@@ -152,12 +136,12 @@ void graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
         cmp_count = 1;
         color_model = monochrome;
         row_bytes = pict_reader.read_short() & 0x7FFF;
-        bounds = read_rect(pict_reader);
+        bounds = qd::rect::read(pict_reader, qd::rect::qd);
     }
 
     // Read the source and destination bounds
-    auto source_rect = read_rect(pict_reader);
-    auto destination_rect = read_rect(pict_reader);
+    auto source_rect = qd::rect::read(pict_reader, qd::rect::qd);
+    auto destination_rect = qd::rect::read(pict_reader, qd::rect::qd);
 
     auto transfer_mode = pict_reader.read_short();
 
@@ -276,7 +260,7 @@ void graphite::qd::pict::parse(graphite::data::reader& pict_reader)
 {
     pict_reader.move(2);
 
-    m_frame = read_rect(pict_reader);
+    m_frame = qd::rect::read(pict_reader, qd::rect::qd);
 
     // We are only dealing with v2 Pictures for the time being...
     if (pict_reader.read_long() != kPICT_V2_MAGIC) {
@@ -291,20 +275,14 @@ void graphite::qd::pict::parse(graphite::data::reader& pict_reader)
 
     if ((pict_reader.read_long() >> 16) != 0xFFFE) {
         // Standard header variant
-        graphite::qd::fixed_rect rect(static_cast<double>(pict_reader.read_signed_long() / static_cast<double>(1 << 16)),
-                                      static_cast<double>(pict_reader.read_signed_long() / static_cast<double>(1 << 16)),
-                                      static_cast<double>(pict_reader.read_signed_long() / static_cast<double>(1 << 16)),
-                                      static_cast<double>(pict_reader.read_signed_long() / static_cast<double>(1 << 16)));
+        auto rect = qd::fixed_rect::read(pict_reader);
         m_x_ratio = m_frame.width() / rect.width();
         m_y_ratio = m_frame.height() / rect.height();
     }
     else {
         // Extended header variant
         pict_reader.move(sizeof(uint32_t) * 2);
-        graphite::qd::rect rect(pict_reader.read_signed_short(),
-                                pict_reader.read_signed_short(),
-                                pict_reader.read_signed_short(),
-                                pict_reader.read_signed_short());
+        auto rect = qd::rect::read(pict_reader, qd::rect::qd);
         m_x_ratio = static_cast<double>(m_frame.width()) / rect.width();
         m_y_ratio = static_cast<double>(m_frame.height()) / rect.height();
     }

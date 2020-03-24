@@ -31,14 +31,9 @@ std::vector<uint32_t> graphite::qd::surface::raw() const
     return out;
 }
 
-int graphite::qd::surface::width() const
+graphite::qd::size graphite::qd::surface::size() const
 {
-    return m_width;
-}
-
-int graphite::qd::surface::height() const
-{
-    return m_height;
+    return graphite::qd::size(m_width, m_height);
 }
 
 graphite::qd::color graphite::qd::surface::at(int x, int y) const
