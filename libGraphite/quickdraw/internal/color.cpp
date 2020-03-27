@@ -86,3 +86,8 @@ graphite::qd::color graphite::qd::color::darkGrey()
 {
     return graphite::qd::color(100, 100, 100);
 }
+
+graphite::qd::color graphite::qd::color::clear()
+{
+    return graphite::qd::color(0, 0, 0, 0);
+}

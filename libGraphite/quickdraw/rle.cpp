@@ -3,6 +3,7 @@
 //
 
 #include <complex>
+#include <algorithm>
 #include "libGraphite/quickdraw/rle.hpp"
 #include "libGraphite/rsrc/manager.hpp"
 
@@ -66,8 +67,9 @@ void graphite::qd::rle::parse(data::reader &reader)
 
     // Determine what the grid will be. We need to round up to the next whole number and have blank tiles
     // if the frame count is not divisible by the grid width constant.
-    m_grid_size = qd::size(static_cast<int16_t>(rle_grid_width),
-                           static_cast<int16_t>(std::ceil(m_frame_count / static_cast<double>(rle_grid_width))));
+    auto grid_width = std::min(rle_grid_width, static_cast<int>(m_frame_count));
+    m_grid_size = qd::size(static_cast<int16_t>(grid_width),
+                           static_cast<int16_t>(std::ceil(m_frame_count / static_cast<double>(grid_width))));
 
     // Create the surface in which all frames will be drawn to, and other working variables required to parse and decode
     // the RLE data correctly.
@@ -121,7 +123,7 @@ void graphite::qd::rle::parse(data::reader &reader)
                 for (auto i = 0; i < count; i += 2) {
                     pixel = reader.read_short();
                     write_pixel(pixel, 0xff, current_offset);
-                    current_offset += 4;
+                    ++current_offset;
                 }
 
                 if (count & 0x03) {
@@ -135,18 +137,18 @@ void graphite::qd::rle::parse(data::reader &reader)
                 pixel_run = reader.read_long();
                 for (auto i = 0; i < count; ++i) {
                     write_pixel_variant1(pixel_run, 0xff, current_offset);
-                    current_offset += 4;
+                    ++current_offset;
 
                     if (i + 2 < count) {
                         write_pixel_variant2(pixel_run, 0xff, current_offset);
-                        current_offset += 4;
+                        ++current_offset;
                     }
                 }
                 break;
             }
 
             case rle::opcode::transparent_run: {
-                current_offset += (count >> ((m_bpp >> 3) - 1)) << 2;
+                current_offset += count;
                 break;
             }
         }

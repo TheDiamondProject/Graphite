@@ -7,7 +7,7 @@
 // MARK: - Constructor
 
 graphite::qd::surface::surface(int width, int height)
-    : m_width(width), m_height(height), m_data(width * height, graphite::qd::color::black())
+    : m_width(width), m_height(height), m_data(width * height, graphite::qd::color::clear())
 {
 }
 

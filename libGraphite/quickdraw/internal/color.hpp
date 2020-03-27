@@ -46,6 +46,7 @@ namespace graphite { namespace qd {
         static color yellow();
         static color lightGrey();
         static color darkGrey();
+        static color clear();
         
     };
 
