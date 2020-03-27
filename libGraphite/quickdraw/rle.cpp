@@ -148,7 +148,7 @@ void graphite::qd::rle::parse(data::reader &reader)
             }
 
             case rle::opcode::transparent_run: {
-                current_offset += count;
+                current_offset += count >> 1;
                 break;
             }
         }
@@ -171,7 +171,7 @@ void graphite::qd::rle::write_pixel(uint16_t pixel, uint8_t mask, uint64_t offse
     auto r = static_cast<uint8_t>((pixel & 0x7C00) >> 7);
     auto g = static_cast<uint8_t>((pixel & 0x03E0) >> 2);
     auto b = static_cast<uint8_t>((pixel & 0x001F) << 3);
-    m_surface->set(static_cast<int>(offset), qd::color(r, g, b));
+    m_surface->set(static_cast<int>(offset), qd::color(b, g, r));
 }
 
 void graphite::qd::rle::write_pixel_variant1(uint32_t pixel, uint8_t mask, uint64_t offset)
@@ -179,7 +179,7 @@ void graphite::qd::rle::write_pixel_variant1(uint32_t pixel, uint8_t mask, uint6
     auto r = static_cast<uint8_t>((pixel & 0x7C000000) >> 23);
     auto g = static_cast<uint8_t>((pixel & 0x03E00000) >> 18);
     auto b = static_cast<uint8_t>((pixel & 0x001F0000) << 13);
-    m_surface->set(static_cast<int>(offset), qd::color(r, g, b));
+    m_surface->set(static_cast<int>(offset), qd::color(b, g, r));
 }
 
 void graphite::qd::rle::write_pixel_variant2(uint32_t pixel, uint8_t mask, uint64_t offset)
@@ -187,5 +187,5 @@ void graphite::qd::rle::write_pixel_variant2(uint32_t pixel, uint8_t mask, uint6
     auto r = static_cast<uint8_t>((pixel & 0x00007C00) >> 7);
     auto g = static_cast<uint8_t>((pixel & 0x000003E0) >> 2);
     auto b = static_cast<uint8_t>((pixel & 0x0000001F) << 3);
-    m_surface->set(static_cast<int>(offset), qd::color(r, g, b));
+    m_surface->set(static_cast<int>(offset), qd::color(b, g, r));
 }
