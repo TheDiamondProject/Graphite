@@ -36,7 +36,7 @@ namespace graphite { namespace qd {
 
         static std::shared_ptr<cicn> load_resource(int64_t id);
 
-        std::weak_ptr<graphite::qd::surface> image_surface() const;
+        std::weak_ptr<graphite::qd::surface> surface() const;
 
     };
 
