@@ -23,9 +23,9 @@ std::vector<uint32_t> graphite::qd::surface::raw() const
     auto out = std::vector<uint32_t>();
     for (auto i = m_data.begin(); i != m_data.end(); ++i) {
         uint32_t color = ((*i).alpha_component() << 24)
-                | ((*i).red_component() << 16)
+                | (*i).red_component()
                 | ((*i).green_component() << 8)
-                | (*i).blue_component();
+                | ((*i).blue_component() << 16);
         out.push_back(color);
     }
     return out;
