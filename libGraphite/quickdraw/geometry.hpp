@@ -5,7 +5,8 @@
 #if !defined(GRAPHITE_GEOMETRY_HPP)
 #define GRAPHITE_GEOMETRY_HPP
 
-#include <libGraphite/data/reader.hpp>
+#include "libGraphite/data/reader.hpp"
+#include "libGraphite/data/writer.hpp"
 
 namespace graphite { namespace qd {
 
@@ -38,12 +39,28 @@ namespace graphite { namespace qd {
         {
             switch (type) {
                 case coding_type::qd: {
-                    auto y = reader.read_short();
-                    auto x = reader.read_short();
+                    auto y = reader.read_signed_short();
+                    auto x = reader.read_signed_short();
                     return point(x, y);
                 }
                 case coding_type::pict: {
-                    return point(reader.read_short(), reader.read_short());
+                    return point(reader.read_signed_short(), reader.read_signed_short());
+                }
+            }
+        }
+
+        void write(graphite::data::writer& writer, coding_type type = qd)
+        {
+            switch (type) {
+                case coding_type::qd: {
+                    writer.write_signed_short(m_y);
+                    writer.write_signed_short(m_x);
+                    break;
+                }
+                case coding_type::pict: {
+                    writer.write_signed_short(m_x);
+                    writer.write_signed_short(m_y);
+                    break;
                 }
             }
         }
@@ -86,6 +103,17 @@ namespace graphite { namespace qd {
             }
         }
 
+        void write(graphite::data::writer& writer, coding_type type = qd)
+        {
+            switch (type) {
+                case coding_type::qd: {
+                    writer.write_signed_long(static_cast<int32_t>(m_y * (1 << 16)));
+                    writer.write_signed_long(static_cast<int32_t>(m_x * (1 << 16)));
+                    break;
+                }
+            }
+        }
+
     };
 
     // MARK: - Size
@@ -117,12 +145,28 @@ namespace graphite { namespace qd {
         {
             switch (type) {
                 case coding_type::qd: {
-                    auto height = reader.read_short();
-                    auto width = reader.read_short();
+                    auto height = reader.read_signed_short();
+                    auto width = reader.read_signed_short();
                     return size(width, height);
                 }
                 case coding_type::pict: {
-                    return size(reader.read_short(), reader.read_short());
+                    return size(reader.read_signed_short(), reader.read_signed_short());
+                }
+            }
+        }
+
+        void write(graphite::data::writer& writer, coding_type type = qd)
+        {
+            switch (type) {
+                case coding_type::qd: {
+                    writer.write_signed_short(m_height);
+                    writer.write_signed_short(m_width);
+                    break;
+                }
+                case coding_type::pict: {
+                    writer.write_signed_short(m_width);
+                    writer.write_signed_short(m_height);
+                    break;
                 }
             }
         }
@@ -160,6 +204,17 @@ namespace graphite { namespace qd {
                     auto height = static_cast<double>(reader.read_signed_long() / static_cast<double>(1 << 16));
                     auto width = static_cast<double>(reader.read_signed_long() / static_cast<double>(1 << 16));
                     return fixed_size(width, height);
+                }
+            }
+        }
+
+        void write(graphite::data::writer& writer, coding_type type = qd)
+        {
+            switch (type) {
+                case coding_type::qd: {
+                    writer.write_signed_long(static_cast<int32_t>(m_height * (1 << 16)));
+                    writer.write_signed_long(static_cast<int32_t>(m_width * (1 << 16)));
+                    break;
                 }
             }
         }
@@ -212,6 +267,22 @@ namespace graphite { namespace qd {
                 }
             }
         }
+
+        void write(graphite::data::writer& writer, coding_type type = qd)
+        {
+            switch (type) {
+                case coding_type::qd: {
+                    m_origin.write(writer, point::qd);
+                    m_size.write(writer, size::qd);
+                    break;
+                }
+                case coding_type::pict: {
+                    m_origin.write(writer, point::pict);
+                    m_size.write(writer, size::pict);
+                    break;
+                }
+            }
+        }
     };
 
     // MARK: - Fixed Rect
@@ -255,6 +326,17 @@ namespace graphite { namespace qd {
                     auto origin = fixed_point::read(reader, fixed_point::qd);
                     auto opposite = fixed_point::read(reader, fixed_point::qd);
                     return fixed_rect(origin, fixed_size(origin.x() + opposite.x(), origin.y() + opposite.y()));
+                }
+            }
+        }
+
+        void write(graphite::data::writer& writer, coding_type type = qd)
+        {
+            switch (type) {
+                case coding_type::qd: {
+                    m_origin.write(writer, fixed_point::qd);
+                    m_size.write(writer, fixed_size::qd);
+                    break;
                 }
             }
         }
