@@ -6,7 +6,7 @@
 #define GRAPHITE_PIXMAP_HPP
 
 #include <cstdint>
-#include <libGraphite/data/reader.hpp>
+#include "libGraphite/data/reader.hpp"
 #include "libGraphite/quickdraw/geometry.hpp"
 #include "libGraphite/data/data.hpp"
 
@@ -45,6 +45,7 @@ namespace graphite { namespace qd {
         static const int length { 50 };
 
         pixmap();
+        pixmap(qd::rect frame);
         pixmap(std::shared_ptr<data::data> data);
 
         graphite::qd::rect bounds() const;
@@ -56,6 +57,8 @@ namespace graphite { namespace qd {
         int16_t cmp_count() const;
         int16_t cmp_size() const;
         enum pixel_format pixel_format() const;
+
+        void write(graphite::data::writer& writer);
     };
 
 }};
