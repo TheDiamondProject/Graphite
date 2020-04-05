@@ -121,6 +121,7 @@ void graphite::rsrc::file::add_resource(const std::string& code, int64_t id, con
         // Add the resource...
         auto resource = std::make_shared<graphite::rsrc::resource>(id, type, name, data);
         type->add_resource(resource);
+        return;
     }
 
     throw std::runtime_error("Failed to find or create resource type container for " + code);
