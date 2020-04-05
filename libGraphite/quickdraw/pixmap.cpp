@@ -25,8 +25,8 @@ graphite::qd::pixmap::pixmap(qd::rect frame)
       m_pixel_type(16),
       m_pixel_size(32),
       m_cmp_count(3),
-      m_cmp_count(8),
-      m_pixel_format(0),
+      m_cmp_size(8),
+      m_pixel_format(unknown),
       m_pm_table(0),
       m_pm_extension(0)
 {
@@ -122,4 +122,5 @@ void graphite::qd::pixmap::write(graphite::data::writer& writer)
     writer.write_long(static_cast<uint32_t>(m_pixel_format));
     writer.write_long(m_pm_table);
     writer.write_long(m_pm_extension);
+    writer.write_long(0); // Reserved.
 }

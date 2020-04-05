@@ -14,6 +14,7 @@ namespace graphite { namespace qd {
 
     enum pixel_format
     {
+        unknown = 0,
         monochrome = 0x01,          // 1 bit indexed
         indexed_2 = 0x02,           // 2 bit indexed
         indexed_4 = 0x04,           // 4 bit indexed
