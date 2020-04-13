@@ -110,17 +110,16 @@ void graphite::qd::pixmap::write(graphite::data::writer& writer)
     writer.write_long(m_base_address);
     writer.write_short(0x8000 | m_row_bytes);
     m_bounds.write(writer, rect::qd);
-    writer.write_short(m_pm_version);
-    writer.write_short(m_pack_type);
-    writer.write_long(m_pack_size);
-    writer.write_short(static_cast<uint32_t>(m_h_res * (1 << 16)));
-    writer.write_short(0);
-    writer.write_short(static_cast<uint32_t>(m_v_res * (1 << 16)));
-    writer.write_short(0);
-    writer.write_short(m_cmp_count);
-    writer.write_short(m_cmp_size);
-    writer.write_long(static_cast<uint32_t>(m_pixel_format));
+    writer.write_signed_short(m_pm_version);
+    writer.write_signed_short(m_pack_type);
+    writer.write_signed_long(m_pack_size);
+    writer.write_signed_long(static_cast<int32_t>(m_h_res * (1 << 16)));
+    writer.write_signed_long(static_cast<int32_t>(m_v_res * (1 << 16)));
+    writer.write_signed_short(m_pixel_type);
+    writer.write_signed_short(m_pixel_size);
+    writer.write_signed_short(m_cmp_count);
+    writer.write_signed_short(m_cmp_size);
+    writer.write_signed_long(static_cast<int32_t>(m_pixel_format));
     writer.write_long(m_pm_table);
-    writer.write_long(m_pm_extension);
-    writer.write_long(0); // Reserved.
+    writer.write_signed_long(m_pm_extension);
 }

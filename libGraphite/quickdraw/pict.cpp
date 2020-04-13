@@ -11,6 +11,42 @@
 #define kPICT_V2_MAGIC          0x001102ff
 #define kPACK_BITS_THRESHOLD    4
 
+// MARK: - Constructors
+
+graphite::qd::pict::pict(std::shared_ptr<graphite::data::data> data, int64_t id, std::string name)
+        : m_surface(nullptr), m_frame(0, 0, 100, 100), m_id(id), m_name(name)
+{
+    // Setup a reader for the PICT data, and then parse it.
+    data::reader pict_reader(data);
+    parse(pict_reader);
+}
+
+graphite::qd::pict::pict(std::shared_ptr<graphite::qd::surface> surface)
+        : m_surface(surface), m_frame(qd::point::zero(), surface->size()), m_id(0), m_name("Picture")
+{
+
+}
+
+std::shared_ptr<graphite::qd::pict> graphite::qd::pict::load_resource(int64_t id)
+{
+    if (auto pict_res = graphite::rsrc::manager::shared_manager().find("PICT", id).lock()) {
+        return std::make_shared<graphite::qd::pict>(pict_res->data(), id, pict_res->name());
+    }
+    return nullptr;
+}
+
+std::shared_ptr<graphite::qd::pict> graphite::qd::pict::from_surface(std::shared_ptr<graphite::qd::surface> surface)
+{
+    return std::make_shared<graphite::qd::pict>(surface);
+}
+
+// MARK: - Accessors
+
+std::weak_ptr<graphite::qd::surface> graphite::qd::pict::image_surface() const
+{
+    return m_surface;
+}
+
 // MARK: - Helper Functions
 
 static inline std::vector<uint8_t> read_bytes(graphite::data::reader& pict_reader, std::size_t size)
@@ -23,7 +59,7 @@ static inline std::vector<uint8_t> read_bytes(graphite::data::reader& pict_reade
     return out;
 }
 
-// MARK: - Parsing
+// MARK: - Parsing / Reading
 
 graphite::qd::rect graphite::qd::pict::read_region(graphite::data::reader& pict_reader)
 {
@@ -158,6 +194,7 @@ void graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
         }
         case 4: {
             raw_size = cmp_count * row_bytes / 4;
+            break;
         }
         default: {
             throw std::runtime_error("Unsupported pack type " + std::to_string(pack_type) + " encountered in PICT: " + std::to_string(m_id) + ", " + m_name);
@@ -332,28 +369,114 @@ void graphite::qd::pict::parse(graphite::data::reader& pict_reader)
     }
 }
 
+// MARK: - Encoder / Writing
 
-// MARK: - Constructors
-
-graphite::qd::pict::pict(std::shared_ptr<graphite::data::data> data, int64_t id, std::string name)
-    : m_surface(nullptr), m_frame(0, 0, 100, 100), m_id(id), m_name(name)
+void graphite::qd::pict::encode(graphite::data::writer& pict_encoder)
 {
-    // Setup a reader for the PICT data, and then parse it.
-    data::reader pict_reader(data);
-    parse(pict_reader);
-}
+    encode_header(pict_encoder);
+    encode_def_hilite(pict_encoder);
+    encode_clip_region(pict_encoder);
+    encode_direct_bits_rect(pict_encoder);
 
-std::shared_ptr<graphite::qd::pict> graphite::qd::pict::load_resource(int64_t id)
-{
-    if (auto pict_res = graphite::rsrc::manager::shared_manager().find("PICT", id).lock()) {
-        return std::make_shared<graphite::qd::pict>(pict_res->data(), id, pict_res->name());
+    // Make sure we're word aligned and put out the end of picture opcode.
+    auto align_adjust = pict_encoder.position() % sizeof(uint16_t);
+    for (auto n = 0; n < align_adjust; ++n) {
+        pict_encoder.write_byte(0);
     }
-    return nullptr;
+    pict_encoder.write_short(static_cast<uint16_t>(opcode::eof));
 }
 
-// MARK: - Accessors
-
-std::weak_ptr<graphite::qd::surface> graphite::qd::pict::image_surface() const
+void graphite::qd::pict::encode_header(graphite::data::writer& pict_encoder)
 {
-    return m_surface;
+    // Write the size as zero. This seems to be fine.
+    pict_encoder.write_short(0);
+
+    // Set the image frame.
+    m_frame.write(pict_encoder, rect::qd);
+
+    // We're only dealing with PICT version 2 currently.
+    pict_encoder.write_long(kPICT_V2_MAGIC);
+    pict_encoder.write_short(static_cast<uint16_t>(opcode::ext_header));
+    pict_encoder.write_long(0xFFFE0000);
+
+    // Image resolution (72dpi)
+    pict_encoder.write_short(72);
+    pict_encoder.write_short(0);
+    pict_encoder.write_short(72);
+    pict_encoder.write_short(0);
+
+    // Optimal source frame. (identical to the image frame)
+    m_frame.write(pict_encoder, rect::qd);
+
+    // Reserved
+    pict_encoder.write_long(0);
+
+    // HEADER ENDS HERE
+}
+
+void graphite::qd::pict::encode_def_hilite(graphite::data::writer& pict_encoder)
+{
+    pict_encoder.write_short(static_cast<uint16_t>(opcode::def_hilite));
+}
+
+void graphite::qd::pict::encode_clip_region(graphite::data::writer& pict_encoder)
+{
+    pict_encoder.write_short(static_cast<uint16_t>(opcode::clip_region));
+    pict_encoder.write_short(10);
+    m_frame.write(pict_encoder, rect::qd);
+}
+
+void graphite::qd::pict::encode_direct_bits_rect(graphite::data::writer& pict_encoder)
+{
+    pict_encoder.write_short(static_cast<uint16_t>(opcode::direct_bits_rect));
+
+    qd::pixmap pm(m_frame);
+    pm.write(pict_encoder);
+
+    // Source and destination frames - identical to the image frame.
+    m_frame.write(pict_encoder, rect::qd);
+    m_frame.write(pict_encoder, rect::qd);
+
+    // Specify the transfer mode.
+    pict_encoder.write_short(0); // Source Copy
+
+    // Prepare to write out the actual image data.
+    std::vector<uint8_t> scanline_bytes(m_frame.width() * pm.cmp_count());
+    for (auto scanline = 0; scanline < m_frame.height(); ++scanline) {
+
+        if (pm.cmp_count() == 3) {
+            for (auto x = 0; x < m_frame.width(); ++x) {
+                auto pixel = m_surface->at(x, scanline);
+                scanline_bytes[x] = pixel.red_component();
+                scanline_bytes[x + m_frame.width()] = pixel.green_component();
+                scanline_bytes[x + m_frame.width() * 2] = pixel.blue_component();
+            }
+        }
+        else if (pm.cmp_count() == 4) {
+            for (auto x = 0; x < m_frame.width(); ++x) {
+                auto pixel = m_surface->at(x, scanline);
+                scanline_bytes[x] = pixel.alpha_component();
+                scanline_bytes[x + m_frame.width()] = pixel.red_component();
+                scanline_bytes[x + m_frame.width() * 2] = pixel.green_component();
+                scanline_bytes[x + m_frame.width() * 3] = pixel.blue_component();
+            }
+        }
+
+        auto packed = packbits::encode(scanline_bytes);
+        if (pm.row_bytes() > 250) {
+            pict_encoder.write_short(packed.size());
+        }
+        else {
+            pict_encoder.write_byte(packed.size());
+        }
+        pict_encoder.write_bytes(packed);
+    }
+}
+
+auto graphite::qd::pict::data() -> std::shared_ptr<graphite::data::data>
+{
+    auto data = std::make_shared<graphite::data::data>();
+    graphite::data::writer writer(data);
+    encode(writer);
+    return data;
 }
