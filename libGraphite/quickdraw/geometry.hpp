@@ -27,15 +27,15 @@ namespace graphite { namespace qd {
         point(const int16_t x, const int16_t y) : m_x(x), m_y(y) {};
         point(const point& p) : m_x(p.m_x), m_y(p.m_y) {};
 
-        static point zero() { return point(); };
+        static auto zero() -> point { return point(); };
 
-        int16_t x() const { return m_x; };
-        int16_t y() const { return m_y; };
+        auto x() const -> int16_t { return m_x; };
+        auto y() const -> int16_t { return m_y; };
 
-        void set_x(const int16_t x) { m_x = x; };
-        void set_y(const int16_t y) { m_y = y; };
+        auto set_x(const int16_t x) -> void { m_x = x; };
+        auto set_y(const int16_t y) -> void { m_y = y; };
 
-        static point read(graphite::data::reader& reader, coding_type type = qd)
+        static auto read(graphite::data::reader& reader, coding_type type = qd) -> point
         {
             switch (type) {
                 case coding_type::qd: {
@@ -49,7 +49,7 @@ namespace graphite { namespace qd {
             }
         }
 
-        void write(graphite::data::writer& writer, coding_type type = qd)
+        auto write(graphite::data::writer& writer, coding_type type = qd) -> void
         {
             switch (type) {
                 case coding_type::qd: {
@@ -84,15 +84,15 @@ namespace graphite { namespace qd {
         fixed_point(const double x, const double y) : m_x(x), m_y(y) {};
         fixed_point(const fixed_point& p) : m_x(p.m_x), m_y(p.m_y) {};
 
-        static fixed_point zero() { return fixed_point(); };
+        static auto zero() -> fixed_point { return fixed_point(); };
 
-        double x() const { return m_x; };
-        double y() const { return m_y; };
+        auto x() const -> double { return m_x; };
+        auto y() const -> double { return m_y; };
 
-        void set_x(const double x) { m_x = x; };
-        void set_y(const double y) { m_y = y; };
+        auto set_x(const double x) -> void { m_x = x; };
+        auto set_y(const double y) -> void { m_y = y; };
 
-        static fixed_point read(graphite::data::reader& reader, coding_type type = qd)
+        static auto read(graphite::data::reader& reader, coding_type type = qd) -> fixed_point
         {
             switch (type) {
                 case coding_type::qd: {
@@ -103,7 +103,7 @@ namespace graphite { namespace qd {
             }
         }
 
-        void write(graphite::data::writer& writer, coding_type type = qd)
+        auto write(graphite::data::writer& writer, coding_type type = qd) -> void
         {
             switch (type) {
                 case coding_type::qd: {
@@ -133,15 +133,15 @@ namespace graphite { namespace qd {
         size(const int16_t width, const int16_t height) : m_width(width), m_height(height) {};
         size(const size& s) : m_width(s.m_width), m_height(s.m_height) {};
 
-        static size zero() { return size(); };
+        static auto zero() -> size { return size(); };
 
-        int16_t width() const { return m_width; };
-        int16_t height() const { return m_height; };
+        auto width() const -> int16_t { return m_width; };
+        auto height() const -> int16_t { return m_height; };
 
-        void set_width(const int16_t width) { m_width = width; };
-        void set_height(const int16_t height) { m_height = height; };
+        auto set_width(const int16_t width) -> void { m_width = width; };
+        auto set_height(const int16_t height) -> void { m_height = height; };
 
-        static size read(graphite::data::reader& reader, coding_type type = qd)
+        static auto read(graphite::data::reader& reader, coding_type type = qd) -> size
         {
             switch (type) {
                 case coding_type::qd: {
@@ -155,7 +155,7 @@ namespace graphite { namespace qd {
             }
         }
 
-        void write(graphite::data::writer& writer, coding_type type = qd)
+        auto write(graphite::data::writer& writer, coding_type type = qd) -> void
         {
             switch (type) {
                 case coding_type::qd: {
@@ -189,15 +189,15 @@ namespace graphite { namespace qd {
         fixed_size(const double width, const double height) : m_width(width), m_height(height) {};
         fixed_size(const fixed_size& s) : m_width(s.m_width), m_height(s.m_height) {};
 
-        static fixed_size zero() { return fixed_size(); };
+        static auto zero() -> fixed_size { return fixed_size(); };
 
-        double width() const { return m_width; };
-        double height() const { return m_height; };
+        auto width() const -> double { return m_width; };
+        auto height() const -> double { return m_height; };
 
-        void set_width(const double width) { m_width = width; };
-        void set_height(const double height) { m_height = height; };
+        auto set_width(const double width) -> void { m_width = width; };
+        auto set_height(const double height) -> void { m_height = height; };
 
-        static fixed_size read(graphite::data::reader& reader, coding_type type = qd)
+        static auto read(graphite::data::reader& reader, coding_type type = qd) -> fixed_size
         {
             switch (type) {
                 case coding_type::qd: {
@@ -208,7 +208,7 @@ namespace graphite { namespace qd {
             }
         }
 
-        void write(graphite::data::writer& writer, coding_type type = qd)
+        auto write(graphite::data::writer& writer, coding_type type = qd) -> void
         {
             switch (type) {
                 case coding_type::qd: {
@@ -238,23 +238,23 @@ namespace graphite { namespace qd {
         rect(const int16_t x, const int16_t y, const int16_t width, const int16_t height) : m_origin(x, y), m_size(width, height) {};
         rect(const rect& r) : m_origin(r.m_origin), m_size(r.m_size) {};
 
-        static rect zero() { return rect(); };
+        static auto zero() -> rect { return rect(); };
 
-        int16_t x() const { return m_origin.x(); };
-        int16_t y() const { return m_origin.y(); };
-        int16_t width() const { return m_size.width(); };
-        int16_t height() const { return m_size.height(); };
-        point origin() const { return m_origin; };
-        size size() const { return m_size; };
+        auto x() const -> int16_t { return m_origin.x(); };
+        auto y() const -> int16_t { return m_origin.y(); };
+        auto width() const -> int16_t { return m_size.width(); };
+        auto height() const -> int16_t { return m_size.height(); };
+        auto origin() const -> point { return m_origin; };
+        auto size() const -> size { return m_size; };
 
-        void set_x(const int16_t x) { m_origin.set_x(x); };
-        void set_y(const int16_t y) { m_origin.set_y(y); };
-        void set_width(const int16_t width) { m_size.set_width(width); };
-        void set_height(const int16_t height) { m_size.set_height(height); };
-        void set_origin(const point& origin) { m_origin = origin; };
-        void set_size(const struct size& size) { m_size = size; };
+        auto set_x(const int16_t x) -> void { m_origin.set_x(x); };
+        auto set_y(const int16_t y) -> void { m_origin.set_y(y); };
+        auto set_width(const int16_t width) -> void { m_size.set_width(width); };
+        auto set_height(const int16_t height) -> void { m_size.set_height(height); };
+        auto set_origin(const point& origin) -> void { m_origin = origin; };
+        auto set_size(const struct size& size) -> void { m_size = size; };
 
-        static rect read(graphite::data::reader& reader, coding_type type = qd)
+        static auto read(graphite::data::reader& reader, coding_type type = qd) -> rect
         {
             switch (type) {
                 case coding_type::qd: {
@@ -268,7 +268,7 @@ namespace graphite { namespace qd {
             }
         }
 
-        void write(graphite::data::writer& writer, coding_type type = qd)
+        auto write(graphite::data::writer& writer, coding_type type = qd) -> void
         {
             switch (type) {
                 case coding_type::qd: {
@@ -303,23 +303,23 @@ namespace graphite { namespace qd {
         fixed_rect(const double x, const double y, const double width, const double height) : m_origin(x, y), m_size(width, height) {};
         fixed_rect(const fixed_rect& r) : m_origin(r.m_origin), m_size(r.m_size) {};
 
-        static fixed_rect zero() { return fixed_rect(); };
+        static auto zero() -> fixed_rect { return fixed_rect(); };
 
-        double x() const { return m_origin.x(); };
-        double y() const { return m_origin.y(); };
-        double width() const { return m_size.width(); };
-        double height() const { return m_size.height(); };
-        fixed_point origin() const { return m_origin; };
-        fixed_size size() const { return m_size; };
+        auto x() const -> double { return m_origin.x(); };
+        auto y() const -> double { return m_origin.y(); };
+        auto width() const -> double { return m_size.width(); };
+        auto height() const -> double { return m_size.height(); };
+        auto origin() const -> fixed_point { return m_origin; };
+        auto size() const -> fixed_size { return m_size; };
 
-        void set_x(const double x) { m_origin.set_x(x); };
-        void set_y(const double y) { m_origin.set_y(y); };
-        void set_width(const double width) { m_size.set_width(width); };
-        void set_height(const double height) { m_size.set_height(height); };
-        void set_origin(const fixed_point& origin) { m_origin = origin; };
-        void set_size(const fixed_size& size) { m_size = size; };
+        auto set_x(const double x) -> void { m_origin.set_x(x); };
+        auto set_y(const double y) -> void { m_origin.set_y(y); };
+        auto set_width(const double width) -> void { m_size.set_width(width); };
+        auto set_height(const double height) -> void { m_size.set_height(height); };
+        auto set_origin(const fixed_point& origin) -> void { m_origin = origin; };
+        auto set_size(const fixed_size& size) -> void { m_size = size; };
 
-        static fixed_rect read(graphite::data::reader& reader, coding_type type = qd)
+        static auto read(graphite::data::reader& reader, coding_type type = qd) -> fixed_rect
         {
             switch (type) {
                 case coding_type::qd: {
@@ -330,7 +330,7 @@ namespace graphite { namespace qd {
             }
         }
 
-        void write(graphite::data::writer& writer, coding_type type = qd)
+        auto write(graphite::data::writer& writer, coding_type type = qd) -> void
         {
             switch (type) {
                 case coding_type::qd: {

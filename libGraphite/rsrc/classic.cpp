@@ -24,7 +24,7 @@
 
 // MARK: - Parsing / Reading
 
-std::vector<std::shared_ptr<graphite::rsrc::type>> graphite::rsrc::classic::parse(std::shared_ptr<graphite::data::reader> reader)
+auto graphite::rsrc::classic::parse(std::shared_ptr<graphite::data::reader> reader) -> std::vector<std::shared_ptr<graphite::rsrc::type>>
 {
 	// 1. Resource File preamble, 
 	auto data_offset = reader->read_long();
@@ -134,7 +134,7 @@ std::vector<std::shared_ptr<graphite::rsrc::type>> graphite::rsrc::classic::pars
 
 // MARK: - Writing
 
-void graphite::rsrc::classic::write(const std::string& path, std::vector<std::shared_ptr<graphite::rsrc::type>> types)
+auto graphite::rsrc::classic::write(const std::string& path, std::vector<std::shared_ptr<graphite::rsrc::type>> types) -> void
 {
 	auto writer = std::make_shared<graphite::data::writer>();
 

@@ -29,7 +29,7 @@ graphite::rsrc::manager::manager()
     
 }
 
-graphite::rsrc::manager& graphite::rsrc::manager::shared_manager()
+auto graphite::rsrc::manager::shared_manager() -> graphite::rsrc::manager&
 {
     static rsrc::manager manager;
     return manager;
@@ -37,14 +37,14 @@ graphite::rsrc::manager& graphite::rsrc::manager::shared_manager()
 
 // MARK: - File Management
 
-void graphite::rsrc::manager::import_file(std::shared_ptr<graphite::rsrc::file> file)
+auto graphite::rsrc::manager::import_file(std::shared_ptr<graphite::rsrc::file> file) -> void
 {
     m_files.push_back(file);
 }
 
 // MARK: - Resource Look Up
 
-std::weak_ptr<graphite::rsrc::resource> graphite::rsrc::manager::find(const std::string& type, const int64_t& id) const
+auto graphite::rsrc::manager::find(const std::string& type, const int64_t& id) const -> std::weak_ptr<graphite::rsrc::resource>
 {
     for (auto i = m_files.rbegin(); i != m_files.rend(); ++i) {
         auto res = (*i)->find(type, id);

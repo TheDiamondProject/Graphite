@@ -15,7 +15,7 @@ graphite::qd::cicn::cicn(std::shared_ptr<graphite::data::data> data, int64_t id,
     parse(reader);
 }
 
-std::shared_ptr<graphite::qd::cicn> graphite::qd::cicn::load_resource(int64_t id)
+auto graphite::qd::cicn::load_resource(int64_t id) -> std::shared_ptr<graphite::qd::cicn>
 {
     if (auto res = graphite::rsrc::manager::shared_manager().find("cicn", id).lock()) {
         return std::make_shared<graphite::qd::cicn>(res->data(), id, res->name());
@@ -26,14 +26,14 @@ std::shared_ptr<graphite::qd::cicn> graphite::qd::cicn::load_resource(int64_t id
 
 // MARK: - Accessors
 
-std::weak_ptr<graphite::qd::surface> graphite::qd::cicn::surface() const
+auto graphite::qd::cicn::surface() const -> std::weak_ptr<graphite::qd::surface>
 {
     return m_surface;
 }
 
 // MARK: - Parser
 
-void graphite::qd::cicn::parse(graphite::data::reader& reader)
+auto graphite::qd::cicn::parse(graphite::data::reader& reader) -> void
 {
     m_pixmap = graphite::qd::pixmap(reader.read_data(qd::pixmap::length));
     m_mask_base_addr = reader.read_long();

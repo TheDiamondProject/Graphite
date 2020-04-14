@@ -34,19 +34,19 @@ graphite::rsrc::file::file(const std::string& path)
 
 // MARK: - Accessors
 
-std::size_t graphite::rsrc::file::type_count() const
+auto graphite::rsrc::file::type_count() const -> std::size_t
 {
 	return m_types.size();
 }
 
-graphite::rsrc::file::format graphite::rsrc::file::current_format() const
+auto graphite::rsrc::file::current_format() const -> graphite::rsrc::file::format
 {
 	return m_format;
 }
 
 // MARK: - File Reading
 
-void graphite::rsrc::file::read(const std::string& path)
+auto graphite::rsrc::file::read(const std::string& path) -> void
 {
 	// Load the file data and prepare to parse the contents of the resource
 	// file. We also need to keep hold of the actual internal data.
@@ -84,7 +84,7 @@ void graphite::rsrc::file::read(const std::string& path)
 
 // MARK: - File Writing
 
-void graphite::rsrc::file::write(const std::string& path, enum graphite::rsrc::file::format fmt)
+auto graphite::rsrc::file::write(const std::string& path, enum graphite::rsrc::file::format fmt) -> void
 {
 	// Determine the correct location to save to, or throw an error.
 	auto write_path = path;
@@ -114,7 +114,7 @@ void graphite::rsrc::file::write(const std::string& path, enum graphite::rsrc::f
 
 // MARK: - Resource Managemnet
 
-void graphite::rsrc::file::add_resource(const std::string& code, int64_t id, const std::string& name, std::shared_ptr<graphite::data::data> data)
+auto graphite::rsrc::file::add_resource(const std::string& code, int64_t id, const std::string& name, std::shared_ptr<graphite::data::data> data) -> void
 {
     // Get the container
     if (auto type = type_container(code).lock()) {
@@ -127,7 +127,7 @@ void graphite::rsrc::file::add_resource(const std::string& code, int64_t id, con
     throw std::runtime_error("Failed to find or create resource type container for " + code);
 }
 
-std::weak_ptr<graphite::rsrc::type> graphite::rsrc::file::type_container(const std::string& code)
+auto graphite::rsrc::file::type_container(const std::string& code) -> std::weak_ptr<graphite::rsrc::type>
 {
     for (auto type : m_types) {
         if (type->code() == code) {
@@ -140,7 +140,7 @@ std::weak_ptr<graphite::rsrc::type> graphite::rsrc::file::type_container(const s
     return type;
 }
 
-std::weak_ptr<graphite::rsrc::resource> graphite::rsrc::file::find(const std::string& type, const int64_t& id)
+auto graphite::rsrc::file::find(const std::string& type, const int64_t& id) -> std::weak_ptr<graphite::rsrc::resource>
 {
     if (auto container = type_container(type).lock()) {
         return container->get(id);

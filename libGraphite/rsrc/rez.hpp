@@ -28,31 +28,20 @@
 #if !defined(GRAPHITE_RSRC_REZ)
 #define GRAPHITE_RSRC_REZ
 
-namespace graphite
-{
+namespace graphite { namespace rsrc { namespace rez {
 
-namespace rsrc
-{
+    /**
+     * Parse the specified/provided data object that represents a resource file
+     * into a list of resource types.
+     */
+    auto parse(std::shared_ptr<graphite::data::reader> reader) -> std::vector<std::shared_ptr<graphite::rsrc::type>>;
 
-namespace rez
-{
+    /**
+     * Build a data object that represents a resource file from the provided list
+     * of resource types.
+     */
+    auto write(const std::string& path, std::vector<std::shared_ptr<graphite::rsrc::type>> types) -> void;
 
-/**
- * Parse the specified/provided data object that represents a resource file 
- * into a list of resource types.
- */
-std::vector<std::shared_ptr<graphite::rsrc::type>> parse(std::shared_ptr<graphite::data::reader> reader);
-
-/**
- * Build a data object that represents a resource file from the provided list
- * of resource types.
- */
-void write(const std::string& path, std::vector<std::shared_ptr<graphite::rsrc::type>> types);
-
-};
-
-};
-
-};
+}}}
 
 #endif

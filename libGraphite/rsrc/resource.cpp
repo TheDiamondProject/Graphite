@@ -42,39 +42,39 @@ graphite::rsrc::resource::resource(
 
 // MARK: - Resource Metadata Accessors
 
-int64_t graphite::rsrc::resource::id() const
+auto graphite::rsrc::resource::id() const -> int64_t
 {
 	return m_id;
 }
 
-void graphite::rsrc::resource::set_id(int64_t id)
+auto graphite::rsrc::resource::set_id(int64_t id) -> void
 {
 	m_id = id;
 }
 
-std::string graphite::rsrc::resource::name() const
+auto graphite::rsrc::resource::name() const -> std::string
 {
 	return m_name;
 }
 
-void graphite::rsrc::resource::set_name(const std::string& name)
+auto graphite::rsrc::resource::set_name(const std::string& name) -> void
 {
 	m_name = name;
 }
 
 // MARK: - Resource Type
 
-std::weak_ptr<graphite::rsrc::type> graphite::rsrc::resource::type() const
+auto graphite::rsrc::resource::type() const -> std::weak_ptr<graphite::rsrc::type>
 {
 	return m_type;
 }
 
-void graphite::rsrc::resource::set_type(std::weak_ptr<graphite::rsrc::type> type)
+auto graphite::rsrc::resource::set_type(std::weak_ptr<graphite::rsrc::type> type) -> void
 {
 	m_type = type;
 }
 
-std::string graphite::rsrc::resource::type_code() const
+auto graphite::rsrc::resource::type_code() const -> std::string
 {
 	if (auto type = m_type.lock()) {
 		return type->code();
@@ -87,19 +87,19 @@ std::string graphite::rsrc::resource::type_code() const
 
 // MARK: - Data
 
-std::shared_ptr<graphite::data::data> graphite::rsrc::resource::data()
+auto graphite::rsrc::resource::data() -> std::shared_ptr<graphite::data::data>
 {
 	return m_data;
 }
 
 // MARK: - 
 
-void graphite::rsrc::resource::set_data_offset(std::size_t offset)
+auto graphite::rsrc::resource::set_data_offset(std::size_t offset) -> void
 {
 	m_data_offset = offset;
 }
 
-std::size_t graphite::rsrc::resource::data_offset() const
+auto graphite::rsrc::resource::data_offset() const -> std::size_t
 {
 	return m_data_offset;
 }

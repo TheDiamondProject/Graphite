@@ -18,7 +18,7 @@ graphite::qd::surface::surface(int width, int height, std::vector<graphite::qd::
 
 // MARK: - Surface Access
 
-std::vector<uint32_t> graphite::qd::surface::raw() const
+auto graphite::qd::surface::raw() const -> std::vector<uint32_t>
 {
     auto out = std::vector<uint32_t>();
     for (auto i = m_data.begin(); i != m_data.end(); ++i) {
@@ -31,29 +31,29 @@ std::vector<uint32_t> graphite::qd::surface::raw() const
     return out;
 }
 
-graphite::qd::size graphite::qd::surface::size() const
+auto graphite::qd::surface::size() const -> graphite::qd::size
 {
     return graphite::qd::size(m_width, m_height);
 }
 
-graphite::qd::color graphite::qd::surface::at(int x, int y) const
+auto graphite::qd::surface::at(int x, int y) const -> graphite::qd::color
 {
     return m_data[(y * m_width) + x];
 }
 
-void graphite::qd::surface::set(int x, int y, graphite::qd::color color)
+auto graphite::qd::surface::set(int x, int y, graphite::qd::color color) -> void
 {
     m_data[(y * m_width) + x] = color;
 }
 
-void graphite::qd::surface::set(int offset, graphite::qd::color color)
+auto graphite::qd::surface::set(int offset, graphite::qd::color color) -> void
 {
     m_data[offset] = color;
 }
 
 // MARK: - Drawing Operations
 
-void graphite::qd::surface::draw_line(int x0, int y0, int x1, int y1, graphite::qd::color color)
+auto graphite::qd::surface::draw_line(int x0, int y0, int x1, int y1, graphite::qd::color color) -> void
 {
     int delta_x = abs(x1 - x0);
     int delta_y = abs(y1 - y0);

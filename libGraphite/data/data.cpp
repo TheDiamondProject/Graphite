@@ -43,7 +43,7 @@ graphite::data::data::data(std::shared_ptr<std::vector<char>> bytes, std::size_t
 
 // MARK: - Offset Calculations
 
-int64_t graphite::data::data::relative_offset(int64_t offset) const
+auto graphite::data::data::relative_offset(int64_t offset) const -> int64_t
 {
 	if (offset > m_size || offset < 0) {
 		throw std::logic_error("Attempted to calculate an offset that went beyond the boundaries of the data slice.");
@@ -53,7 +53,7 @@ int64_t graphite::data::data::relative_offset(int64_t offset) const
 
 // MARK: - Size
 
-std::size_t graphite::data::data::size() const
+auto graphite::data::data::size() const -> std::size_t
 {
     if (m_size > 0) {
         return m_size;
@@ -66,17 +66,17 @@ std::size_t graphite::data::data::size() const
     }
 }
 
-std::size_t graphite::data::data::start() const
+auto graphite::data::data::start() const -> std::size_t
 {
     return m_start;
 }
 
-enum graphite::data::data::byte_order graphite::data::data::current_byte_order() const
+auto graphite::data::data::current_byte_order() const -> enum graphite::data::data::byte_order
 {
     return m_bo;
 }
 
-void graphite::data::data::set_byte_order(enum data::byte_order bo)
+auto graphite::data::data::set_byte_order(enum data::byte_order bo) -> void
 {
     m_bo = bo;
 }
@@ -84,12 +84,12 @@ void graphite::data::data::set_byte_order(enum data::byte_order bo)
 
 // MARK: - Plumbing
 
-std::shared_ptr<std::vector<char>> graphite::data::data::get()
+auto graphite::data::data::get() -> std::shared_ptr<std::vector<char>>
 {
     return m_data;
 }
 
-char graphite::data::data::at(std::size_t offset) const
+auto graphite::data::data::at(std::size_t offset) const -> char
 {
 	return m_data->at(relative_offset(offset));
 }

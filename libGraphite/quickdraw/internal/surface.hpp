@@ -45,12 +45,12 @@ namespace graphite { namespace qd
         /**
          * Export the raw surface data.
          */
-        std::vector<uint32_t> raw() const;
+        auto raw() const -> std::vector<uint32_t>;
 
         /**
          * Returns the size of the surface
          */
-        qd::size size() const;
+        auto size() const -> qd::size;
 
         /**
          * Returns the color at the specified coordinate within the surface.
@@ -60,7 +60,7 @@ namespace graphite { namespace qd
          *
          * @note            This method of getting colors is _slow_. Use only for single point lookup.
          */
-        graphite::qd::color at(int x, int y) const;
+        auto at(int x, int y) const -> graphite::qd::color;
 
         /**
          * Set the color at the specified coordinate within the surface.
@@ -70,7 +70,7 @@ namespace graphite { namespace qd
          *
          * @note            This method of setting colors is _slow_. Use only for single point setting.
          */
-        void set(int x, int y, graphite::qd::color color);
+        auto set(int x, int y, graphite::qd::color color) -> void;
 
         /**
          * Set the color at the specified coordinate within the surface.
@@ -79,7 +79,7 @@ namespace graphite { namespace qd
          *
          * @note            This method of setting colors is _slow_. Use only for single point setting.
          */
-        void set(int offset, graphite::qd::color color);
+        auto set(int offset, graphite::qd::color color) -> void;
 
         /**
          * Draw a line from point x0,y0 to x1,y1 using the color specified.
@@ -89,7 +89,7 @@ namespace graphite { namespace qd
          * @param y1
          * @param color
          */
-        void draw_line(int x0, int y0, int x1, int y1, graphite::qd::color color);
+        auto draw_line(int x0, int y0, int x1, int y1, graphite::qd::color color) -> void;
 
     };
 

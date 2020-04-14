@@ -4,7 +4,7 @@
 
 #include "libGraphite/quickdraw/internal/packbits.hpp"
 
-std::size_t graphite::qd::packbits::decode(std::vector<uint8_t> &out_data, std::vector<uint8_t> pack_data, std::size_t value_size)
+auto graphite::qd::packbits::decode(std::vector<uint8_t> &out_data, std::vector<uint8_t> pack_data, std::size_t value_size) -> std::size_t
 {
     std::size_t pos = 0;
 

@@ -61,12 +61,12 @@ graphite::data::reader::reader(std::shared_ptr<graphite::data::data> data, uint6
 // MARK: - Byte Order
 
 template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type*>
-T graphite::data::reader::swap(
+auto graphite::data::reader::swap(
     T value,
     enum graphite::data::data::byte_order value_bo,
     enum graphite::data::data::byte_order result_bo,
     int64_t size
-) {
+) -> T {
     // Return the value immediately if the value byte order matches the result byte order.
     if (value_bo == result_bo) {
         return value;
@@ -86,47 +86,47 @@ T graphite::data::reader::swap(
 
 // MARK: - Internal Data
 
-std::shared_ptr<graphite::data::data> graphite::data::reader::get()
+auto graphite::data::reader::get() -> std::shared_ptr<graphite::data::data>
 {
     return m_data;
 }
 
 // MARK: - Size
 
-std::size_t graphite::data::reader::size() const
+auto graphite::data::reader::size() const -> std::size_t
 {
     return m_data->size();
 }
 
 // MARK: - Position
 
-bool graphite::data::reader::eof() const
+auto graphite::data::reader::eof() const -> bool
 {
     return (m_pos >= m_data->size());
 }
 
-uint64_t graphite::data::reader::position() const
+auto graphite::data::reader::position() const -> uint64_t
 {
     return m_pos;
 }
 
-void graphite::data::reader::set_position(uint64_t pos)
+auto graphite::data::reader::set_position(uint64_t pos) -> void
 {
     m_pos = pos;
 }
 
-void graphite::data::reader::move(int64_t delta)
+auto graphite::data::reader::move(int64_t delta) -> void
 {
     // TODO: Bounds checking
     m_pos += delta;
 }
 
-void graphite::data::reader::save_position()
+auto graphite::data::reader::save_position() -> void
 {
     m_pos_stack.push_back(m_pos);
 }
 
-void graphite::data::reader::restore_position()
+auto graphite::data::reader::restore_position() -> void
 {
     if (m_pos_stack.empty()) {
         throw std::logic_error("Attempted to restore reader position that did not exist.");
@@ -138,7 +138,7 @@ void graphite::data::reader::restore_position()
 // MARK: - Template Read
 
 template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type*>
-T graphite::data::reader::read_integer(int64_t offset, graphite::data::reader::mode mode, int64_t size)
+auto graphite::data::reader::read_integer(int64_t offset, graphite::data::reader::mode mode, int64_t size) -> T
 {
     T v = 0;
     size = size == -1 ? sizeof(T) : size;
@@ -168,54 +168,54 @@ T graphite::data::reader::read_integer(int64_t offset, graphite::data::reader::m
 
 // MARK: - Read Integer Functions
 
-uint8_t graphite::data::reader::read_byte(int64_t offset, graphite::data::reader::mode mode)
+auto graphite::data::reader::read_byte(int64_t offset, graphite::data::reader::mode mode) -> uint8_t
 {
     return read_integer<uint8_t>(offset, mode);
 }
 
-int8_t graphite::data::reader::read_signed_byte(int64_t offset, graphite::data::reader::mode mode)
+auto graphite::data::reader::read_signed_byte(int64_t offset, graphite::data::reader::mode mode) -> int8_t
 {
     return static_cast<int8_t>(read_byte(offset, mode));
 }
 
-uint16_t graphite::data::reader::read_short(int64_t offset, graphite::data::reader::mode mode)
+auto graphite::data::reader::read_short(int64_t offset, graphite::data::reader::mode mode) -> uint16_t
 {
     return read_integer<uint16_t>(offset, mode);
 }
 
-int16_t graphite::data::reader::read_signed_short(int64_t offset, graphite::data::reader::mode mode)
+auto graphite::data::reader::read_signed_short(int64_t offset, graphite::data::reader::mode mode) -> int16_t
 {
     return static_cast<int16_t>(read_short(offset, mode));
 }
 
-uint32_t graphite::data::reader::read_triple(int64_t offset, graphite::data::reader::mode mode)
+auto graphite::data::reader::read_triple(int64_t offset, graphite::data::reader::mode mode) -> uint32_t
 {
     return read_integer<uint32_t>(offset, mode, 3);
 }
 
-uint32_t graphite::data::reader::read_long(int64_t offset, graphite::data::reader::mode mode)
+auto graphite::data::reader::read_long(int64_t offset, graphite::data::reader::mode mode) -> uint32_t
 {
     return read_integer<uint32_t>(offset, mode);
 }
 
-int32_t graphite::data::reader::read_signed_long(int64_t offset, graphite::data::reader::mode mode)
+auto graphite::data::reader::read_signed_long(int64_t offset, graphite::data::reader::mode mode) -> int32_t
 {
     return static_cast<int32_t>(read_long(offset, mode));
 }
 
-uint64_t graphite::data::reader::read_quad(int64_t offset, graphite::data::reader::mode mode)
+auto graphite::data::reader::read_quad(int64_t offset, graphite::data::reader::mode mode) -> uint64_t
 {
     return read_integer<uint64_t>(offset, mode);
 }
 
-int64_t graphite::data::reader::read_signed_quad(int64_t offset, graphite::data::reader::mode mode)
+auto graphite::data::reader::read_signed_quad(int64_t offset, graphite::data::reader::mode mode) -> int64_t
 {
     return static_cast<int64_t>(read_quad(offset, mode));
 }
 
 // MARK: - Read String Functions
 
-std::string graphite::data::reader::read_cstr(int64_t size, int64_t offset, graphite::data::reader::mode mode)
+auto graphite::data::reader::read_cstr(int64_t size, int64_t offset, graphite::data::reader::mode mode) -> std::string
 {
     if (size == -1) {
         // Read until a NUL byte is encountered. This is the slowest form of
@@ -240,7 +240,7 @@ std::string graphite::data::reader::read_cstr(int64_t size, int64_t offset, grap
     }
 }
 
-std::string graphite::data::reader::read_pstr(int64_t offset, graphite::data::reader::mode mode)
+auto graphite::data::reader::read_pstr(int64_t offset, graphite::data::reader::mode mode) -> std::string
 {
     switch (mode) {
         case advance: {
@@ -257,14 +257,14 @@ std::string graphite::data::reader::read_pstr(int64_t offset, graphite::data::re
 
 // MARK: - Read Data Functions
 
-std::shared_ptr<graphite::data::data> graphite::data::reader::read_data(int64_t size, int64_t offset, graphite::data::reader::mode mode)
+auto graphite::data::reader::read_data(int64_t size, int64_t offset, graphite::data::reader::mode mode) -> std::shared_ptr<graphite::data::data>
 {
     auto data = std::make_shared<graphite::data::data>(m_data->get(), size, m_data->start() + m_pos + offset);
     move(offset + size);
     return data;
 }
 
-std::vector<char> graphite::data::reader::read_bytes(int64_t size, int64_t offset, graphite::data::reader::mode mode)
+auto graphite::data::reader::read_bytes(int64_t size, int64_t offset, graphite::data::reader::mode mode) -> std::vector<char>
 {
     char *start = &(*m_data->get())[m_data->relative_offset(m_pos + offset)];
     char *end = &(*m_data->get())[m_data->relative_offset(m_pos + offset + size)];

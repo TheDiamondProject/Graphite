@@ -25,7 +25,7 @@ graphite::qd::clut::clut(graphite::data::reader& reader)
     parse(reader);
 }
 
-std::shared_ptr<graphite::qd::clut> graphite::qd::clut::load_resource(int64_t id)
+auto graphite::qd::clut::load_resource(int64_t id) -> std::shared_ptr<graphite::qd::clut>
 {
     if (auto res = graphite::rsrc::manager::shared_manager().find("clut", id).lock()) {
         return std::make_shared<graphite::qd::clut>(res->data(), id, res->name());
@@ -35,17 +35,17 @@ std::shared_ptr<graphite::qd::clut> graphite::qd::clut::load_resource(int64_t id
 
 // MARK: - Accessors
 
-int graphite::qd::clut::size() const
+auto graphite::qd::clut::size() const -> int
 {
     return m_size;
 }
 
-graphite::qd::color graphite::qd::clut::at(int index) const
+auto graphite::qd::clut::at(int index) const -> graphite::qd::color
 {
     return std::get<1>(m_entries[index]);
 }
 
-graphite::qd::color graphite::qd::clut::get(int value) const
+auto graphite::qd::clut::get(int value) const -> graphite::qd::color
 {
     for (auto entry : m_entries) {
         if (std::get<0>(entry) == value) {
@@ -57,7 +57,7 @@ graphite::qd::color graphite::qd::clut::get(int value) const
 
 // MARK: - Parser
 
-void graphite::qd::clut::parse(graphite::data::reader& reader)
+auto graphite::qd::clut::parse(graphite::data::reader& reader) -> void
 {
     m_seed = reader.read_long();
     m_flags = static_cast<flags>(reader.read_short());

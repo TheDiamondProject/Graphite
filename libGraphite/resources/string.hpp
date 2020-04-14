@@ -21,14 +21,13 @@ namespace graphite { namespace resources {
     public:
         string(std::string str, std::shared_ptr<data::data> data, int64_t id = 0, const std::string name = "");
 
-        static std::shared_ptr<string> load_resource(int64_t id);
+        static auto load_resource(int64_t id) -> std::shared_ptr<string>;
 
-        std::string value() const;
-        data::data data() const;
+        auto value() const -> std::string;
+        auto data() const -> data::data;
 
-        void set_string(const std::string& str);
-        void set_data(data::data data);
-
+        auto set_string(const std::string& str) -> void;
+        auto set_data(data::data data) -> void;
     };
 
 }};

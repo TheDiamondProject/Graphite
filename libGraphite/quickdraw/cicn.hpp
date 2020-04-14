@@ -29,14 +29,14 @@ namespace graphite { namespace qd {
         std::shared_ptr<qd::surface> m_surface;
         qd::clut m_clut;
 
-        void parse(data::reader& reader);
+        auto parse(data::reader& reader) -> void;
 
     public:
         cicn(std::shared_ptr<graphite::data::data> data, int64_t id = 0, std::string name = "");
 
-        static std::shared_ptr<cicn> load_resource(int64_t id);
+        static auto load_resource(int64_t id) -> std::shared_ptr<cicn>;
 
-        std::weak_ptr<graphite::qd::surface> surface() const;
+        auto surface() const -> std::weak_ptr<graphite::qd::surface>;
 
     };
 

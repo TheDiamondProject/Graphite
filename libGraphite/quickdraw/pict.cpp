@@ -27,7 +27,7 @@ graphite::qd::pict::pict(std::shared_ptr<graphite::qd::surface> surface)
 
 }
 
-std::shared_ptr<graphite::qd::pict> graphite::qd::pict::load_resource(int64_t id)
+auto graphite::qd::pict::load_resource(int64_t id) -> std::shared_ptr<graphite::qd::pict>
 {
     if (auto pict_res = graphite::rsrc::manager::shared_manager().find("PICT", id).lock()) {
         return std::make_shared<graphite::qd::pict>(pict_res->data(), id, pict_res->name());
@@ -35,21 +35,21 @@ std::shared_ptr<graphite::qd::pict> graphite::qd::pict::load_resource(int64_t id
     return nullptr;
 }
 
-std::shared_ptr<graphite::qd::pict> graphite::qd::pict::from_surface(std::shared_ptr<graphite::qd::surface> surface)
+auto graphite::qd::pict::from_surface(std::shared_ptr<graphite::qd::surface> surface) -> std::shared_ptr<graphite::qd::pict>
 {
     return std::make_shared<graphite::qd::pict>(surface);
 }
 
 // MARK: - Accessors
 
-std::weak_ptr<graphite::qd::surface> graphite::qd::pict::image_surface() const
+auto graphite::qd::pict::image_surface() const -> std::weak_ptr<graphite::qd::surface>
 {
     return m_surface;
 }
 
 // MARK: - Helper Functions
 
-static inline std::vector<uint8_t> read_bytes(graphite::data::reader& pict_reader, std::size_t size)
+static inline auto read_bytes(graphite::data::reader& pict_reader, std::size_t size) -> std::vector<uint8_t>
 {
     auto out = std::vector<uint8_t>(size);
     auto in = pict_reader.read_bytes(size);
@@ -61,7 +61,7 @@ static inline std::vector<uint8_t> read_bytes(graphite::data::reader& pict_reade
 
 // MARK: - Parsing / Reading
 
-graphite::qd::rect graphite::qd::pict::read_region(graphite::data::reader& pict_reader)
+auto graphite::qd::pict::read_region(graphite::data::reader& pict_reader) -> graphite::qd::rect
 {
     auto size = pict_reader.read_short();
     auto rect = graphite::qd::rect::read(pict_reader, qd::rect::qd);
@@ -77,14 +77,14 @@ graphite::qd::rect graphite::qd::pict::read_region(graphite::data::reader& pict_
     return rect;
 }
 
-void graphite::qd::pict::read_long_comment(graphite::data::reader& pict_reader)
+auto graphite::qd::pict::read_long_comment(graphite::data::reader& pict_reader) -> void
 {
     pict_reader.move(2);
     auto length = pict_reader.read_short();
     pict_reader.move(length);
 }
 
-void graphite::qd::pict::read_pack_bits_rect(graphite::data::reader & pict_reader)
+auto graphite::qd::pict::read_pack_bits_rect(graphite::data::reader & pict_reader) -> void
 {
     graphite::qd::pixel_format color_model = b16_rgb555;
     int16_t cmp_size;
@@ -148,7 +148,7 @@ void graphite::qd::pict::read_pack_bits_rect(graphite::data::reader & pict_reade
     // TODO: This needs to be completed with the rgb data being converted to a surface.
 }
 
-void graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_reader)
+auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_reader) -> void
 {
     graphite::qd::pixel_format color_model = b16_rgb555;
     int16_t pack_type;
@@ -293,7 +293,7 @@ void graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
     m_surface = std::make_shared<graphite::qd::surface>(width, height, rgb);
 }
 
-void graphite::qd::pict::parse(graphite::data::reader& pict_reader)
+auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
 {
     pict_reader.move(2);
 
@@ -371,7 +371,7 @@ void graphite::qd::pict::parse(graphite::data::reader& pict_reader)
 
 // MARK: - Encoder / Writing
 
-void graphite::qd::pict::encode(graphite::data::writer& pict_encoder)
+auto graphite::qd::pict::encode(graphite::data::writer& pict_encoder) -> void
 {
     encode_header(pict_encoder);
     encode_def_hilite(pict_encoder);
@@ -386,7 +386,7 @@ void graphite::qd::pict::encode(graphite::data::writer& pict_encoder)
     pict_encoder.write_short(static_cast<uint16_t>(opcode::eof));
 }
 
-void graphite::qd::pict::encode_header(graphite::data::writer& pict_encoder)
+auto graphite::qd::pict::encode_header(graphite::data::writer& pict_encoder) -> void
 {
     // Write the size as zero. This seems to be fine.
     pict_encoder.write_short(0);
@@ -414,19 +414,19 @@ void graphite::qd::pict::encode_header(graphite::data::writer& pict_encoder)
     // HEADER ENDS HERE
 }
 
-void graphite::qd::pict::encode_def_hilite(graphite::data::writer& pict_encoder)
+auto graphite::qd::pict::encode_def_hilite(graphite::data::writer& pict_encoder) -> void
 {
     pict_encoder.write_short(static_cast<uint16_t>(opcode::def_hilite));
 }
 
-void graphite::qd::pict::encode_clip_region(graphite::data::writer& pict_encoder)
+auto graphite::qd::pict::encode_clip_region(graphite::data::writer& pict_encoder) -> void
 {
     pict_encoder.write_short(static_cast<uint16_t>(opcode::clip_region));
     pict_encoder.write_short(10);
     m_frame.write(pict_encoder, rect::qd);
 }
 
-void graphite::qd::pict::encode_direct_bits_rect(graphite::data::writer& pict_encoder)
+auto graphite::qd::pict::encode_direct_bits_rect(graphite::data::writer& pict_encoder) -> void
 {
     pict_encoder.write_short(static_cast<uint16_t>(opcode::direct_bits_rect));
 

@@ -26,93 +26,86 @@
 #if !defined(GRAPHITE_RSRC_RESOURCE)
 #define GRAPHITE_RSRC_RESOURCE
 
-namespace graphite
-{
+namespace graphite { namespace rsrc {
 
-namespace rsrc
-{
+    class type;
 
-class type;
+    /**
+     * The `graphite::rsrc::resource` class represents a single resource within
+     * a resource file.
+     */
+    class resource
+    {
+    private:
+        int64_t m_id;
+        std::weak_ptr<graphite::rsrc::type> m_type;
+        std::string m_name;
+        std::shared_ptr<graphite::data::data> m_data;
+        std::size_t m_data_offset { 0 };
 
-/**
- * The `graphite::rsrc::resource` class represents a single resource within
- * a resource file.
- */
-class resource
-{
-public:
-	/**
-	 * Construct a new resource instance, without an explicit type or 
-	 * data.
-	 */
-	resource(int64_t id, const std::string& name);
+    public:
+    	/**
+    	 * Construct a new resource instance, without an explicit type or
+    	 * data.
+    	 */
+    	resource(int64_t id, const std::string& name);
 
-	/**
-	 * Construct a new resource instance with the specified type, and data.
-	 */
-	resource(int64_t id, std::weak_ptr<graphite::rsrc::type> type, const std::string& name, std::shared_ptr<graphite::data::data> data);
+    	/**
+    	 * Construct a new resource instance with the specified type, and data.
+    	 */
+    	resource(int64_t id, std::weak_ptr<graphite::rsrc::type> type, const std::string& name, std::shared_ptr<graphite::data::data> data);
 
-	/**
-	 * Returns the ID of the resource.
-	 */
-	int64_t id() const;
+    	/**
+    	 * Returns the ID of the resource.
+    	 */
+    	auto id() const -> int64_t;
 
-	/**
-	 * Set the ID of the resource.
-	 */
-	void set_id(int64_t id);
+    	/**
+    	 * Set the ID of the resource.
+    	 */
+    	auto set_id(int64_t id) -> void;
 
-	/**
-	 * Returns the name of the resource.
-	 */
-	std::string name() const;
+    	/**
+    	 * Returns the name of the resource.
+    	 */
+    	auto name() const -> std::string;
 
-	/**
-	 * Set the name of the resource.
-	 */
-	void set_name(const std::string& name);
+    	/**
+    	 * Set the name of the resource.
+    	 */
+    	auto set_name(const std::string& name) -> void;
 
-	/**
-	 * Returns the type container of the resource.
-	 */
-	std::weak_ptr<graphite::rsrc::type> type() const;
+    	/**
+    	 * Returns the type container of the resource.
+    	 */
+    	auto type() const -> std::weak_ptr<graphite::rsrc::type>;
 
-	/**
-	 * Set the type container of the resource.
-	 */
-	void set_type(std::weak_ptr<graphite::rsrc::type> type);
+    	/**
+    	 * Set the type container of the resource.
+    	 */
+    	auto set_type(std::weak_ptr<graphite::rsrc::type> type) -> void;
 
-	/**
-	 * Returns the type code of the resource.
-	 */
-	std::string type_code() const;
+    	/**
+    	 * Returns the type code of the resource.
+    	 */
+    	auto type_code() const -> std::string;
 
-	/**
-	 * Returns a shared pointer to the contained data.
-	 */
-	std::shared_ptr<graphite::data::data> data();
+    	/**
+    	 * Returns a shared pointer to the contained data.
+    	 */
+    	auto data() -> std::shared_ptr<graphite::data::data>;
 
-	/**
-	 * Store the location of the data within the resource file.
-	 */
-	void set_data_offset(std::size_t offset);
+    	/**
+    	 * Store the location of the data within the resource file.
+    	 */
+    	auto set_data_offset(std::size_t offset) -> void;
 
-	/**
-	 * The location of the data within the resource file.
-	 */
-	std::size_t data_offset() const;
+    	/**
+    	 * The location of the data within the resource file.
+    	 */
+    	auto data_offset() const -> std::size_t;
+    };
 
-
-private:
-	int64_t m_id;
-	std::weak_ptr<graphite::rsrc::type> m_type;
-	std::string m_name;
-	std::shared_ptr<graphite::data::data> m_data;
-	std::size_t m_data_offset { 0 };
-};
-
-};
-
-};
+}}
 
 #endif

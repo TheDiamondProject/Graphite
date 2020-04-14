@@ -27,19 +27,19 @@ namespace graphite { namespace qd {
         uint16_t m_size;
         std::vector<std::tuple<uint16_t, qd::color>> m_entries;
 
-        void parse(data::reader& reader);
+        auto parse(data::reader& reader) -> void;
 
     public:
         clut();
         clut(std::shared_ptr<graphite::data::data> data, int64_t id = 0, std::string name = "");
         clut(data::reader& reader);
 
-        static std::shared_ptr<clut> load_resource(int64_t id);
+        static auto load_resource(int64_t id) -> std::shared_ptr<clut>;
 
-        int size() const;
+        auto size() const -> int;
 
-        qd::color at(int index) const;
-        qd::color get(int value) const;
+        auto at(int index) const -> qd::color;
+        auto get(int value) const -> qd::color;
 
     };
 

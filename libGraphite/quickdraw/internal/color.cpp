@@ -14,22 +14,22 @@ graphite::qd::color::color(uint8_t red, uint8_t green, uint8_t blue, uint8_t alp
 
 // MARK: - Accessors
 
-uint8_t graphite::qd::color::red_component() const
+auto graphite::qd::color::red_component() const -> uint8_t
 {
     return m_red;
 }
 
-uint8_t graphite::qd::color::green_component() const
+auto graphite::qd::color::green_component() const -> uint8_t
 {
     return m_green;
 }
 
-uint8_t graphite::qd::color::blue_component() const
+auto graphite::qd::color::blue_component() const -> uint8_t
 {
     return m_blue;
 }
 
-uint8_t graphite::qd::color::alpha_component() const
+auto graphite::qd::color::alpha_component() const -> uint8_t
 {
     return m_alpha;
 }
@@ -37,57 +37,57 @@ uint8_t graphite::qd::color::alpha_component() const
 
 // MARK: - Quick Colors
 
-graphite::qd::color graphite::qd::color::black()
+auto graphite::qd::color::black() -> graphite::qd::color
 {
     return graphite::qd::color(0, 0, 0);
 }
 
-graphite::qd::color graphite::qd::color::white()
+auto graphite::qd::color::white() -> graphite::qd::color
 {
     return graphite::qd::color(255, 255, 255);
 }
 
-graphite::qd::color graphite::qd::color::red()
+auto graphite::qd::color::red() -> graphite::qd::color
 {
     return graphite::qd::color(255, 0, 0);
 }
 
-graphite::qd::color graphite::qd::color::green()
+auto graphite::qd::color::green() -> graphite::qd::color
 {
     return graphite::qd::color(0, 255, 0);
 }
 
-graphite::qd::color graphite::qd::color::blue()
+auto graphite::qd::color::blue() -> graphite::qd::color
 {
     return graphite::qd::color(0, 0, 255);
 }
 
-graphite::qd::color graphite::qd::color::purple()
+auto graphite::qd::color::purple() -> graphite::qd::color
 {
     return graphite::qd::color(150, 0, 255);
 }
 
-graphite::qd::color graphite::qd::color::orange()
+auto graphite::qd::color::orange() -> graphite::qd::color
 {
     return graphite::qd::color(255, 150, 0);
 }
 
-graphite::qd::color graphite::qd::color::yellow()
+auto graphite::qd::color::yellow() -> graphite::qd::color
 {
     return graphite::qd::color(255, 255, 0);
 }
 
-graphite::qd::color graphite::qd::color::lightGrey()
+auto graphite::qd::color::lightGrey() -> graphite::qd::color
 {
     return graphite::qd::color(200, 200, 200);
 }
 
-graphite::qd::color graphite::qd::color::darkGrey()
+auto graphite::qd::color::darkGrey() -> graphite::qd::color
 {
     return graphite::qd::color(100, 100, 100);
 }
 
-graphite::qd::color graphite::qd::color::clear()
+auto graphite::qd::color::clear() -> graphite::qd::color
 {
     return graphite::qd::color(0, 0, 0, 0);
 }

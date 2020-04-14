@@ -39,26 +39,26 @@ namespace graphite { namespace qd {
         double m_y_ratio;
         std::size_t m_size;
 
-        void parse(graphite::data::reader& pict_reader);
-        graphite::qd::rect read_region(graphite::data::reader& pict_reader);
-        void read_long_comment(graphite::data::reader& pict_reader);
-        void read_direct_bits_rect(graphite::data::reader& pict_reader);
-        void read_pack_bits_rect(graphite::data::reader & pict_reader);
+        auto parse(graphite::data::reader& pict_reader) -> void;
+        auto read_region(graphite::data::reader& pict_reader) -> graphite::qd::rect;
+        auto read_long_comment(graphite::data::reader& pict_reader) -> void;
+        auto read_direct_bits_rect(graphite::data::reader& pict_reader) -> void;
+        auto read_pack_bits_rect(graphite::data::reader & pict_reader) -> void;
 
-        void encode(graphite::data::writer& pict_encoder);
-        void encode_header(graphite::data::writer& pict_encoder);
-        void encode_def_hilite(graphite::data::writer& pict_encoder);
-        void encode_clip_region(graphite::data::writer& pict_encoder);
-        void encode_direct_bits_rect(graphite::data::writer& pict_encoder);
+        auto encode(graphite::data::writer& pict_encoder) -> void;
+        auto encode_header(graphite::data::writer& pict_encoder) -> void;
+        auto encode_def_hilite(graphite::data::writer& pict_encoder) -> void;
+        auto encode_clip_region(graphite::data::writer& pict_encoder) -> void;
+        auto encode_direct_bits_rect(graphite::data::writer& pict_encoder) -> void;
 
     public:
         pict(std::shared_ptr<graphite::data::data> data, int64_t id = 0, std::string name = "");
         pict(std::shared_ptr<graphite::qd::surface> surface);
 
-        static std::shared_ptr<pict> load_resource(int64_t id);
-        static std::shared_ptr<pict> from_surface(std::shared_ptr<graphite::qd::surface> surface);
+        static auto load_resource(int64_t id) -> std::shared_ptr<pict>;
+        static auto from_surface(std::shared_ptr<graphite::qd::surface> surface) -> std::shared_ptr<pict>;
 
-        std::weak_ptr<graphite::qd::surface> image_surface() const;
+        auto image_surface() const -> std::weak_ptr<graphite::qd::surface>;
 
         auto data() -> std::shared_ptr<graphite::data::data>;
     };

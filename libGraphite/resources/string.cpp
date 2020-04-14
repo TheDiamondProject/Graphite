@@ -14,7 +14,7 @@ graphite::resources::string::string(std::string str, std::shared_ptr<data::data>
     // TODO: Add implementation to extract a new copy of the data that is not a pointer.
 }
 
-std::shared_ptr<graphite::resources::string> graphite::resources::string::load_resource(int64_t id)
+auto graphite::resources::string::load_resource(int64_t id) -> std::shared_ptr<graphite::resources::string>
 {
     if (auto str_res = graphite::rsrc::manager::shared_manager().find("STR ", id).lock()) {
         auto reader = graphite::data::reader(str_res->data());
@@ -27,22 +27,22 @@ std::shared_ptr<graphite::resources::string> graphite::resources::string::load_r
 
 // MARK: - Accessor
 
-std::string graphite::resources::string::value() const
+auto graphite::resources::string::value() const -> std::string
 {
     return m_str;
 }
 
-graphite::data::data graphite::resources::string::data() const
+auto graphite::resources::string::data() const -> graphite::data::data
 {
     return m_data;
 }
 
-void graphite::resources::string::set_string(const std::string& str)
+auto graphite::resources::string::set_string(const std::string& str) -> void
 {
     m_str = str;
 }
 
-void graphite::resources::string::set_data(data::data data)
+auto graphite::resources::string::set_data(data::data data) -> void
 {
     m_data = data;
 }

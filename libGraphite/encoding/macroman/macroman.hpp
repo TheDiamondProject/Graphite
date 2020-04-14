@@ -24,31 +24,20 @@
 #if !defined(GRAPHITE_MACROMAN)
 #define GRAPHITE_MACROMAN
 
-namespace graphite
-{
-  
-namespace encoding
-{
+namespace graphite { namespace encoding { namespace mac_roman {
 
-namespace mac_roman
-{
+    /**
+     * Convert a sequence of bytes into a UTF-8 string, translating them from a
+     * Mac OS Roman encoding.
+     */
+    auto to_utf8(std::vector<uint8_t> bytes) -> std::string;
 
-/**
- * Convert a sequence of bytes into a UTF-8 string, translating them from a
- * Mac OS Roman encoding.
- */
-std::string to_utf8(std::vector<uint8_t> bytes);
+    /**
+     * Convert a UTF-8 encoded string into a sequence of bytes containing a Mac OS
+     * Roman encoded string.
+     */
+    auto from_utf8(const std::string& str) -> std::vector<uint8_t>;
 
-/**
- * Convert a UTF-8 encoded string into a sequence of bytes containing a Mac OS
- * Roman encoded string.
- */
-std::vector<uint8_t> from_utf8(const std::string& str);
-
-};
-
-};
-
-};
+}}};
 
 #endif

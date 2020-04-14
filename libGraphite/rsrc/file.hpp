@@ -27,99 +27,92 @@
 #if !defined(GRAPHITE_RSRC_FILE)
 #define GRAPHITE_RSRC_FILE
 
-namespace graphite
-{
-  
-namespace rsrc
-{
-
-/**
- * The `graphite::rsrc::file` represents a ResourceFork file.
- */
-class file
-{
-public:
-
-    enum flags : uint8_t { };
-
-public:
-    /**
-     * Denotes the format of a resource file being represented.
-     * 
-     *  + classic
-     *      The classic resource file format is that found in the original Macintosh
-     *      operating systems. This is the only format used by the Diamond Project.
-     *
-     *  + extended
-     *      The extended resource file format is extremely similar to the classic 
-     *      format, but has a number of extensions for modern use. This is primarily
-     *      used by Kestrel.
-     *
-     *  + rez
-     *      The rez resource file format was a format that was created for use within
-     *      EV Nova for Windows. This is used as a compatibility option for Kestrel.
-     */
-    enum format { classic, extended, rez };
-
-public:
-    /**
-     * Construct a new blank `graphite::rsrc::file`.
-     */
-    file() = default;
-    
-    /**
-     * Construct a new `graphite::rsrc::file` by loading the contents of the specified
-     * file.
-     */
-    file(const std::string& path);
+namespace graphite { namespace rsrc {
 
     /**
-     * Read and parse the contents of the resource file at the specified location.
-     * Warning: This will destroy all existing information in the resource file.
+     * The `graphite::rsrc::file` represents a ResourceFork file.
      */
-    void read(const std::string& path);
+    class file
+    {
+    public:
 
-    /**
-     * Write the contents of the the resource file to disk. If no location is specified,
-     * then it will use the original read path (if it exists).
-     */
-    void write(const std::string& path = "", enum format fmt = classic);
+        enum flags : uint8_t { };
 
-    /**
-     * Returns the number of types contained in the resource file.
-     */
-    std::size_t type_count() const;
+        /**
+         * Denotes the format of a resource file being represented.
+         *
+         *  + classic
+         *      The classic resource file format is that found in the original Macintosh
+         *      operating systems. This is the only format used by the Diamond Project.
+         *
+         *  + extended
+         *      The extended resource file format is extremely similar to the classic
+         *      format, but has a number of extensions for modern use. This is primarily
+         *      used by Kestrel.
+         *
+         *  + rez
+         *      The rez resource file format was a format that was created for use within
+         *      EV Nova for Windows. This is used as a compatibility option for Kestrel.
+         */
+        enum format { classic, extended, rez };
 
-    /**
-     * Reports the current format of the resource file.
-     */
-    format current_format() const;
+    private:
+        std::string m_path { "" };
+        std::vector<std::shared_ptr<type>> m_types;
+        std::shared_ptr<graphite::data::data> m_data { nullptr };
+        format m_format { classic };
 
-    /**
-     * Add a resource into the receiver.
-     */
-    void add_resource(const std::string& type, int64_t id, const std::string& name, std::shared_ptr<graphite::data::data> data);
+    public:
+        /**
+         * Construct a new blank `graphite::rsrc::file`.
+         */
+        file() = default;
 
-    /**
-     * Retrieve a type container for the specified type code. If a container
-     * does not exist then create one.
-     */
-    std::weak_ptr<graphite::rsrc::type> type_container(const std::string& code);
+        /**
+         * Construct a new `graphite::rsrc::file` by loading the contents of the specified
+         * file.
+         */
+        file(const std::string& path);
 
-    /**
-     * Attempt to get the resource of the specified type and id.
-     */
-    std::weak_ptr<resource> find(const std::string& type, const int64_t& id);
-    
-private:
-    std::string m_path { "" };
-    std::vector<std::shared_ptr<type>> m_types;
-    std::shared_ptr<graphite::data::data> m_data { nullptr };
-    format m_format { classic };
-};
+        /**
+         * Read and parse the contents of the resource file at the specified location.
+         * Warning: This will destroy all existing information in the resource file.
+         */
+        auto read(const std::string& path) -> void;
 
-};
+        /**
+         * Write the contents of the the resource file to disk. If no location is specified,
+         * then it will use the original read path (if it exists).
+         */
+        auto write(const std::string& path = "", enum format fmt = classic) -> void;
 
-};
+        /**
+         * Returns the number of types contained in the resource file.
+         */
+        auto type_count() const -> std::size_t;
+
+        /**
+         * Reports the current format of the resource file.
+         */
+        auto current_format() const -> format;
+
+        /**
+         * Add a resource into the receiver.
+         */
+        auto add_resource(const std::string& type, int64_t id, const std::string& name, std::shared_ptr<graphite::data::data> data) -> void;
+
+        /**
+         * Retrieve a type container for the specified type code. If a container
+         * does not exist then create one.
+         */
+        auto type_container(const std::string& code) -> std::weak_ptr<graphite::rsrc::type>;
+
+        /**
+         * Attempt to get the resource of the specified type and id.
+         */
+        auto find(const std::string& type, const int64_t& id) -> std::weak_ptr<resource>;
+    };
+
+}}
 
 #endif

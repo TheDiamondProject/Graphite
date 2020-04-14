@@ -31,22 +31,22 @@ namespace graphite { namespace qd {
          */
         color(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha = 255);
 
-        uint8_t red_component() const;
-        uint8_t green_component() const;
-        uint8_t blue_component() const;
-        uint8_t alpha_component() const;
+        auto red_component() const -> uint8_t;
+        auto green_component() const -> uint8_t;
+        auto blue_component() const -> uint8_t;
+        auto alpha_component() const -> uint8_t;
         
-        static color black();
-        static color white();
-        static color red();
-        static color green();
-        static color blue();
-        static color purple();
-        static color orange();
-        static color yellow();
-        static color lightGrey();
-        static color darkGrey();
-        static color clear();
+        static auto black() -> color;
+        static auto white() -> color;
+        static auto red() -> color;
+        static auto green() -> color;
+        static auto blue() -> color;
+        static auto purple() -> color;
+        static auto orange() -> color;
+        static auto yellow() -> color;
+        static auto lightGrey() -> color;
+        static auto darkGrey() -> color;
+        static auto clear() -> color;
         
     };
 

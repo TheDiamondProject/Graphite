@@ -43,23 +43,23 @@ namespace graphite { namespace qd {
         uint32_t m_pm_table;
         uint32_t m_pm_extension;
     public:
-        static const int length { 50 };
+        static constexpr int length { 50 };
 
         pixmap();
         pixmap(qd::rect frame);
         pixmap(std::shared_ptr<data::data> data);
 
-        graphite::qd::rect bounds() const;
-        int16_t row_bytes() const;
-        int16_t pack_type() const;
-        int16_t pack_size() const;
-        int16_t pixel_type() const;
-        int16_t pixel_size() const;
-        int16_t cmp_count() const;
-        int16_t cmp_size() const;
-        enum pixel_format pixel_format() const;
+        auto bounds() const -> graphite::qd::rect;
+        auto row_bytes() const -> int16_t;
+        auto pack_type() const -> int16_t;
+        auto pack_size() const -> int16_t;
+        auto pixel_type() const -> int16_t;
+        auto pixel_size() const -> int16_t;
+        auto cmp_count() const -> int16_t;
+        auto cmp_size() const -> int16_t;
+        auto pixel_format() const -> enum pixel_format;
 
-        void write(graphite::data::writer& writer);
+        auto write(graphite::data::writer& writer) -> void;
     };
 
 }};

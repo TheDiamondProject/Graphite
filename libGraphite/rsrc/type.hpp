@@ -26,56 +26,50 @@
 #if !defined(GRAPHITE_RSRC_TYPE)
 #define GRAPHITE_RSRC_TYPE
 
-namespace graphite
-{
+namespace graphite { namespace rsrc {
 
-namespace rsrc
-{
+    /**
+     *
+     */
+    class type
+    {
+    private:
+        std::string m_code;
+        std::vector<std::shared_ptr<resource>> m_resources;
 
-/**
- * 
- */
-class type
-{
-public:
-	/**
-	 * Construct a new a resource type container with the specified
-	 * type code.
-	 */
-	type(const std::string& code);
+    public:
+    	/**
+    	 * Construct a new a resource type container with the specified
+    	 * type code.
+    	 */
+    	type(const std::string& code);
 
-	/**
-	 * Returns the type code of the receiver.
-	 */
-	std::string code() const;
+    	/**
+    	 * Returns the type code of the receiver.
+    	 */
+    	auto code() const -> std::string;
 
-	/**
-	 * Returns a count of the number of resources associated to this type.
-	 */
-	std::size_t count() const;
+    	/**
+    	 * Returns a count of the number of resources associated to this type.
+    	 */
+    	auto count() const -> std::size_t;
 
-	/**
-	 * Add a new resource to the receiver.
-	 */
-	void add_resource(std::shared_ptr<resource> resource);
+    	/**
+    	 * Add a new resource to the receiver.
+    	 */
+    	auto add_resource(std::shared_ptr<resource> resource) -> void;
 
-	/**
-	 * Returns an vector containing all of the resources 
-	 */
-	std::vector<std::shared_ptr<resource>> resources() const;
+    	/**
+    	 * Returns an vector containing all of the resources
+    	 */
+    	auto resources() const -> std::vector<std::shared_ptr<resource>>;
 
-	/**
-	 * Returns the resource with the specified ID.
-	 */
-	std::weak_ptr<resource> get(int16_t id) const;
+    	/**
+    	 * Returns the resource with the specified ID.
+    	 */
+    	auto get(int16_t id) const -> std::weak_ptr<resource>;
+    };
 
-private:
-	std::string m_code;
-	std::vector<std::shared_ptr<resource>> m_resources;
-};
-
-};
-
-};
+}}
 
 #endif

@@ -24,14 +24,15 @@
 
 // MARK: - Parsing / Reading
 
-std::vector<std::shared_ptr<graphite::rsrc::type>> graphite::rsrc::rez::parse(std::shared_ptr<graphite::data::reader> reader)
+auto graphite::rsrc::rez::parse(std::shared_ptr<graphite::data::reader> reader) -> std::vector<std::shared_ptr<graphite::rsrc::type>>
 {
+    // TODO: .rez implementation
     return {};
 }
 
 // MARK: - Writing
 
-void graphite::rsrc::rez::write(const std::string& path, std::vector<std::shared_ptr<graphite::rsrc::type>> types)
+auto graphite::rsrc::rez::write(const std::string& path, std::vector<std::shared_ptr<graphite::rsrc::type>> types) -> void
 {
-	
+    // TODO: .rez implementation
 }

@@ -58,54 +58,54 @@ graphite::qd::pixmap::pixmap(std::shared_ptr<data::data> px_data)
 
 // MARK: - Accessors
 
-graphite::qd::rect graphite::qd::pixmap::bounds() const
+auto graphite::qd::pixmap::bounds() const -> graphite::qd::rect
 {
     return m_bounds;
 }
 
-int16_t graphite::qd::pixmap::row_bytes() const
+auto graphite::qd::pixmap::row_bytes() const -> int16_t
 {
     return m_row_bytes;
 }
 
-int16_t graphite::qd::pixmap::pack_type() const
+auto graphite::qd::pixmap::pack_type() const -> int16_t
 {
     return m_pack_type;
 }
 
-int16_t graphite::qd::pixmap::pack_size() const
+auto graphite::qd::pixmap::pack_size() const -> int16_t
 {
     return m_pack_size;
 }
 
-int16_t graphite::qd::pixmap::pixel_type() const
+auto graphite::qd::pixmap::pixel_type() const -> int16_t
 {
     return m_pixel_type;
 }
 
-int16_t graphite::qd::pixmap::pixel_size() const
+auto graphite::qd::pixmap::pixel_size() const -> int16_t
 {
     return m_pixel_size;
 }
 
-int16_t graphite::qd::pixmap::cmp_count() const
+auto graphite::qd::pixmap::cmp_count() const -> int16_t
 {
     return m_cmp_count;
 }
 
-int16_t graphite::qd::pixmap::cmp_size() const
+auto graphite::qd::pixmap::cmp_size() const -> int16_t
 {
     return m_cmp_size;
 }
 
-enum graphite::qd::pixel_format graphite::qd::pixmap::pixel_format() const
+auto graphite::qd::pixmap::pixel_format() const -> enum graphite::qd::pixel_format
 {
     return m_pixel_format;
 }
 
 // MARK: -
 
-void graphite::qd::pixmap::write(graphite::data::writer& writer)
+auto graphite::qd::pixmap::write(graphite::data::writer& writer) -> void
 {
     writer.write_long(m_base_address);
     writer.write_short(0x8000 | m_row_bytes);

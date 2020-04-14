@@ -26,55 +26,48 @@
 #if !defined(GRAPHITE_RSRC_MANAGER)
 #define GRAPHITE_RSRC_MANAGER
 
-namespace graphite
-{
-
-namespace rsrc
-{
-
-/**
- * The Manager is a shared object within an application that is keeps track of
- * all loaded resources.
- *
- * Resources are loaded in through a resource file and then placed into the
- * resource manager to be "managed" if a newly imported resource conflicts with
- * an existing resource, the existing resource will be replaced by the newer
- */
-class manager
-{
-public:
-	manager(const manager&) = delete;
-    manager& operator=(const manager &) = delete;
-    manager(manager &&) = delete;
-    manager & operator=(manager &&) = delete;
-    
-    /**
-     * The Resource Manager is a singleton due to the "resource space"
-     * of a process being shared. All resource files loaded into a process
-     * occupy the same space and are able to override each other, depending
-     * on load order.
-     */
-    static manager& shared_manager();
-    
-    /**
-     * Import the specified file into the Manager. This will trigger a parsing
-     * of the file if it hasn't already occurred.
-     */
-    void import_file(std::shared_ptr<file> file);
+namespace graphite { namespace rsrc {
 
     /**
-     * Attempt to get the resource of the specified type and id.
+     * The Manager is a shared object within an application that is keeps track of
+     * all loaded resources.
+     *
+     * Resources are loaded in through a resource file and then placed into the
+     * resource manager to be "managed" if a newly imported resource conflicts with
+     * an existing resource, the existing resource will be replaced by the newer
      */
-    std::weak_ptr<resource> find(const std::string& type, const int64_t& id) const;
+    class manager
+    {
+    private:
+        std::vector<std::shared_ptr<file>> m_files;
+        manager();
 
-    
-private:
-    std::vector<std::shared_ptr<file>> m_files;
-    manager();
-};
+    public:
+    	manager(const manager&) = delete;
+        manager& operator=(const manager &) = delete;
+        manager(manager &&) = delete;
+        manager & operator=(manager &&) = delete;
 
-};
+        /**
+         * The Resource Manager is a singleton due to the "resource space"
+         * of a process being shared. All resource files loaded into a process
+         * occupy the same space and are able to override each other, depending
+         * on load order.
+         */
+        static auto shared_manager() -> manager&;
 
-};
+        /**
+         * Import the specified file into the Manager. This will trigger a parsing
+         * of the file if it hasn't already occurred.
+         */
+        auto import_file(std::shared_ptr<file> file) -> void;
+
+        /**
+         * Attempt to get the resource of the specified type and id.
+         */
+        auto find(const std::string& type, const int64_t& id) const -> std::weak_ptr<resource>;
+    };
+
+}}
 
 #endif

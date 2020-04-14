@@ -18,7 +18,7 @@ graphite::qd::rle::rle(std::shared_ptr<data::data> data, int64_t id, std::string
     parse(reader);
 }
 
-std::shared_ptr<graphite::qd::rle> graphite::qd::rle::load_resource(int64_t id)
+auto graphite::qd::rle::load_resource(int64_t id) -> std::shared_ptr<graphite::qd::rle>
 {
     if (auto rle_res = graphite::rsrc::manager::shared_manager().find("rlëD", id).lock()) {
         return std::make_shared<graphite::qd::rle>(rle_res->data());
@@ -28,29 +28,29 @@ std::shared_ptr<graphite::qd::rle> graphite::qd::rle::load_resource(int64_t id)
 
 // MARK: - Accessors
 
-std::weak_ptr<graphite::qd::surface> graphite::qd::rle::surface() const
+auto graphite::qd::rle::surface() const -> std::weak_ptr<graphite::qd::surface>
 {
     return m_surface;
 }
 
-std::vector<graphite::qd::rect> graphite::qd::rle::frames() const
+auto graphite::qd::rle::frames() const -> std::vector<graphite::qd::rect>
 {
     return m_frames;
 }
 
-int graphite::qd::rle::frame_count() const
+auto graphite::qd::rle::frame_count() const -> int
 {
     return static_cast<int>(m_frame_count);
 }
 
-graphite::qd::rect graphite::qd::rle::frame_at(int frame) const
+auto graphite::qd::rle::frame_at(int frame) const -> graphite::qd::rect
 {
     return m_frames[frame];
 }
 
 // MARK: - Parsing
 
-void graphite::qd::rle::parse(data::reader &reader)
+auto graphite::qd::rle::parse(data::reader &reader) -> void
 {
     // Read the header of the RLE information. This will tell us what we need to do in order to
     // actually decode the frames.
@@ -159,14 +159,14 @@ void graphite::qd::rle::parse(data::reader &reader)
     return;
 }
 
-uint64_t graphite::qd::rle::surface_offset(int32_t frame, int32_t line) const
+auto graphite::qd::rle::surface_offset(int32_t frame, int32_t line) const -> uint64_t
 {
     qd::point fo(frame % rle_grid_width, frame / rle_grid_width);
     qd::point p(fo.x() * m_frame_size.width(), (fo.y() * m_frame_size.height()) + line);
     return static_cast<uint64_t>(p.y() * m_surface->size().width() + p.x());
 }
 
-void graphite::qd::rle::write_pixel(uint16_t pixel, uint8_t mask, uint64_t offset)
+auto graphite::qd::rle::write_pixel(uint16_t pixel, uint8_t mask, uint64_t offset) -> void
 {
     auto r = static_cast<uint8_t>((pixel & 0x7C00) >> 7);
     auto g = static_cast<uint8_t>((pixel & 0x03E0) >> 2);
@@ -174,7 +174,7 @@ void graphite::qd::rle::write_pixel(uint16_t pixel, uint8_t mask, uint64_t offse
     m_surface->set(static_cast<int>(offset), qd::color(r, g, b));
 }
 
-void graphite::qd::rle::write_pixel_variant1(uint32_t pixel, uint8_t mask, uint64_t offset)
+auto graphite::qd::rle::write_pixel_variant1(uint32_t pixel, uint8_t mask, uint64_t offset) -> void
 {
     auto r = static_cast<uint8_t>((pixel & 0x7C000000) >> 23);
     auto g = static_cast<uint8_t>((pixel & 0x03E00000) >> 18);
@@ -182,7 +182,7 @@ void graphite::qd::rle::write_pixel_variant1(uint32_t pixel, uint8_t mask, uint6
     m_surface->set(static_cast<int>(offset), qd::color(r, g, b));
 }
 
-void graphite::qd::rle::write_pixel_variant2(uint32_t pixel, uint8_t mask, uint64_t offset)
+auto graphite::qd::rle::write_pixel_variant2(uint32_t pixel, uint8_t mask, uint64_t offset) -> void
 {
     auto r = static_cast<uint8_t>((pixel & 0x00007C00) >> 7);
     auto g = static_cast<uint8_t>((pixel & 0x000003E0) >> 2);

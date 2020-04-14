@@ -68,43 +68,42 @@ static uint16_t cp_table[0x100] =
 namespace unicode
 {
 
-struct hint
-{
-public:
-    uint8_t m_mask;
-    uint8_t m_lead;
-    uint32_t m_beg;
-    uint32_t m_end;
-    size_t m_bits;
-    
-    hint(uint8_t mask, uint8_t lead, uint32_t beg, uint32_t end, size_t bits)
-        : m_mask(mask), m_lead(lead), m_beg(beg), m_end(end), m_bits(bits)
+    struct hint
     {
+    public:
+        uint8_t m_mask;
+        uint8_t m_lead;
+        uint32_t m_beg;
+        uint32_t m_end;
+        size_t m_bits;
 
-    }
-    
-    static std::vector<unicode::hint> utf8()
-    {
-        static std::vector<unicode::hint> utf8;
-        if (utf8.empty()) {
-            utf8.push_back(unicode::hint(0b00111111, 0b10000000, 0, 0, 6));
-            utf8.push_back(unicode::hint(0b01111111, 0b00000000, 0000, 0177, 7));
-            utf8.push_back(unicode::hint(0b00011111, 0b11000000, 0200, 03777, 5));
-            utf8.push_back(unicode::hint(0b00001111, 0b11100000, 04000, 0177777, 4));
-            utf8.push_back(unicode::hint(0b00000111, 0b11110000, 0200000, 04177777, 3));
+        hint(uint8_t mask, uint8_t lead, uint32_t beg, uint32_t end, size_t bits)
+                : m_mask(mask), m_lead(lead), m_beg(beg), m_end(end), m_bits(bits)
+        {
+
         }
-        return utf8;
-    }
-    
-};
 
+        static auto utf8() -> std::vector<unicode::hint>
+        {
+            static std::vector<unicode::hint> utf8;
+            if (utf8.empty()) {
+                utf8.emplace_back(unicode::hint(0b00111111, 0b10000000, 0, 0, 6));
+                utf8.emplace_back(unicode::hint(0b01111111, 0b00000000, 0000, 0177, 7));
+                utf8.emplace_back(unicode::hint(0b00011111, 0b11000000, 0200, 03777, 5));
+                utf8.emplace_back(unicode::hint(0b00001111, 0b11100000, 04000, 0177777, 4));
+                utf8.emplace_back(unicode::hint(0b00000111, 0b11110000, 0200000, 04177777, 3));
+            }
+            return utf8;
+        }
+
+    };
 };
 
 // MARK: - Conversion Functions
 
-std::vector<uint8_t> graphite::encoding::mac_roman::from_utf8(const std::string &str)
+auto graphite::encoding::mac_roman::from_utf8(const std::string &str) -> std::vector<uint8_t>
 {
-    std::vector<uint8_t> mac_roman_bytes {};
+    std::vector<uint8_t> mac_roman_bytes;
     
     // Convert back to a C-String for easier processing here...
     const char *s = str.c_str();
@@ -140,8 +139,7 @@ std::vector<uint8_t> graphite::encoding::mac_roman::from_utf8(const std::string 
         // Look up the MacRoman byte for the codepoint and then add it to the vector.
         for (auto j = 0; j < 0x100; ++j) {
             if (cp_table[j] == codepoint) {
-                mac_roman_bytes.push_back(j);
-                
+                mac_roman_bytes.emplace_back(j);
             }
         }
     }
@@ -149,9 +147,9 @@ std::vector<uint8_t> graphite::encoding::mac_roman::from_utf8(const std::string 
     return mac_roman_bytes;
 }
 
-std::string graphite::encoding::mac_roman::to_utf8(std::vector<uint8_t> bytes)
+auto graphite::encoding::mac_roman::to_utf8(std::vector<uint8_t> bytes) -> std::string
 {
-    std::string result("");
+    std::string result;
     
     auto utf8 = unicode::hint::utf8();
     for (auto c : bytes) {
