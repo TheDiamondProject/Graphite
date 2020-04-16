@@ -10,6 +10,7 @@
 #include <tuple>
 #include "libGraphite/quickdraw/internal/color.hpp"
 #include "libGraphite/data/reader.hpp"
+#include "libGraphite/data/writer.hpp"
 
 namespace graphite { namespace qd {
 
@@ -41,6 +42,7 @@ namespace graphite { namespace qd {
         auto at(int index) const -> qd::color;
         auto get(int value) const -> qd::color;
 
+        auto write(graphite::data::writer& writer) -> void;
     };
 
 }};

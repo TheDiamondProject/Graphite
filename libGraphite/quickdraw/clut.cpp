@@ -71,3 +71,21 @@ auto graphite::qd::clut::parse(graphite::data::reader& reader) -> void
         m_entries.emplace_back(std::make_tuple(value, qd::color(r, g, b)));
     }
 }
+
+// MARK: - Writer
+
+auto graphite::qd::clut::write(graphite::data::writer& writer) -> void
+{
+    writer.write_long(m_seed);
+    writer.write_short(static_cast<uint16_t>(m_flags));
+    writer.write_short(m_size - 1);
+
+    for (auto entry : m_entries) {
+        auto value = std::get<0>(entry);
+        auto color = std::get<1>(entry);
+        writer.write_short(value);
+        writer.write_short(static_cast<uint16_t>((color.red_component() / 255.0) * 65535.0));
+        writer.write_short(static_cast<uint16_t>((color.green_component() / 255.0) * 65535.0));
+        writer.write_short(static_cast<uint16_t>((color.blue_component() / 255.0) * 65535.0));
+    }
+}
