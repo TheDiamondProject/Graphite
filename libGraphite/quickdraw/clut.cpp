@@ -55,6 +55,22 @@ auto graphite::qd::clut::get(int value) const -> graphite::qd::color
     throw std::runtime_error("Access invalid entry/value '" + std::to_string(value) + "' of color table: " + std::to_string(m_id));
 }
 
+auto graphite::qd::clut::set(const qd::color color) -> uint16_t
+{
+    uint16_t value = 0;
+    for (auto entry : m_entries) {
+        if (std::get<1>(entry) == color) {
+            return std::get<0>(entry);
+        }
+        if (std::get<0>(entry) == value) {
+            ++value;
+        }
+    }
+    m_entries.emplace_back(std::make_tuple(value, color));
+    m_size = m_entries.size();
+    return value;
+}
+
 // MARK: - Parser
 
 auto graphite::qd::clut::parse(graphite::data::reader& reader) -> void

@@ -63,9 +63,19 @@ auto graphite::qd::pixmap::bounds() const -> graphite::qd::rect
     return m_bounds;
 }
 
+auto graphite::qd::pixmap::set_bounds(const graphite::qd::rect rect) -> void
+{
+    m_bounds = rect;
+}
+
 auto graphite::qd::pixmap::row_bytes() const -> int16_t
 {
     return m_row_bytes;
+}
+
+auto graphite::qd::pixmap::set_row_bytes(const int16_t row_bytes) -> void
+{
+    m_row_bytes = row_bytes;
 }
 
 auto graphite::qd::pixmap::pack_type() const -> int16_t
@@ -73,9 +83,19 @@ auto graphite::qd::pixmap::pack_type() const -> int16_t
     return m_pack_type;
 }
 
+auto graphite::qd::pixmap::set_pack_type(const int16_t pack_type) -> void
+{
+    m_pack_type = pack_type;
+}
+
 auto graphite::qd::pixmap::pack_size() const -> int16_t
 {
     return m_pack_size;
+}
+
+auto graphite::qd::pixmap::set_pack_size(const int16_t pack_size) -> void
+{
+    m_pack_size = pack_size;
 }
 
 auto graphite::qd::pixmap::pixel_type() const -> int16_t
@@ -83,9 +103,19 @@ auto graphite::qd::pixmap::pixel_type() const -> int16_t
     return m_pixel_type;
 }
 
+auto graphite::qd::pixmap::set_pixel_type(const int16_t pixel_type) -> void
+{
+    m_pixel_type = pixel_type;
+}
+
 auto graphite::qd::pixmap::pixel_size() const -> int16_t
 {
     return m_pixel_size;
+}
+
+auto graphite::qd::pixmap::set_pixel_size(const int16_t pixel_size) -> void
+{
+    m_pixel_size = pixel_size;
 }
 
 auto graphite::qd::pixmap::cmp_count() const -> int16_t
@@ -93,9 +123,19 @@ auto graphite::qd::pixmap::cmp_count() const -> int16_t
     return m_cmp_count;
 }
 
+auto graphite::qd::pixmap::set_cmp_count(const int16_t cmp_count) -> void
+{
+    m_cmp_count = cmp_count;
+}
+
 auto graphite::qd::pixmap::cmp_size() const -> int16_t
 {
     return m_cmp_size;
+}
+
+auto graphite::qd::pixmap::set_cmp_size(const int16_t cmp_size) -> void
+{
+    m_cmp_size = cmp_size;
 }
 
 auto graphite::qd::pixmap::pixel_format() const -> enum graphite::qd::pixel_format

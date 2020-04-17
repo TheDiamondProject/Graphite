@@ -41,6 +41,7 @@ namespace graphite { namespace qd {
 
         auto at(int index) const -> qd::color;
         auto get(int value) const -> qd::color;
+        auto set(const qd::color color) -> uint16_t;
 
         auto write(graphite::data::writer& writer) -> void;
     };

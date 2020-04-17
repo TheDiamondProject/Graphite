@@ -91,3 +91,10 @@ auto graphite::qd::color::clear() -> graphite::qd::color
 {
     return graphite::qd::color(0, 0, 0, 0);
 }
+
+// MARK: - Operators
+
+auto graphite::qd::color::operator==(const graphite::qd::color &rhs) -> bool
+{
+    return (m_red == rhs.m_red) && (m_green == rhs.m_green) && (m_blue == rhs.m_blue) && (m_alpha == rhs.m_alpha);
+}

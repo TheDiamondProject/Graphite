@@ -37,7 +37,7 @@ namespace graphite { namespace qd {
         static auto load_resource(int64_t id) -> std::shared_ptr<cicn>;
 
         auto surface() const -> std::weak_ptr<graphite::qd::surface>;
-
+        auto data() -> std::shared_ptr<graphite::data::data>;
     };
 
 }};

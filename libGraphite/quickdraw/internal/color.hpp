@@ -47,7 +47,8 @@ namespace graphite { namespace qd {
         static auto lightGrey() -> color;
         static auto darkGrey() -> color;
         static auto clear() -> color;
-        
+
+        auto operator== (const color& rhs) -> bool;
     };
 
 }}
