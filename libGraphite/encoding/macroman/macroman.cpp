@@ -18,7 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-
+#include <cstring>
+#include <stdexcept>
 #include "libGraphite/encoding/macroman/macroman.hpp"
 
 // MARK: - Encoding Tables
