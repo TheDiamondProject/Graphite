@@ -23,9 +23,9 @@ namespace graphite { namespace qd {
         int64_t m_id;
         std::string m_name;
 
-        uint32_t m_seed;
-        enum flags m_flags;
-        uint16_t m_size;
+        uint32_t m_seed { 0 };
+        enum flags m_flags { pixmap };
+        uint16_t m_size { 0 };
         std::vector<std::tuple<uint16_t, qd::color>> m_entries;
 
         auto parse(data::reader& reader) -> void;

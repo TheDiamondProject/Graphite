@@ -33,6 +33,7 @@ namespace graphite { namespace qd {
 
     public:
         cicn(std::shared_ptr<graphite::data::data> data, int64_t id = 0, std::string name = "");
+        cicn(std::shared_ptr<qd::surface> surface);
 
         static auto load_resource(int64_t id) -> std::shared_ptr<cicn>;
 

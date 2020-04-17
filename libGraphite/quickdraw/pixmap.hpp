@@ -27,21 +27,21 @@ namespace graphite { namespace qd {
     class pixmap
     {
     private:
-        uint32_t m_base_address;
-        int16_t m_row_bytes;
-        graphite::qd::rect m_bounds;
-        int16_t m_pm_version;
-        int16_t m_pack_type;
-        int32_t m_pack_size;
-        double m_h_res;
-        double m_v_res;
-        int16_t m_pixel_type;
-        int16_t m_pixel_size;
-        int16_t m_cmp_count;
-        int16_t m_cmp_size;
-        enum pixel_format m_pixel_format;
-        uint32_t m_pm_table;
-        uint32_t m_pm_extension;
+        uint32_t m_base_address { 0 };
+        int16_t m_row_bytes { 0 };
+        graphite::qd::rect m_bounds { rect::zero() };
+        int16_t m_pm_version { 0 };
+        int16_t m_pack_type { 0 };
+        int32_t m_pack_size { 0 };
+        double m_h_res { 72 };
+        double m_v_res { 72 };
+        int16_t m_pixel_type { 0 };
+        int16_t m_pixel_size { 0 };
+        int16_t m_cmp_count { 0 };
+        int16_t m_cmp_size { 0 };
+        enum pixel_format m_pixel_format { unknown };
+        uint32_t m_pm_table { 0 };
+        uint32_t m_pm_extension { 0 };
     public:
         static constexpr int length { 50 };
 

@@ -15,6 +15,12 @@ graphite::qd::cicn::cicn(std::shared_ptr<graphite::data::data> data, int64_t id,
     parse(reader);
 }
 
+graphite::qd::cicn::cicn(std::shared_ptr<qd::surface> surface)
+        : m_surface(surface)
+{
+
+}
+
 auto graphite::qd::cicn::load_resource(int64_t id) -> std::shared_ptr<graphite::qd::cicn>
 {
     if (auto res = graphite::rsrc::manager::shared_manager().find("cicn", id).lock()) {
@@ -149,25 +155,48 @@ auto graphite::qd::cicn::parse(graphite::data::reader& reader) -> void
 
 auto graphite::qd::cicn::data() -> std::shared_ptr<graphite::data::data>
 {
-    auto data = std::shared_ptr<graphite::data::data>();
+    auto data = std::make_shared<graphite::data::data>();
     auto writer = graphite::data::writer(data);
     auto width = m_surface->size().width();
     auto height = m_surface->size().height();
 
-    // Rebuild the Color Table for the surface. To do this we want to create an empty table, and populate it.
-    m_clut = qd::clut();
+    // TODO: This is a brute force method of bringing down the color depth/number of colors required,
+    // for a cicn image. It doesn't optimise for image quality at all, and should be replaced at somepoint.
     std::vector<uint16_t> color_values;
     std::vector<bool> mask_values;
-    for (auto y = 0; y < height; ++y) {
-        for (auto x = 0; x < width; ++x) {
-            auto color = m_surface->at(x, y);
-            mask_values.emplace_back((color.alpha_component() & 0x80) != 0);
-            color_values.emplace_back(m_clut.set(color));
+    uint8_t pass = 0;
+    do {
+        if (pass++ > 0) {
+            for (auto y = 0; y < height; ++y) {
+                for (auto x = 0; x < width; ++x) {
+                    auto color = m_surface->at(x, y);
+                    m_surface->set(x, y, qd::color(
+                            color.red_component() & ~(1 << pass),
+                            color.green_component() & ~(1 << pass),
+                            color.blue_component() & ~(1 << pass),
+                            color.alpha_component()
+                    ));
+                }
+            }
         }
-    }
+
+        // Rebuild the Color Table for the surface. To do this we want to create an empty table, and populate it.
+        m_clut = qd::clut();
+        color_values.clear();
+        mask_values.clear();
+        for (auto y = 0; y < height; ++y) {
+            for (auto x = 0; x < width; ++x) {
+                auto color = m_surface->at(x, y);
+                mask_values.emplace_back((color.alpha_component() & 0x80) != 0);
+                color_values.emplace_back(m_clut.set(color));
+            }
+        }
+    } while(m_clut.size() >= 256);
+
 
     // Determine what component configuration we need.
     m_pixmap = qd::pixmap();
+    m_pixmap.set_bounds(qd::rect(point::zero(), m_surface->size()));
     graphite::data::writer mask_data(std::make_shared<graphite::data::data>());
     graphite::data::writer bmap_data(std::make_shared<graphite::data::data>());
     graphite::data::writer pmap_data(std::make_shared<graphite::data::data>());
@@ -188,13 +217,15 @@ auto graphite::qd::cicn::data() -> std::shared_ptr<graphite::data::data>
         value <<= (7 - bit_offset);
         scratch |= value;
     }
+    mask_data.write_byte(scratch);
 
     if (m_clut.size() >= 256) {
         throw std::runtime_error("Implementation does not currently handle more than 256 colors in a CICN");
     }
     else if (m_clut.size() >= 16) {
-        m_pixmap.set_cmp_size(1);
-        m_pixmap.set_cmp_count(8);
+        m_pixmap.set_pixel_size(8);
+        m_pixmap.set_cmp_size(8);
+        m_pixmap.set_cmp_count(1);
         m_pixmap.set_row_bytes(m_surface->size().width());
 
         for (auto n = 0; n < color_values.size(); ++n) {
@@ -202,8 +233,9 @@ auto graphite::qd::cicn::data() -> std::shared_ptr<graphite::data::data>
         }
     }
     else if (m_clut.size() >= 4) {
-        m_pixmap.set_cmp_size(1);
-        m_pixmap.set_cmp_count(4);
+        m_pixmap.set_pixel_size(4);
+        m_pixmap.set_cmp_size(4);
+        m_pixmap.set_cmp_count(1);
         m_pixmap.set_row_bytes(m_surface->size().width() >> 1);
 
         scratch = 0;
@@ -217,10 +249,12 @@ auto graphite::qd::cicn::data() -> std::shared_ptr<graphite::data::data>
             value <<= (4 - (bit_offset * 4));
             scratch |= value;
         }
+        pmap_data.write_byte(scratch);
     }
     else if (m_clut.size() >= 2) {
-        m_pixmap.set_cmp_size(1);
-        m_pixmap.set_cmp_count(2);
+        m_pixmap.set_pixel_size(2);
+        m_pixmap.set_cmp_size(2);
+        m_pixmap.set_cmp_count(1);
         m_pixmap.set_row_bytes(m_surface->size().width() >> 2);
 
         scratch = 0;
@@ -234,8 +268,10 @@ auto graphite::qd::cicn::data() -> std::shared_ptr<graphite::data::data>
             value <<= (6 - (bit_offset * 2));
             scratch |= value;
         }
+        pmap_data.write_byte(scratch);
     }
     else {
+        m_pixmap.set_pixel_size(1);
         m_pixmap.set_cmp_size(1);
         m_pixmap.set_cmp_count(1);
         m_pixmap.set_row_bytes(m_surface->size().width() >> 3);
@@ -251,9 +287,23 @@ auto graphite::qd::cicn::data() -> std::shared_ptr<graphite::data::data>
             value <<= (7 - bit_offset);
             scratch |= value;
         }
+        pmap_data.write_byte(scratch);
     }
 
+    // Calculate some offsets
+    m_mask_base_addr = 4;
+    m_bmap_base_addr = m_mask_base_addr + mask_data.size();
+
     // Write out the image data for the cicn.
+    m_pixmap.write(writer);
+    writer.write_long(0);
+    writer.write_short(m_mask_row_bytes);
+    m_pixmap.bounds().write(writer);
+    writer.write_long(0);
+    writer.write_short(m_bmap_row_bytes);
+    m_pixmap.bounds().write(writer);
+    writer.write_long(0);
+
     writer.write_data(mask_data.data());
     writer.write_data(bmap_data.data());
     m_clut.write(writer);
