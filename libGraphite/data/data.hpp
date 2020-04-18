@@ -41,7 +41,7 @@ namespace graphite { namespace data {
         enum byte_order { msb, lsb };
 
     private:
-        data::byte_order m_bo { msb };
+        enum data::byte_order m_bo { msb };
         std::shared_ptr<std::vector<char>> m_data { nullptr };
         std::size_t m_start { 0 };
         std::size_t m_size { 0 };
