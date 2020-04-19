@@ -227,7 +227,7 @@ auto graphite::data::reader::read_cstr(int64_t size, int64_t offset, graphite::d
         }
         
         if (mode == reader::mode::advance) {
-            m_pos += offset + vec.size();
+            m_pos += offset + vec.size() + 1;
         }
         
         return graphite::encoding::mac_roman::to_utf8(vec);
