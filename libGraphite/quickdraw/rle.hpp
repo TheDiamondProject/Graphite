@@ -39,15 +39,23 @@ namespace graphite { namespace qd {
         auto write_pixel_variant1(uint32_t pixel, uint8_t mask, uint64_t offset) -> void;
         auto write_pixel_variant2(uint32_t pixel, uint8_t mask, uint64_t offset) -> void;
 
+        auto encode(graphite::data::writer& writer) -> void;
+
     public:
         rle(std::shared_ptr<data::data> data, int64_t id = 0, std::string name = "");
+        rle(qd::size frame_size, uint16_t frame_count);
+
         static auto load_resource(int64_t id) -> std::shared_ptr<rle>;
 
         auto surface() const -> std::weak_ptr<qd::surface>;
         auto frames() const -> std::vector<qd::rect>;
 
         auto frame_count() const -> int;
-        auto frame_at(int frame) const -> qd::rect;
+        auto frame_rect(int frame) const -> qd::rect;
+        auto frame_surface(int frame) const -> std::shared_ptr<qd::surface>;
+        auto write_frame(int frame, std::shared_ptr<qd::surface> surface) -> void;
+
+        auto data() -> std::shared_ptr<graphite::data::data>;
     };
 
 }};
