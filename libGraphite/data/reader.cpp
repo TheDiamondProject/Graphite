@@ -236,6 +236,9 @@ auto graphite::data::reader::read_cstr(int64_t size, int64_t offset, graphite::d
         // Read a fixed chunk of memory and convert it to a string.
         auto data = read_bytes(size, offset, mode);
         std::vector<uint8_t> bytes(data.begin(), data.end());
+        while (!bytes.empty() && bytes.back() == 0) {
+            bytes.pop_back();
+        }
         return graphite::encoding::mac_roman::to_utf8(bytes);
     }
 }

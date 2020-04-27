@@ -87,6 +87,11 @@ namespace graphite { namespace rsrc {
         auto write(const std::string& path = "", enum format fmt = classic) -> void;
 
         /**
+         * Returns the name of the file.
+         */
+        auto name() const -> std::string;
+
+        /**
          * Returns the number of types contained in the resource file.
          */
         auto type_count() const -> std::size_t;

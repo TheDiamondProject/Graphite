@@ -63,9 +63,19 @@ namespace graphite { namespace rsrc {
         auto import_file(std::shared_ptr<file> file) -> void;
 
         /**
+         *
+         */
+        auto files() const -> std::vector<std::shared_ptr<file>>;
+
+        /**
          * Attempt to get the resource of the specified type and id.
          */
         auto find(const std::string& type, const int64_t& id) const -> std::weak_ptr<resource>;
+
+        /**
+         * Returns a list of type containers for the specified type code.
+         */
+        auto get_type(const std::string& type) const -> std::vector<std::weak_ptr<rsrc::type>>;
     };
 
 }}

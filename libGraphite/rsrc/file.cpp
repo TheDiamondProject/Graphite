@@ -44,6 +44,28 @@ auto graphite::rsrc::file::current_format() const -> graphite::rsrc::file::forma
 	return m_format;
 }
 
+auto graphite::rsrc::file::name() const -> std::string
+{
+    std::string out;
+    auto path = m_path;
+
+    while (!m_path.empty()) {
+        if (path.back() == '.') {
+            out.clear();
+            path.pop_back();
+        }
+        else if (path.back() == '/') {
+            return out;
+        }
+        else {
+            out.insert(out.begin(), path.back());
+            path.pop_back();
+        }
+    }
+
+    return out;
+}
+
 // MARK: - File Reading
 
 auto graphite::rsrc::file::read(const std::string& path) -> void

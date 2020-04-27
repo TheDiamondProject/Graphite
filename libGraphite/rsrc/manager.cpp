@@ -42,6 +42,11 @@ auto graphite::rsrc::manager::import_file(std::shared_ptr<graphite::rsrc::file> 
     m_files.push_back(file);
 }
 
+auto graphite::rsrc::manager::files() const -> std::vector<std::shared_ptr<file>>
+{
+    return m_files;
+}
+
 // MARK: - Resource Look Up
 
 auto graphite::rsrc::manager::find(const std::string& type, const int64_t& id) const -> std::weak_ptr<graphite::rsrc::resource>
@@ -53,4 +58,13 @@ auto graphite::rsrc::manager::find(const std::string& type, const int64_t& id) c
         }
     }
     return std::weak_ptr<graphite::rsrc::resource>();
+}
+
+auto graphite::rsrc::manager::get_type(const std::string &type) const -> std::vector<std::weak_ptr<rsrc::type>>
+{
+    std::vector<std::weak_ptr<rsrc::type>> v;
+    for (auto i = m_files.rbegin(); i != m_files.rend(); ++i) {
+        v.emplace_back((*i)->type_container(type));
+    }
+    return v;
 }
