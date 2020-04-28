@@ -217,11 +217,12 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
     uint32_t height = source_rect.height();
     uint32_t width = source_rect.width();
     uint32_t bounds_width = bounds.width();
+    auto packing_enabled = ((pack_type == 3 ? 2 : 1) + (row_bytes > 250 ? 2 : 1)) <= bounds_width;
 
     for (uint32_t scanline = 0; scanline < height; ++scanline) {
         raw.clear();
 
-        if (pack_type > 2) {
+        if (pack_type > 2 && packing_enabled) {
             if (row_bytes > 250) {
                 packed_bytes_count = pict_reader.read_short();
             }
@@ -274,17 +275,17 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
     if (pack_type == 3) {
         for (uint32_t p = 0, i = 0; i < source_length; ++i) {
             uint16_t v = px_short_buffer[i];
-            rgb[p++] = graphite::qd::color(static_cast<uint8_t>((v & 0x001f) << 3),
+            rgb[p++] = graphite::qd::color(static_cast<uint8_t>(((v & 0x7c00) >> 10) << 3),
                                            static_cast<uint8_t>(((v & 0x03e0) >> 5) << 3),
-                                           static_cast<uint8_t>(((v & 0x7c00) >> 10) << 3));
+                                           static_cast<uint8_t>((v & 0x001f) << 3));
         }
     }
     else {
         for (uint32_t p = 0, i = 0; i < source_length; ++i) {
             uint32_t v = px_long_buffer[i];
-            rgb[p++] = graphite::qd::color(static_cast<uint8_t>((v & 0xFF0000) >> 16),
+            rgb[p++] = graphite::qd::color(static_cast<uint8_t>(v & 0xFF),
                                            static_cast<uint8_t>((v & 0xFF00) >> 8),
-                                           static_cast<uint8_t>(v & 0xFF),
+                                           static_cast<uint8_t>((v & 0xFF0000) >> 16),
                                            static_cast<uint8_t>((v & 0xFF000000) >> 24));
         }
     }
