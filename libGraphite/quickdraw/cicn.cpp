@@ -83,7 +83,7 @@ auto graphite::qd::cicn::parse(graphite::data::reader& reader) -> void
         }
 
     }
-    else if (m_pixmap.cmp_size() == 1 && m_pixmap.cmp_count() == 2) {
+    else if ((m_pixmap.cmp_size() == 1 && m_pixmap.cmp_count() == 2) || (m_pixmap.cmp_size() == 2 && m_pixmap.cmp_count() == 1)) {
 
         for (auto y = 0; y < m_pixmap.bounds().height(); ++y) {
             auto y_offset = (y * m_pixmap.row_bytes());
@@ -104,7 +104,7 @@ auto graphite::qd::cicn::parse(graphite::data::reader& reader) -> void
         }
 
     }
-    else if (m_pixmap.cmp_size() == 1 && m_pixmap.cmp_count() == 4) {
+    else if ((m_pixmap.cmp_size() == 1 && m_pixmap.cmp_count() == 4) || (m_pixmap.cmp_size() == 4 && m_pixmap.cmp_count() == 1)) {
 
         for (auto y = 0; y < m_pixmap.bounds().height(); ++y) {
             auto y_offset = (y * m_pixmap.row_bytes());
@@ -125,7 +125,7 @@ auto graphite::qd::cicn::parse(graphite::data::reader& reader) -> void
         }
 
     }
-    else if (m_pixmap.cmp_size() == 1 && m_pixmap.cmp_count() == 8) {
+    else if ((m_pixmap.cmp_size() == 1 && m_pixmap.cmp_count() == 8) || (m_pixmap.cmp_size() == 8 && m_pixmap.cmp_count() == 1)) {
 
         for (auto y = 0; y < m_pixmap.bounds().height(); ++y) {
             auto y_offset = (y * m_pixmap.row_bytes());
