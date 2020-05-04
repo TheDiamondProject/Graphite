@@ -5,6 +5,7 @@
 #include <libGraphite/rsrc/manager.hpp>
 #include "libGraphite/quickdraw/pict.hpp"
 #include "libGraphite/quickdraw/internal/packbits.hpp"
+#include "libGraphite/quickdraw/clut.hpp"
 
 // MARK: - Constants
 
@@ -90,22 +91,34 @@ auto graphite::qd::pict::read_pack_bits_rect(graphite::data::reader & pict_reade
     int16_t cmp_size;
     int16_t row_bytes;
     graphite::qd::rect bounds(0, 0, 0, 0);
+    qd::clut color_table;
 
     // Determine if we're dealing a PixMap or an old style BitMap
     bool is_pixmap = pict_reader.read_short(sizeof(uint32_t), data::reader::peek) & 0x8000;
-    if (is_pixmap) {
+    if (!is_pixmap) {
+        // Most like an indexed Bitmap...
+        // WARNING: This is unverified code and will need to be further investigated to ensure correctness.
+        cmp_size = 1;
+        color_model = monochrome;
+        row_bytes = pict_reader.read_short() & 0x7FFF;
+        bounds = qd::rect::read(pict_reader, qd::rect::qd);
+
+        pict_reader.move(6);
+
+        double h_res = static_cast<double>(pict_reader.read_signed_long() / static_cast<double>(1 << 16));
+        double v_res = static_cast<double>(pict_reader.read_signed_long() / static_cast<double>(1 << 16));
+
+        pict_reader.move(22);
+
+        // Color Table
+        color_table = qd::clut(pict_reader);
+    }
+    else {
         graphite::qd::pixmap pm = graphite::qd::pixmap(pict_reader.read_data(qd::pixmap::length));
         cmp_size = pm.cmp_size();
         color_model = pm.pixel_format();
         row_bytes = pm.row_bytes();
         bounds = pm.bounds();
-    }
-    else {
-        // Old style bitmap
-        cmp_size = 1;
-        color_model = monochrome;
-        row_bytes = pict_reader.read_short() & 0x7FFF;
-        bounds = qd::rect::read(pict_reader, qd::rect::qd);
     }
 
     // Read the source and destination bounds
@@ -119,6 +132,8 @@ auto graphite::qd::pict::read_pack_bits_rect(graphite::data::reader & pict_reade
     std::vector<uint8_t> rgb;
     std::size_t rgb_buffer_offset = 0;
     uint16_t packed_bytes_count = 0;
+    uint32_t source_length = source_rect.width() * source_rect.height();
+    std::vector<graphite::qd::color> surface_data;
 
     for (auto scanline = 0; scanline < source_rect.height(); ++scanline) {
         raw.clear();
@@ -139,13 +154,17 @@ auto graphite::qd::pict::read_pack_bits_rect(graphite::data::reader & pict_reade
         }
 
         rgb_buffer_offset += row_bytes;
-        rgb.insert(rgb.end(), raw.begin(), raw.end());
+        if (cmp_size == 1) {
+            for (auto component : raw) {
+                surface_data.emplace_back(color_table.get(component));
+            }
+        }
+        else {
+            rgb.insert(rgb.end(), raw.begin(), raw.end());
+        }
     }
 
-    uint32_t source_length = source_rect.width() * source_rect.height();
-    std::vector<graphite::qd::color> surface_data(source_length, graphite::qd::color::purple());
-
-    // TODO: This needs to be completed with the rgb data being converted to a surface.
+    m_surface = std::make_shared<graphite::qd::surface>(destination_rect.width(), destination_rect.height(), surface_data);
 }
 
 auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_reader) -> void
