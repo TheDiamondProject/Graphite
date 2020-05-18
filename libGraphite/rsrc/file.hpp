@@ -95,6 +95,11 @@ namespace graphite { namespace rsrc {
          * Returns the number of types contained in the resource file.
          */
         auto type_count() const -> std::size_t;
+        
+        /**
+         * Returns the list of all types contained in the resource file.
+         */
+        auto types() const -> std::vector<std::shared_ptr<type>>;
 
         /**
          * Reports the current format of the resource file.

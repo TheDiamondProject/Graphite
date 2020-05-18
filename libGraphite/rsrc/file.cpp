@@ -39,6 +39,11 @@ auto graphite::rsrc::file::type_count() const -> std::size_t
 	return m_types.size();
 }
 
+auto graphite::rsrc::file::types() const -> std::vector<std::shared_ptr<type>>
+{
+    return m_types;
+}
+
 auto graphite::rsrc::file::current_format() const -> graphite::rsrc::file::format
 {
 	return m_format;
