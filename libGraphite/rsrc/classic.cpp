@@ -238,6 +238,9 @@ auto graphite::rsrc::classic::write(const std::string& path, std::vector<std::sh
             // The data offset is a 3 byte (24-bit) value. This means the hi-byte needs discarding
             // and then a swap performing.
             auto offset = static_cast<uint32_t>(resource->data_offset());
+            if (offset > 0xFFFFFF) {
+                throw std::runtime_error("Attempted to write resource data offset exceeding maximum size.");
+            }
             writer->write_byte((offset >> 16) & 0xFF);
             writer->write_byte((offset >>  8) & 0xFF);
             writer->write_byte((offset >>  0) & 0xFF);
