@@ -58,7 +58,7 @@ auto graphite::data::data::size() const -> std::size_t
     if (m_size > 0) {
         return m_size;
     }
-    else if (m_data != nullptr) {
+    else if (m_data != nullptr && m_start == 0) {
         return m_data->size();
     }
     else {
