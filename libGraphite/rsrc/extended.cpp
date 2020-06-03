@@ -49,19 +49,19 @@ auto graphite::rsrc::extended::parse(std::shared_ptr<graphite::data::reader> rea
 	// Now move to the start of the resource map, and verify the contents of the preamble.
 	reader->set_position(map_offset);
 
-	if (reader->read_long() != data_offset) {
+	if (reader->read_quad() != data_offset) {
 		throw std::runtime_error("[Extended Resource File] Second Preamble 'data_offset' mismatch.");
 	}
 
-	if (reader->read_long() != map_offset) {
+	if (reader->read_quad() != map_offset) {
 		throw std::runtime_error("[Extended Resource File] Second Preamble 'map_offset' mismatch.");
 	}
 
-	if (reader->read_long() != data_length) {
+	if (reader->read_quad() != data_length) {
 		throw std::runtime_error("[Extended Resource File] Second Preamble 'data_length' mismatch.");
 	}
 
-	if (reader->read_long() != map_length) {
+	if (reader->read_quad() != map_length) {
 		throw std::runtime_error("[Extended Resource File] Second Preamble 'map_length' mismatch.");
 	}
 
