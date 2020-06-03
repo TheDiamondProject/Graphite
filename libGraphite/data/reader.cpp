@@ -152,7 +152,7 @@ auto graphite::data::reader::read_integer(int64_t offset, graphite::data::reader
     
     for (auto i = 0; i < size; ++i) {
         auto b = static_cast<uint8_t>(m_data->at(m_pos + offset + i));
-        v |= b << (i << 3);
+        v |= static_cast<T>(b) << (i << 3);
     }
     
     if (size > 1) {
