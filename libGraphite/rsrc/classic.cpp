@@ -215,7 +215,11 @@ auto graphite::rsrc::classic::write(const std::string& path, std::vector<std::sh
     for (auto type : types) {
         for (auto resource : type->resources()) {
             
-            writer->write_signed_short(static_cast<int16_t>(resource->id()));
+            auto id = resource->id();
+            if (id < SHRT_MIN || id > SHRT_MAX) {
+                throw std::runtime_error("Attempted to write resource id outside of valid range.");
+            }
+            writer->write_signed_short(static_cast<int16_t>(id));
             
             // The name is actually stored in the name list, and the resource stores an offset
             // to that name. If no name is assigned to the resource then the offset is encoded as
