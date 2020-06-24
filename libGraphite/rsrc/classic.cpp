@@ -41,7 +41,7 @@ auto graphite::rsrc::classic::parse(std::shared_ptr<graphite::data::reader> read
 		throw std::runtime_error("[Classic Resource File] ResourceMap starts at the unexpected location.");
 	}
 
-	if (rsrc_size != reader->size()) {
+	if (rsrc_size > reader->size()) {
 		throw std::runtime_error("[Classic Resource File] ResourceFile has unexpected length.");
 	}
 
