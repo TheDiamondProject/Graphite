@@ -41,7 +41,7 @@ auto graphite::rsrc::classic::parse(std::shared_ptr<graphite::data::reader> read
 		throw std::runtime_error("[Classic Resource File] ResourceMap starts at the unexpected location.");
 	}
 
-	if (rsrc_size != reader->size()) {
+	if (rsrc_size > reader->size()) {
 		throw std::runtime_error("[Classic Resource File] ResourceFile has unexpected length.");
 	}
 
@@ -215,7 +215,11 @@ auto graphite::rsrc::classic::write(const std::string& path, std::vector<std::sh
     for (auto type : types) {
         for (auto resource : type->resources()) {
             
-            writer->write_signed_short(static_cast<int16_t>(resource->id()));
+            auto id = resource->id();
+            if (id < SHRT_MIN || id > SHRT_MAX) {
+                throw std::runtime_error("Attempted to write resource id outside of valid range.");
+            }
+            writer->write_signed_short(static_cast<int16_t>(id));
             
             // The name is actually stored in the name list, and the resource stores an offset
             // to that name. If no name is assigned to the resource then the offset is encoded as
@@ -239,7 +243,7 @@ auto graphite::rsrc::classic::write(const std::string& path, std::vector<std::sh
             // and then a swap performing.
             auto offset = static_cast<uint32_t>(resource->data_offset());
             if (offset > 0xFFFFFF) {
-                throw std::runtime_error("Attempted to write resource data offset exceeding maximum size.");
+                throw std::runtime_error("Attempted to write resource file exceeding maximum size.");
             }
             writer->write_byte((offset >> 16) & 0xFF);
             writer->write_byte((offset >>  8) & 0xFF);
@@ -268,6 +272,10 @@ auto graphite::rsrc::classic::write(const std::string& path, std::vector<std::sh
             writer->write_byte(static_cast<uint8_t>(mac_roman.size()));
             writer->write_bytes(mac_roman);
         }
+    }
+    // Even if the data fits the spec, the resource manager will still not read files larger than 16MB
+    if (writer->size() > 0xFFFFFF) {
+        throw std::runtime_error("Attempted to write resource file exceeding maximum size.");
     }
     map_length = static_cast<uint16_t>(writer->size() - map_offset);
 
