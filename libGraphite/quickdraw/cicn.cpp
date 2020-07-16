@@ -158,6 +158,9 @@ auto graphite::qd::cicn::data() -> std::shared_ptr<graphite::data::data>
     auto data = std::make_shared<graphite::data::data>();
     auto writer = graphite::data::writer(data);
     auto width = m_surface->size().width();
+    // Bitmap/mask width must be a whole number of bytes
+    auto width8 = width;
+    if (width8 % 8) width8 += 8 - (width8 % 8);
     auto height = m_surface->size().height();
 
     // TODO: This is a brute force method of bringing down the color depth/number of colors required,
@@ -190,6 +193,9 @@ auto graphite::qd::cicn::data() -> std::shared_ptr<graphite::data::data>
                 mask_values.emplace_back((color.alpha_component() & 0x80) != 0);
                 color_values.emplace_back(m_clut.set(color));
             }
+            for (auto x = width; x < width8; ++x) {
+                mask_values.emplace_back(false);
+            }
         }
     } while(m_clut.size() >= 256);
 
@@ -200,7 +206,7 @@ auto graphite::qd::cicn::data() -> std::shared_ptr<graphite::data::data>
     graphite::data::writer mask_data(std::make_shared<graphite::data::data>());
     graphite::data::writer bmap_data(std::make_shared<graphite::data::data>());
     graphite::data::writer pmap_data(std::make_shared<graphite::data::data>());
-    m_mask_row_bytes = m_bmap_row_bytes = width >> 3;
+    m_mask_row_bytes = m_bmap_row_bytes = width8 >> 3;
 
     bmap_data.write_byte(0, m_bmap_row_bytes * height);
 
