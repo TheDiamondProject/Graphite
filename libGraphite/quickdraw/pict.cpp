@@ -302,9 +302,9 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
     else {
         for (uint32_t p = 0, i = 0; i < source_length; ++i) {
             uint32_t v = px_long_buffer[i];
-            rgb[p++] = graphite::qd::color(static_cast<uint8_t>(v & 0xFF),
+            rgb[p++] = graphite::qd::color(static_cast<uint8_t>((v & 0xFF0000) >> 16),
                                            static_cast<uint8_t>((v & 0xFF00) >> 8),
-                                           static_cast<uint8_t>((v & 0xFF0000) >> 16),
+                                           static_cast<uint8_t>(v & 0xFF),
                                            static_cast<uint8_t>((v & 0xFF000000) >> 24));
         }
     }
