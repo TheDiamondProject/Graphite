@@ -70,6 +70,7 @@ namespace graphite { namespace qd {
         auto set_cmp_size(const int16_t cmp_size) -> void;
         auto set_pm_table(const uint32_t pm_table) -> void;
 
+        auto build_pixel_data(std::vector<uint16_t> color_values, uint16_t pixel_size) -> std::shared_ptr<graphite::data::data>;
         auto write(graphite::data::writer& writer) -> void;
     };
 

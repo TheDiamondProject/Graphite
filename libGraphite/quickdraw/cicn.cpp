@@ -158,9 +158,6 @@ auto graphite::qd::cicn::data() -> std::shared_ptr<graphite::data::data>
     auto data = std::make_shared<graphite::data::data>();
     auto writer = graphite::data::writer(data);
     auto width = m_surface->size().width();
-    // Bitmap/mask width must be a whole number of bytes
-    auto width8 = width;
-    if (width8 % 8) width8 += 8 - (width8 % 8);
     auto height = m_surface->size().height();
 
     // TODO: This is a brute force method of bringing down the color depth/number of colors required,
@@ -193,9 +190,6 @@ auto graphite::qd::cicn::data() -> std::shared_ptr<graphite::data::data>
                 mask_values.emplace_back((color.alpha_component() & 0x80) != 0);
                 color_values.emplace_back(m_clut.set(color));
             }
-            for (auto x = width; x < width8; ++x) {
-                mask_values.emplace_back(false);
-            }
         }
     } while(m_clut.size() >= 256);
 
@@ -205,95 +199,43 @@ auto graphite::qd::cicn::data() -> std::shared_ptr<graphite::data::data>
     m_pixmap.set_bounds(qd::rect(point::zero(), m_surface->size()));
     graphite::data::writer mask_data(std::make_shared<graphite::data::data>());
     graphite::data::writer bmap_data(std::make_shared<graphite::data::data>());
-    graphite::data::writer pmap_data(std::make_shared<graphite::data::data>());
-    m_mask_row_bytes = m_bmap_row_bytes = width8 >> 3;
+    std::shared_ptr<graphite::data::data> pmap_data;
+    m_mask_row_bytes = m_bmap_row_bytes = (width - 1) / 8 + 1;
 
     bmap_data.write_byte(0, m_bmap_row_bytes * height);
 
     // Construct the mask data for the image.
-    uint8_t scratch = 0;
-    for (auto n = 0; n < mask_values.size(); ++n) {
-        // We need to write the scratch byte every 8th bit that is visited, and clear it.
-        auto bit_offset = n % 8;
-        if (bit_offset == 0 && n != 0) {
-            mask_data.write_byte(scratch);
-            scratch = 0;
-        }
-        uint8_t value = mask_values[n] ? 1 : 0;
-        value <<= (7 - bit_offset);
-        scratch |= value;
-    }
-    mask_data.write_byte(scratch);
-
-    if (m_clut.size() >= 256) {
-        throw std::runtime_error("Implementation does not currently handle more than 256 colors in a CICN");
-    }
-    else if (m_clut.size() >= 16) {
-        m_pixmap.set_pixel_size(8);
-        m_pixmap.set_cmp_size(8);
-        m_pixmap.set_cmp_count(1);
-        m_pixmap.set_row_bytes(m_surface->size().width());
-
-        for (auto n = 0; n < color_values.size(); ++n) {
-            pmap_data.write_byte(static_cast<uint8_t>(color_values[n] & 0xFF));
-        }
-    }
-    else if (m_clut.size() >= 4) {
-        m_pixmap.set_pixel_size(4);
-        m_pixmap.set_cmp_size(4);
-        m_pixmap.set_cmp_count(1);
-        m_pixmap.set_row_bytes(m_surface->size().width() >> 1);
-
-        scratch = 0;
-        for (auto n = 0; n < color_values.size(); ++n) {
-            auto bit_offset = n % 2;
-            if (bit_offset == 0 && n != 0) {
-                pmap_data.write_byte(scratch);
+    for (auto y = 0; y < height; ++y) {
+        uint8_t scratch = 0;
+        for (auto x = 0; x < width; ++x) {
+            // We need to write the scratch byte every 8th bit that is visited, and clear it.
+            auto bit_offset = x % 8;
+            if (bit_offset == 0 && x != 0) {
+                mask_data.write_byte(scratch);
                 scratch = 0;
             }
-            uint8_t value = static_cast<uint8_t>(color_values[n] & 0xF);
-            value <<= (4 - (bit_offset * 4));
-            scratch |= value;
-        }
-        pmap_data.write_byte(scratch);
-    }
-    else if (m_clut.size() >= 2) {
-        m_pixmap.set_pixel_size(2);
-        m_pixmap.set_cmp_size(2);
-        m_pixmap.set_cmp_count(1);
-        m_pixmap.set_row_bytes(m_surface->size().width() >> 2);
-
-        scratch = 0;
-        for (auto n = 0; n < color_values.size(); ++n) {
-            auto bit_offset = n % 4;
-            if (bit_offset == 0 && n != 0) {
-                pmap_data.write_byte(scratch);
-                scratch = 0;
-            }
-            uint8_t value = static_cast<uint8_t>(color_values[n] & 0x3);
-            value <<= (6 - (bit_offset * 2));
-            scratch |= value;
-        }
-        pmap_data.write_byte(scratch);
-    }
-    else {
-        m_pixmap.set_pixel_size(1);
-        m_pixmap.set_cmp_size(1);
-        m_pixmap.set_cmp_count(1);
-        m_pixmap.set_row_bytes(m_surface->size().width() >> 3);
-
-        scratch = 0;
-        for (auto n = 0; n < color_values.size(); ++n) {
-            auto bit_offset = n % 8;
-            if (bit_offset == 0 && n != 0) {
-                pmap_data.write_byte(scratch);
-                scratch = 0;
-            }
-            uint8_t value = static_cast<uint8_t>(color_values[n] & 0x1);
+            auto n = y * width + x;
+            uint8_t value = mask_values[n] ? 1 : 0;
             value <<= (7 - bit_offset);
             scratch |= value;
         }
-        pmap_data.write_byte(scratch);
+        mask_data.write_byte(scratch);
+    }
+
+    if (m_clut.size() > 256) {
+        throw std::runtime_error("Implementation does not currently handle more than 256 colors in a CICN");
+    }
+    else if (m_clut.size() > 16) {
+        pmap_data = m_pixmap.build_pixel_data(color_values, 8);
+    }
+    else if (m_clut.size() > 4) {
+        pmap_data = m_pixmap.build_pixel_data(color_values, 4);
+    }
+    else if (m_clut.size() > 2) {
+        pmap_data = m_pixmap.build_pixel_data(color_values, 2);
+    }
+    else {
+        pmap_data = m_pixmap.build_pixel_data(color_values, 1);
     }
 
     // Calculate some offsets
@@ -313,7 +255,7 @@ auto graphite::qd::cicn::data() -> std::shared_ptr<graphite::data::data>
     writer.write_data(mask_data.data());
     writer.write_data(bmap_data.data());
     m_clut.write(writer);
-    writer.write_data(pmap_data.data());
+    writer.write_data(pmap_data);
 
     return data;
 }
