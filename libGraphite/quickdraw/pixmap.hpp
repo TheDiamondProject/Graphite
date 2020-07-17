@@ -58,6 +58,7 @@ namespace graphite { namespace qd {
         auto cmp_count() const -> int16_t;
         auto cmp_size() const -> int16_t;
         auto pixel_format() const -> enum pixel_format;
+        auto pm_table() const -> uint32_t;
 
         auto set_bounds(const graphite::qd::rect rect) -> void;
         auto set_row_bytes(const int16_t row_bytes) -> void;
@@ -67,6 +68,7 @@ namespace graphite { namespace qd {
         auto set_pixel_size(const int16_t pixel_size) -> void;
         auto set_cmp_count(const int16_t cmp_count) -> void;
         auto set_cmp_size(const int16_t cmp_size) -> void;
+        auto set_pm_table(const uint32_t pm_table) -> void;
 
         auto write(graphite::data::writer& writer) -> void;
     };

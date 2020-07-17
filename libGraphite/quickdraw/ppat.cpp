@@ -1,0 +1,271 @@
+//
+// Created by Tom Hancocks on 17/07/2020.
+//
+
+#include "libGraphite/quickdraw/ppat.hpp"
+#include "libGraphite/rsrc/manager.hpp"
+#include <tuple>
+
+// MARK: - Constructor
+
+graphite::qd::ppat::ppat(std::shared_ptr<graphite::data::data> data, int64_t id, std::string name)
+        : m_id(id), m_name(name)
+{
+    data::reader reader(data);
+    parse(reader);
+}
+
+graphite::qd::ppat::ppat(std::shared_ptr<qd::surface> surface)
+        : m_surface(surface)
+{
+
+}
+
+auto graphite::qd::ppat::load_resource(int64_t id) -> std::shared_ptr<graphite::qd::ppat>
+{
+    if (auto res = graphite::rsrc::manager::shared_manager().find("ppat", id).lock()) {
+        return std::make_shared<graphite::qd::ppat>(res->data(), id, res->name());
+    }
+    return nullptr;
+}
+
+
+// MARK: - Accessors
+
+auto graphite::qd::ppat::surface() const -> std::weak_ptr<graphite::qd::surface>
+{
+    return m_surface;
+}
+
+// MARK: - Parser
+
+auto graphite::qd::ppat::parse(graphite::data::reader& reader) -> void
+{
+    m_pat_type = reader.read_short();
+    if (m_pat_type != 1) {
+        throw std::runtime_error("Currently unsupported ppat configuration: pat_type=" +
+                                 std::to_string(m_pat_type));
+    }
+
+    m_pmap_base_addr = reader.read_long();
+    m_pat_base_addr = reader.read_long();
+
+    reader.set_position(m_pmap_base_addr);
+    m_pixmap = graphite::qd::pixmap(reader.read_data(qd::pixmap::length));
+
+    reader.set_position(m_pat_base_addr);
+    auto pmap_data_size = m_pixmap.row_bytes() * m_pixmap.bounds().height();
+    auto pmap_data = reader.read_data(pmap_data_size);
+
+    reader.set_position(m_pixmap.pm_table());
+    m_clut = qd::clut(reader);
+
+    // Now that all information has been extracted from the resource, proceed and attempt to render it.
+    m_surface = std::make_shared<graphite::qd::surface>(m_pixmap.bounds().width(), m_pixmap.bounds().height());
+
+    if (m_pixmap.cmp_size() == 1 && m_pixmap.cmp_count() == 1) {
+
+        for (auto y = 0; y < m_pixmap.bounds().height(); ++y) {
+            auto y_offset = (y * m_pixmap.row_bytes());
+
+            for (auto x = 0; x < m_pixmap.bounds().width(); ++x) {
+                auto byte_offset = 7 - (x % 8);
+
+                auto byte = pmap_data->at(y_offset + (x / 8));
+                auto v = (byte >> byte_offset) & 0x1;
+
+                m_surface->set(x, y, m_clut.get(v));
+            }
+        }
+
+    }
+    else if ((m_pixmap.cmp_size() == 1 && m_pixmap.cmp_count() == 2) || (m_pixmap.cmp_size() == 2 && m_pixmap.cmp_count() == 1)) {
+
+        for (auto y = 0; y < m_pixmap.bounds().height(); ++y) {
+            auto y_offset = (y * m_pixmap.row_bytes());
+
+            for (auto x = 0; x < m_pixmap.bounds().width(); ++x) {
+                auto byte_offset = (3 - (x % 4)) << 1;
+
+                auto byte = pmap_data->at(y_offset + (x / 4));
+                auto v = (byte >> byte_offset) & 0x3;
+
+                m_surface->set(x, y, m_clut.get(v));
+            }
+        }
+
+    }
+    else if ((m_pixmap.cmp_size() == 1 && m_pixmap.cmp_count() == 4) || (m_pixmap.cmp_size() == 4 && m_pixmap.cmp_count() == 1)) {
+
+        for (auto y = 0; y < m_pixmap.bounds().height(); ++y) {
+            auto y_offset = (y * m_pixmap.row_bytes());
+
+            for (auto x = 0; x < m_pixmap.bounds().width(); ++x) {
+                auto byte_offset = (1 - (x % 2)) << 2;
+
+                auto byte = pmap_data->at(y_offset + (x / 2));
+                auto v = (byte >> byte_offset) & 0xF;
+
+                m_surface->set(x, y, m_clut.get(v));
+            }
+        }
+
+    }
+    else if ((m_pixmap.cmp_size() == 1 && m_pixmap.cmp_count() == 8) || (m_pixmap.cmp_size() == 8 && m_pixmap.cmp_count() == 1)) {
+
+        for (auto y = 0; y < m_pixmap.bounds().height(); ++y) {
+            auto y_offset = (y * m_pixmap.row_bytes());
+
+            for (auto x = 0; x < m_pixmap.bounds().width(); ++x) {
+                auto byte = static_cast<uint8_t>(pmap_data->at(y_offset + x));
+
+                m_surface->set(x, y, m_clut.get(byte));
+            }
+        }
+
+    }
+    else {
+        throw std::runtime_error("Currently unsupported ppat configuration: cmp_size=" +
+                                 std::to_string(m_pixmap.cmp_size()) +
+                                 ", cmp_count=" + std::to_string(m_pixmap.cmp_count()));
+    }
+}
+
+// MARK: - Encoder
+
+auto graphite::qd::ppat::data() -> std::shared_ptr<graphite::data::data>
+{
+    auto data = std::make_shared<graphite::data::data>();
+    auto writer = graphite::data::writer(data);
+    auto width = m_surface->size().width();
+    auto height = m_surface->size().height();
+
+    // TODO: This is a brute force method of bringing down the color depth/number of colors required,
+    // for a ppat image. It doesn't optimise for image quality at all, and should be replaced at somepoint.
+    std::vector<uint16_t> color_values;
+    uint8_t pass = 0;
+    do {
+        if (pass++ > 0) {
+            for (auto y = 0; y < height; ++y) {
+                for (auto x = 0; x < width; ++x) {
+                    auto color = m_surface->at(x, y);
+                    m_surface->set(x, y, qd::color(
+                            color.red_component() & ~(1 << pass),
+                            color.green_component() & ~(1 << pass),
+                            color.blue_component() & ~(1 << pass),
+                            color.alpha_component()
+                    ));
+                }
+            }
+        }
+
+        // Rebuild the Color Table for the surface. To do this we want to create an empty table, and populate it.
+        m_clut = qd::clut();
+        color_values.clear();
+        for (auto y = 0; y < height; ++y) {
+            for (auto x = 0; x < width; ++x) {
+                auto color = m_surface->at(x, y);
+                color_values.emplace_back(m_clut.set(color));
+            }
+        }
+    } while(m_clut.size() >= 256);
+
+
+    // Determine what component configuration we need.
+    m_pixmap = qd::pixmap();
+    m_pixmap.set_bounds(qd::rect(point::zero(), m_surface->size()));
+    graphite::data::writer pmap_data(std::make_shared<graphite::data::data>());
+
+    uint8_t scratch = 0;
+
+    if (m_clut.size() >= 256) {
+        throw std::runtime_error("Implementation does not currently handle more than 256 colors in a PPAT");
+    }
+    else if (m_clut.size() >= 16) {
+        m_pixmap.set_pixel_size(8);
+        m_pixmap.set_cmp_size(8);
+        m_pixmap.set_cmp_count(1);
+        m_pixmap.set_row_bytes(m_surface->size().width());
+
+        for (auto n = 0; n < color_values.size(); ++n) {
+            pmap_data.write_byte(static_cast<uint8_t>(color_values[n] & 0xFF));
+        }
+    }
+    else if (m_clut.size() >= 4) {
+        m_pixmap.set_pixel_size(4);
+        m_pixmap.set_cmp_size(4);
+        m_pixmap.set_cmp_count(1);
+        m_pixmap.set_row_bytes(m_surface->size().width() >> 1);
+
+        scratch = 0;
+        for (auto n = 0; n < color_values.size(); ++n) {
+            auto bit_offset = n % 2;
+            if (bit_offset == 0 && n != 0) {
+                pmap_data.write_byte(scratch);
+                scratch = 0;
+            }
+            uint8_t value = static_cast<uint8_t>(color_values[n] & 0xF);
+            value <<= (4 - (bit_offset * 4));
+            scratch |= value;
+        }
+        pmap_data.write_byte(scratch);
+    }
+    else if (m_clut.size() >= 2) {
+        m_pixmap.set_pixel_size(2);
+        m_pixmap.set_cmp_size(2);
+        m_pixmap.set_cmp_count(1);
+        m_pixmap.set_row_bytes(m_surface->size().width() >> 2);
+
+        scratch = 0;
+        for (auto n = 0; n < color_values.size(); ++n) {
+            auto bit_offset = n % 4;
+            if (bit_offset == 0 && n != 0) {
+                pmap_data.write_byte(scratch);
+                scratch = 0;
+            }
+            uint8_t value = static_cast<uint8_t>(color_values[n] & 0x3);
+            value <<= (6 - (bit_offset * 2));
+            scratch |= value;
+        }
+        pmap_data.write_byte(scratch);
+    }
+    else {
+        m_pixmap.set_pixel_size(1);
+        m_pixmap.set_cmp_size(1);
+        m_pixmap.set_cmp_count(1);
+        m_pixmap.set_row_bytes(m_surface->size().width() >> 3);
+
+        scratch = 0;
+        for (auto n = 0; n < color_values.size(); ++n) {
+            auto bit_offset = n % 8;
+            if (bit_offset == 0 && n != 0) {
+                pmap_data.write_byte(scratch);
+                scratch = 0;
+            }
+            uint8_t value = static_cast<uint8_t>(color_values[n] & 0x1);
+            value <<= (7 - bit_offset);
+            scratch |= value;
+        }
+        pmap_data.write_byte(scratch);
+    }
+
+    // Calculate some offsets
+    m_pat_type = 1;
+    m_pmap_base_addr = 28;
+    m_pat_base_addr = m_pmap_base_addr + 50;
+    m_pixmap.set_pm_table(m_pat_base_addr + pmap_data.size());
+
+    // Write out the image data for the ppat.
+    writer.write_short(m_pat_type);
+    writer.write_long(m_pmap_base_addr);
+    writer.write_long(m_pat_base_addr);
+    writer.write_long(0);
+    writer.write_short(0);
+    writer.write_long(0);
+    writer.write_quad(0);
+    m_pixmap.write(writer);
+    writer.write_data(pmap_data.data());
+    m_clut.write(writer);
+
+    return data;
+}
