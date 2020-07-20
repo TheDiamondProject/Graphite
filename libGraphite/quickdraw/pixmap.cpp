@@ -143,7 +143,56 @@ auto graphite::qd::pixmap::pixel_format() const -> enum graphite::qd::pixel_form
     return m_pixel_format;
 }
 
+auto graphite::qd::pixmap::pm_table() const -> uint32_t
+{
+    return m_pm_table;
+}
+
+auto graphite::qd::pixmap::set_pm_table(const uint32_t pm_table) -> void
+{
+    m_pm_table = pm_table;
+}
+
 // MARK: -
+
+auto graphite::qd::pixmap::build_pixel_data(std::vector<uint16_t> color_values, uint16_t pixel_size) -> std::shared_ptr<graphite::data::data>
+{
+    graphite::data::writer pmap_data(std::make_shared<graphite::data::data>());
+    m_pixel_size = m_cmp_size = pixel_size;
+    m_cmp_count = 1;
+
+    if (pixel_size == 8) {
+        m_row_bytes = m_bounds.width();
+        for (auto n = 0; n < color_values.size(); ++n) {
+            pmap_data.write_byte(static_cast<uint8_t>(color_values[n] & 0xFF));
+        }
+    }
+    else {
+        auto width = m_bounds.width();
+        auto mod = 8 / pixel_size;
+        m_row_bytes = (width - 1) / mod + 1;
+        auto mask = (1 << pixel_size) - 1;
+        auto diff = 8 - pixel_size;
+
+        for (auto y = 0; y < m_bounds.height(); ++y) {
+            uint8_t scratch = 0;
+            for (auto x = 0; x < width; ++x) {
+                auto bit_offset = x % mod;
+                if (bit_offset == 0 && x != 0) {
+                    pmap_data.write_byte(scratch);
+                    scratch = 0;
+                }
+                auto n = y * width + x;
+                uint8_t value = static_cast<uint8_t>(color_values[n] & mask);
+                value <<= (diff - (bit_offset * pixel_size));
+                scratch |= value;
+            }
+            pmap_data.write_byte(scratch);
+        }
+    }
+
+    return pmap_data.data();
+}
 
 auto graphite::qd::pixmap::write(graphite::data::writer& writer) -> void
 {
