@@ -385,6 +385,10 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
             case opcode::def_hilite: {
                 break;
             }
+            case opcode::compressed_quicktime:
+            case opcode::uncompressed_quicktime: {
+                throw std::runtime_error("Encountered an incompatible PICT: " + std::to_string(m_id) + ", " + m_name);
+            }
         }
     }
 }
