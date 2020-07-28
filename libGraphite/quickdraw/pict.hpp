@@ -28,6 +28,8 @@ namespace graphite { namespace qd {
             def_hilite = 0x001e,
             long_comment = 0x00a1,
             ext_header = 0x0c00,
+            compressed_quicktime = 0x8200,
+            uncompressed_quicktime = 0x8201,
         };
 
     private:
