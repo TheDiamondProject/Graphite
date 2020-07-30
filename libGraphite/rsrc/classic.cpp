@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 #include <iostream>
+#include <limits>
 #include "libGraphite/rsrc/classic.hpp"
 #include "libGraphite/encoding/macroman/macroman.hpp"
 
@@ -216,7 +217,7 @@ auto graphite::rsrc::classic::write(const std::string& path, std::vector<std::sh
         for (auto resource : type->resources()) {
             
             auto id = resource->id();
-            if (id < SHRT_MIN || id > SHRT_MAX) {
+            if (id < std::numeric_limits<int16_t>::min() || id > std::numeric_limits<int16_t>::max()) {
                 throw std::runtime_error("Attempted to write resource id outside of valid range.");
             }
             writer->write_signed_short(static_cast<int16_t>(id));
