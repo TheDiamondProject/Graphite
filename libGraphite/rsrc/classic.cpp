@@ -105,7 +105,7 @@ auto graphite::rsrc::classic::parse(std::shared_ptr<graphite::data::reader> read
 
 			// 5. Parse out of the name of the resource.
 			std::string name = "";
-			if (name_offset != UINT16_MAX) {
+			if (name_offset != std::numeric_limits<uint16_t>::max()) {
 				reader->save_position();
 				reader->set_position(map_offset + name_list_offset + name_offset);
 				name = reader->read_pstr();

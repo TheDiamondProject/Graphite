@@ -2,6 +2,7 @@
 // Created by Tom Hancocks on 25/03/2020.
 //
 
+#include <limits>
 #include "libGraphite/quickdraw/clut.hpp"
 #include "libGraphite/rsrc/manager.hpp"
 
@@ -20,7 +21,7 @@ graphite::qd::clut::clut(std::shared_ptr<graphite::data::data> data, int64_t id,
 }
 
 graphite::qd::clut::clut(graphite::data::reader& reader)
-    : m_id(INT64_MAX), m_name("Embedded `clut` resource")
+    : m_id(std::numeric_limits<int64_t>::max()), m_name("Embedded `clut` resource")
 {
     parse(reader);
 }

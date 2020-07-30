@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 #include <iostream>
+#include <limits>
 #include "libGraphite/rsrc/extended.hpp"
 #include "libGraphite/encoding/macroman/macroman.hpp"
 
@@ -105,7 +106,7 @@ auto graphite::rsrc::extended::parse(std::shared_ptr<graphite::data::reader> rea
 
 			// 5. Parse out of the name of the resource.
 			std::string name = "";
-			if (name_offset != UINT64_MAX) {
+			if (name_offset != std::numeric_limits<uint64_t>::max()) {
 				reader->save_position();
 				reader->set_position(map_offset + name_list_offset + name_offset);
 				name = reader->read_pstr();
@@ -222,7 +223,7 @@ auto graphite::rsrc::extended::write(const std::string& path, std::vector<std::s
             // to that name. If no name is assigned to the resource then the offset is encoded as
             // 0xFFFFFFFFFFFFFFFF.
             if (resource->name().empty()) {
-                writer->write_quad(UINT64_MAX);
+                writer->write_quad(std::numeric_limits<uint64_t>::max());
             }
             else {
                 // Convert the name to MacRoman so that we can get the length of it when encoded.
