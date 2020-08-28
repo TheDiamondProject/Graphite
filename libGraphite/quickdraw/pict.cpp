@@ -148,6 +148,8 @@ auto graphite::qd::pict::read_pack_bits_rect(graphite::data::reader & pict_reade
 
             auto packed_data = read_bytes(pict_reader, packed_bytes_count);
             qd::packbits::decode(raw, packed_data, sizeof(uint8_t));
+            // Decoded packbits may contain more data than the row requires - trim it to width
+            raw.resize(source_rect.width());
         }
         else {
             raw = read_bytes(pict_reader, row_bytes);
