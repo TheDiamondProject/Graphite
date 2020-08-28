@@ -280,7 +280,7 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
                 for (uint32_t x = 0; x < width; x++) {
                     px_long_buffer[px_buffer_offset + x] =
                             ((raw[x] & 0xFF) << 24)
-                            | ((raw[bounds_width] & 0xFF) << 16)
+                            | ((raw[bounds_width + x] & 0xFF) << 16)
                             | ((raw[2 * bounds_width + x] & 0xFF) << 8)
                             | (raw[3 * bounds_width + x] & 0xFF);
                 }
