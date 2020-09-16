@@ -47,6 +47,9 @@ auto graphite::qd::clut::at(int index) const -> graphite::qd::color
 
 auto graphite::qd::clut::get(int value) const -> graphite::qd::color
 {
+    if (m_flags == device) {
+        return at(value);
+    }
     for (auto entry : m_entries) {
         if (std::get<0>(entry) == value) {
             return std::get<1>(entry);
