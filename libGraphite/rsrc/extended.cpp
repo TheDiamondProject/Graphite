@@ -80,6 +80,7 @@ auto graphite::rsrc::extended::parse(std::shared_ptr<graphite::data::reader> rea
 	// The next fields are the offsets of the type list and the name list.
 	auto type_list_offset = static_cast<uint64_t>(reader->read_quad());
 	auto name_list_offset = static_cast<uint64_t>(reader->read_quad());
+	auto attribute_list_offset = static_cast<uint64_t>(reader->read_quad());
 
 	// 3. Parse the list of Resource Types.
 	reader->set_position(map_offset + type_list_offset);
@@ -90,11 +91,21 @@ auto graphite::rsrc::extended::parse(std::shared_ptr<graphite::data::reader> rea
 		auto code = reader->read_cstr(4);
 		auto count = static_cast<uint64_t>(reader->read_quad() + 1);
 		auto first_resource_offset = static_cast<uint64_t>(reader->read_quad());
+		auto attribute_offset = static_cast<uint64_t>(reader->read_quad());
 
-		auto type = std::make_shared<graphite::rsrc::type>(code);
-
-		// 4. Parse the list of Resources for the current resource type.
+		// 4. Extract the list of attributes before we create the type, as they are needed for actually building the
+		// type.
 		reader->save_position();
+		reader->set_position(attribute_list_offset + attribute_offset);
+
+		std::map<std::string, std::string> attributes;
+		auto attribute_count = static_cast<uint64_t>(reader->read_quad());
+		for (auto i = 0; i < attribute_count; ++i) {
+		    attributes.insert(std::make_pair(reader->read_cstr(), reader->read_cstr()));
+		}
+		auto type = std::make_shared<graphite::rsrc::type>(code, attributes);
+
+		// 5. Parse the list of Resources for the current resource type.
 		reader->set_position(map_offset + type_list_offset + first_resource_offset);
 
 		for (auto res_idx = 0; res_idx < count; ++res_idx) {
@@ -104,8 +115,8 @@ auto graphite::rsrc::extended::parse(std::shared_ptr<graphite::data::reader> rea
 			auto resource_data_offset = reader->read_quad();
 			auto handle __attribute__((unused)) = reader->read_long();
 
-			// 5. Parse out of the name of the resource.
-			std::string name = "";
+			// 6. Parse out of the name of the resource.
+			std::string name;
 			if (name_offset != std::numeric_limits<uint64_t>::max()) {
 				reader->save_position();
 				reader->set_position(map_offset + name_list_offset + name_offset);
@@ -113,21 +124,21 @@ auto graphite::rsrc::extended::parse(std::shared_ptr<graphite::data::reader> rea
 				reader->restore_position();
 			}
 
-			// 6. Create a data slice for the resource's data.
+			// 7. Create a data slice for the resource's data.
 			reader->save_position();
 			reader->set_position(data_offset + resource_data_offset);
 			auto data_size = reader->read_quad();
 			auto slice = reader->read_data(data_size);
 			reader->restore_position();
 
-			// 7. Construct a new resource instance, and add it to the type.
+			// 8. Construct a new resource instance, and add it to the type.
 			auto resource = std::make_shared<graphite::rsrc::resource>(id, type, name, slice);
 			type->add_resource(resource);
 		}
 
 		reader->restore_position();
 
-		// 8. Save the resource type into the list of types and return it.
+		// 9. Save the resource type into the list of types and return it.
 		types.push_back(type);
 	}
 
@@ -156,10 +167,10 @@ auto graphite::rsrc::extended::write(const std::string& path, std::vector<std::s
 	// 2. Iterate through all of the resources and write their data blobs to the file data.
     // When doing this we need to record the starting points of each resources data, as
     uint16_t resource_count = 0;
-    for (auto type : types) {
+    for (const auto& type : types) {
         resource_count += type->count();
         
-        for (auto resource : type->resources()) {
+        for (const auto& resource : type->resources()) {
             // Get the data for the resource and determine its size.
             auto data = resource->data();
             auto size = data->size();
@@ -186,19 +197,25 @@ auto graphite::rsrc::extended::write(const std::string& path, std::vector<std::s
     
     // 4. We're now writing the primary map information, which includes flags, and offsets for
     // the type list and the name list. We can calculate where each of these will be.
-    const uint64_t resource_type_length = 20;
+    const uint64_t resource_type_length = 28;
     const uint64_t resource_length = 29;
-    uint64_t type_list_offset = 56; // The type list is 56 bytes from the start of the resource map.
+    uint64_t type_list_offset = 64; // The type list is 64 bytes from the start of the resource map.
     uint64_t name_list_offset = type_list_offset + (types.size() * resource_type_length) + (resource_count * resource_length) + sizeof(uint64_t);
+    uint64_t attribute_list_offset = 0;
+    uint64_t attribute_list_offset_position = 0;
     
     writer->write_short(0x0000);
     writer->write_quad(type_list_offset);
     writer->write_quad(name_list_offset);
 
+    attribute_list_offset_position = writer->position();
+    writer->write_quad(attribute_list_offset_position);
+
     // Now moving on to actually writing each of the type descriptors into the data.
-    uint16_t resource_offset = sizeof(uint64_t) + (types.size() * resource_type_length);
+    uint64_t attribute_offset = 0;
+    uint64_t resource_offset = sizeof(uint64_t) + (types.size() * resource_type_length);
     writer->write_quad(types.size() - 1);
-    for (auto type : types) {
+    for (const auto& type : types) {
         // We need to ensure that the type code is 4 characters -- otherwise this file will be
         // massively corrupt when produced.
         auto mac_roman = graphite::encoding::mac_roman::from_utf8(type->code());
@@ -208,14 +225,20 @@ auto graphite::rsrc::extended::write(const std::string& path, std::vector<std::s
         writer->write_bytes(mac_roman);
         writer->write_quad(type->count() - 1);
         writer->write_quad(resource_offset);
-        
+        writer->write_quad(attribute_offset);
+
+        std::cout << "adding type: " << type->code() << type->attributes_string() << std::endl;
+
+        for (const auto& attribute : type->attributes()) {
+            attribute_offset += sizeof(uint64_t) + attribute.first.size() + attribute.second.size() + 2;
+        }
         resource_offset += type->count() * resource_length;
     }
     
     // 5. Now we're writing the actual resource headers.
-    uint16_t name_offset = 0;
-    for (auto type : types) {
-        for (auto resource : type->resources()) {
+    uint64_t name_offset = 0;
+    for (const auto& type : types) {
+        for (const auto& resource : type->resources()) {
             
             writer->write_signed_quad(resource->id());
             
@@ -242,10 +265,10 @@ auto graphite::rsrc::extended::write(const std::string& path, std::vector<std::s
         }
     }
     
-    // 6. Finally we write out each of the resource names, and calculate the map length.
+    // 6. Write out each of the resource names, and calculate the map length.
     name_offset = 0;
-    for (auto type : types) {
-        for (auto resource : type->resources()) {
+    for (const auto& type : types) {
+        for (const auto& resource : type->resources()) {
             if (resource->name().empty()) {
                 continue;
             }
@@ -260,9 +283,31 @@ auto graphite::rsrc::extended::write(const std::string& path, std::vector<std::s
             writer->write_bytes(mac_roman);
         }
     }
+
+    // 7. Finally write out a list of attributes, but make sure the actual location of this attribute list is
+    // kept correct.
+    auto pos = writer->position();
+    writer->set_position(attribute_list_offset_position);
+    writer->write_quad(pos);
+    writer->set_position(pos);
+
+    attribute_offset = 0;
+    for (const auto& type : types) {
+        const auto& attributes = type->attributes();
+
+        auto initial = writer->position();
+        writer->write_quad(attributes.size());
+
+        for (const auto& attribute : attributes) {
+            writer->write_cstr(attribute.first);
+            writer->write_cstr(attribute.second);
+        }
+
+        attribute_offset += (writer->position() - initial);
+    }
     map_length = static_cast<uint64_t>(writer->size() - map_offset);
 
-    // 7. Fix the preamble values.
+    // 8. Fix the preamble values.
     writer->set_position(sizeof(uint64_t));
     writer->write_quad(data_offset);
     writer->write_quad(map_offset);

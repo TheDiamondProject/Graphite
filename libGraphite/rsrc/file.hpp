@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <map>
 #include "libGraphite/data/data.hpp"
 #include "libGraphite/rsrc/type.hpp"
 
@@ -72,7 +73,7 @@ namespace graphite { namespace rsrc {
          * Construct a new `graphite::rsrc::file` by loading the contents of the specified
          * file.
          */
-        file(const std::string& path);
+        explicit file(const std::string& path);
 
         /**
          * Read and parse the contents of the resource file at the specified location.
@@ -109,18 +110,23 @@ namespace graphite { namespace rsrc {
         /**
          * Add a resource into the receiver.
          */
-        auto add_resource(const std::string& type, int64_t id, const std::string& name, std::shared_ptr<graphite::data::data> data) -> void;
+        auto add_resource(const std::string& type,
+                          const int64_t& id,
+                          const std::string& name,
+                          const std::shared_ptr<graphite::data::data>& data,
+                          const std::map<std::string, std::string>& attributes = {}) -> void;
 
         /**
          * Retrieve a type container for the specified type code. If a container
          * does not exist then create one.
          */
-        auto type_container(const std::string& code) -> std::weak_ptr<graphite::rsrc::type>;
+        auto type_container(const std::string& code,
+                            const std::map<std::string, std::string>& attributes = {}) -> std::weak_ptr<graphite::rsrc::type>;
 
         /**
          * Attempt to get the resource of the specified type and id.
          */
-        auto find(const std::string& type, const int64_t& id) -> std::weak_ptr<resource>;
+        auto find(const std::string& type, const int64_t& id, const std::map<std::string, std::string> &attributes) -> std::weak_ptr<resource>;
     };
 
 }}

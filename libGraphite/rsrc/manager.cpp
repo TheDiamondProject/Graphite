@@ -49,10 +49,10 @@ auto graphite::rsrc::manager::files() const -> std::vector<std::shared_ptr<file>
 
 // MARK: - Resource Look Up
 
-auto graphite::rsrc::manager::find(const std::string& type, const int64_t& id) const -> std::weak_ptr<graphite::rsrc::resource>
+auto graphite::rsrc::manager::find(const std::string& type, const int64_t& id, const std::map<std::string, std::string>& attributes) const -> std::weak_ptr<graphite::rsrc::resource>
 {
     for (auto i = m_files.rbegin(); i != m_files.rend(); ++i) {
-        auto res = (*i)->find(type, id);
+        auto res = (*i)->find(type, id, attributes);
         if (!res.expired()) {
             return res;
         }
@@ -60,11 +60,11 @@ auto graphite::rsrc::manager::find(const std::string& type, const int64_t& id) c
     return std::weak_ptr<graphite::rsrc::resource>();
 }
 
-auto graphite::rsrc::manager::get_type(const std::string &type) const -> std::vector<std::weak_ptr<rsrc::type>>
+auto graphite::rsrc::manager::get_type(const std::string &type, const std::map<std::string, std::string>& attributes) const -> std::vector<std::weak_ptr<rsrc::type>>
 {
     std::vector<std::weak_ptr<rsrc::type>> v;
     for (auto i = m_files.rbegin(); i != m_files.rend(); ++i) {
-        v.emplace_back((*i)->type_container(type));
+        v.emplace_back((*i)->type_container(type, attributes));
     }
     return v;
 }

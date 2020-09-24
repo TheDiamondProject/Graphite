@@ -20,39 +20,57 @@
 
 #include "libGraphite/rsrc/type.hpp"
 
+#include <utility>
+
 // MARK: - Constructor
 
-graphite::rsrc::type::type(const std::string& code)
-	: m_code(code)
+graphite::rsrc::type::type(std::string  code, std::map<std::string, std::string>  attributes)
+	: m_code(std::move(code)), m_attributes(std::move(attributes))
 {
 	
 }
 
 // MARK: - Metadata Accessors
 
-std::string graphite::rsrc::type::code() const
+auto graphite::rsrc::type::code() const -> std::string
 {
 	return m_code;
 }
 
+auto graphite::rsrc::type::attributes() const -> std::map<std::string, std::string>
+{
+    return m_attributes;
+}
+
+auto graphite::rsrc::type::attributes_string() const -> std::string
+{
+    std::string text;
+
+    for (const auto& m_attribute : m_attributes) {
+        text.append(":" + m_attribute.first + "=" + (m_attribute.second));
+    }
+
+    return text;
+}
+
 // MARK: - Resource Management
 
-std::size_t graphite::rsrc::type::count() const
+auto graphite::rsrc::type::count() const -> std::size_t
 {
 	return m_resources.size();
 }
 
-void graphite::rsrc::type::add_resource(std::shared_ptr<graphite::rsrc::resource> resource)
+auto graphite::rsrc::type::add_resource(std::shared_ptr<graphite::rsrc::resource> resource) -> void
 {
 	m_resources.push_back(resource);
 }
 
-std::vector<std::shared_ptr<graphite::rsrc::resource>> graphite::rsrc::type::resources() const
+auto graphite::rsrc::type::resources() const -> std::vector<std::shared_ptr<graphite::rsrc::resource>>
 {
 	return m_resources;
 }
 
-std::weak_ptr<graphite::rsrc::resource> graphite::rsrc::type::get(int16_t id) const
+auto graphite::rsrc::type::get(int16_t id) const -> std::weak_ptr<graphite::rsrc::resource>
 {
     for (auto r = m_resources.begin(); r != m_resources.end(); ++r) {
         if ((*r)->id() == id) {
