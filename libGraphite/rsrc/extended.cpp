@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <iostream>
 #include <limits>
 #include "libGraphite/rsrc/extended.hpp"
 #include "libGraphite/encoding/macroman/macroman.hpp"
@@ -226,8 +225,6 @@ auto graphite::rsrc::extended::write(const std::string& path, std::vector<std::s
         writer->write_quad(type->count() - 1);
         writer->write_quad(resource_offset);
         writer->write_quad(attribute_offset);
-
-        std::cout << "adding type: " << type->code() << type->attributes_string() << std::endl;
 
         for (const auto& attribute : type->attributes()) {
             attribute_offset += sizeof(uint64_t) + attribute.first.size() + attribute.second.size() + 2;
