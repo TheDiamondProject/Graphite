@@ -8,15 +8,11 @@
 
 // MARK: - Constructors
 
-graphite::qd::clut::clut()
-{
-
-}
 
 graphite::qd::clut::clut(std::shared_ptr<graphite::data::data> data, int64_t id, std::string name)
-    : m_id(id), m_name(name)
+    : m_id(id), m_name(std::move(name))
 {
-    data::reader reader(data);
+    data::reader reader(std::move(data));
     parse(reader);
 }
 
@@ -59,7 +55,7 @@ auto graphite::qd::clut::get(int value) const -> graphite::qd::color
     throw std::runtime_error("Access invalid entry/value '" + std::to_string(value) + "' of color table: " + std::to_string(m_id));
 }
 
-auto graphite::qd::clut::set(const qd::color color) -> uint16_t
+auto graphite::qd::clut::set(const qd::color& color) -> uint16_t
 {
     uint16_t value = 0;
     for (auto entry : m_entries) {
@@ -84,10 +80,10 @@ auto graphite::qd::clut::parse(graphite::data::reader& reader) -> void
     m_size = reader.read_short() + 1;
 
     for (auto i = 0; i < m_size; ++i) {
-        uint16_t value = reader.read_short();
-        uint8_t r = static_cast<uint8_t>((reader.read_short() / 65535.0) * 255);
-        uint8_t g = static_cast<uint8_t>((reader.read_short() / 65535.0) * 255);
-        uint8_t b = static_cast<uint8_t>((reader.read_short() / 65535.0) * 255);
+        auto value = reader.read_short();
+        auto r = static_cast<uint8_t>((reader.read_short() / 65535.0) * 255);
+        auto g = static_cast<uint8_t>((reader.read_short() / 65535.0) * 255);
+        auto b = static_cast<uint8_t>((reader.read_short() / 65535.0) * 255);
         m_entries.emplace_back(std::make_tuple(value, qd::color(r, g, b)));
     }
 }

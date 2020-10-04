@@ -6,18 +6,7 @@
 
 // MARK: - Point
 
-graphite::qd::point::point()
-{
-
-}
-
-graphite::qd::point::point(const qd::point& p)
-    : m_x(p.m_x), m_y(p.m_y)
-{
-
-}
-
-graphite::qd::point::point(const int16_t x, const int16_t y)
+graphite::qd::point::point(int16_t x, int16_t y)
     : m_x(x), m_y(y)
 {
 
@@ -38,12 +27,12 @@ auto graphite::qd::point::y() const -> int16_t
     return m_y;
 }
 
-auto graphite::qd::point::set_x(const int16_t x) -> void
+auto graphite::qd::point::set_x(const int16_t& x) -> void
 {
     m_x = x;
 }
 
-auto graphite::qd::point::set_y(const int16_t y) -> void
+auto graphite::qd::point::set_y(const int16_t& y) -> void
 {
     m_y = y;
 }
@@ -62,7 +51,7 @@ auto graphite::qd::point::read(graphite::data::reader& reader, enum coding_type 
     }
 }
 
-auto graphite::qd::point::write(graphite::data::writer& writer, enum coding_type type) -> void
+auto graphite::qd::point::write(graphite::data::writer& writer, enum coding_type type) const -> void
 {
     switch (type) {
         case coding_type::qd: {
@@ -80,19 +69,8 @@ auto graphite::qd::point::write(graphite::data::writer& writer, enum coding_type
 
 // MARK: - Fixed Point
 
-graphite::qd::fixed_point::fixed_point()
-{
-
-}
-
-graphite::qd::fixed_point::fixed_point(const double x, const double y)
+graphite::qd::fixed_point::fixed_point(double x, double y)
     : m_x(x), m_y(y)
-{
-
-};
-
-graphite::qd::fixed_point::fixed_point(const qd::fixed_point& p)
-    : m_x(p.m_x), m_y(p.m_y)
 {
 
 };
@@ -112,12 +90,12 @@ auto graphite::qd::fixed_point::y() const -> double
     return m_y;
 };
 
-auto graphite::qd::fixed_point::set_x(const double x) -> void
+auto graphite::qd::fixed_point::set_x(const double& x) -> void
 {
     m_x = x;
 };
 
-auto graphite::qd::fixed_point::set_y(const double y) -> void
+auto graphite::qd::fixed_point::set_y(const double& y) -> void
 {
     m_y = y;
 };
@@ -133,7 +111,7 @@ auto graphite::qd::fixed_point::read(graphite::data::reader& reader, enum coding
     }
 }
 
-auto graphite::qd::fixed_point::write(graphite::data::writer& writer, enum coding_type type) -> void
+auto graphite::qd::fixed_point::write(graphite::data::writer& writer, enum coding_type type) const -> void
 {
     switch (type) {
         case coding_type::qd: {
@@ -146,19 +124,8 @@ auto graphite::qd::fixed_point::write(graphite::data::writer& writer, enum codin
 
 // MARK: - Size
 
-graphite::qd::size::size()
-{
-
-}
-
-graphite::qd::size::size(const int16_t width, const int16_t height)
+graphite::qd::size::size(int16_t width, int16_t height)
     : m_width(width), m_height(height)
-{
-
-};
-
-graphite::qd::size::size(const qd::size& s)
-    : m_width(s.m_width), m_height(s.m_height)
 {
 
 };
@@ -178,12 +145,12 @@ auto graphite::qd::size::height() const -> int16_t
     return m_height;
 };
 
-auto graphite::qd::size::set_width(const int16_t width) -> void
+auto graphite::qd::size::set_width(const int16_t& width) -> void
 {
     m_width = width;
 };
 
-auto graphite::qd::size::set_height(const int16_t height) -> void
+auto graphite::qd::size::set_height(const int16_t& height) -> void
 {
     m_height = height;
 };
@@ -202,7 +169,7 @@ auto graphite::qd::size::read(graphite::data::reader& reader, enum coding_type t
     }
 }
 
-auto graphite::qd::size::write(graphite::data::writer& writer, enum coding_type type) -> void
+auto graphite::qd::size::write(graphite::data::writer& writer, enum coding_type type) const -> void
 {
     switch (type) {
         case coding_type::qd: {
@@ -220,19 +187,8 @@ auto graphite::qd::size::write(graphite::data::writer& writer, enum coding_type 
 
 // MARK: - Fixed Size
 
-graphite::qd::fixed_size::fixed_size()
-{
-
-}
-
-graphite::qd::fixed_size::fixed_size(const double width, const double height)
+graphite::qd::fixed_size::fixed_size(double width, double height)
     : m_width(width), m_height(height)
-{
-
-}
-
-graphite::qd::fixed_size::fixed_size(const qd::fixed_size& s)
-    : m_width(s.m_width), m_height(s.m_height)
 {
 
 }
@@ -252,12 +208,12 @@ auto graphite::qd::fixed_size::height() const -> double
     return m_height;
 }
 
-auto graphite::qd::fixed_size::set_width(const double width) -> void
+auto graphite::qd::fixed_size::set_width(const double& width) -> void
 {
     m_width = width;
 }
 
-auto graphite::qd::fixed_size::set_height(const double height) -> void
+auto graphite::qd::fixed_size::set_height(const double& height) -> void
 {
     m_height = height;
 }
@@ -273,7 +229,7 @@ auto graphite::qd::fixed_size::read(graphite::data::reader& reader, enum coding_
     }
 }
 
-auto graphite::qd::fixed_size::write(graphite::data::writer& writer, enum coding_type type) -> void
+auto graphite::qd::fixed_size::write(graphite::data::writer& writer, enum coding_type type) const -> void
 {
     switch (type) {
         case coding_type::qd: {
@@ -286,25 +242,14 @@ auto graphite::qd::fixed_size::write(graphite::data::writer& writer, enum coding
 
 // MARK: - Rect
 
-graphite::qd::rect::rect()
-{
-
-}
-
 graphite::qd::rect::rect(const point& origin, const qd::size& sz)
     : m_origin(origin), m_size(sz)
 {
 
 }
 
-graphite::qd::rect::rect(const int16_t x, const int16_t y, const int16_t width, const int16_t height)
+graphite::qd::rect::rect(int16_t x, int16_t y, int16_t width, int16_t height)
     : m_origin(x, y), m_size(width, height)
-{
-
-}
-
-graphite::qd::rect::rect(const qd::rect& r)
-    : m_origin(r.m_origin), m_size(r.m_size)
 {
 
 }
@@ -344,22 +289,22 @@ auto graphite::qd::rect::size() const -> qd::size
     return m_size;
 }
 
-auto graphite::qd::rect::set_x(const int16_t x) -> void
+auto graphite::qd::rect::set_x(const int16_t& x) -> void
 {
     m_origin.set_x(x);
 }
 
-auto graphite::qd::rect::set_y(const int16_t y) -> void
+auto graphite::qd::rect::set_y(const int16_t& y) -> void
 {
     m_origin.set_y(y);
 }
 
-auto graphite::qd::rect::set_width(const int16_t width) -> void
+auto graphite::qd::rect::set_width(const int16_t& width) -> void
 {
     m_size.set_width(width);
 }
 
-auto graphite::qd::rect::set_height(const int16_t height) -> void
+auto graphite::qd::rect::set_height(const int16_t& height) -> void
 {
     m_size.set_height(height);
 }
@@ -406,25 +351,14 @@ auto graphite::qd::rect::write(graphite::data::writer& writer, enum coding_type 
 
 // MARK: - Fixed Rect
 
-graphite::qd::fixed_rect::fixed_rect()
-{
-
-}
-
 graphite::qd::fixed_rect::fixed_rect(const qd::fixed_point& origin, const qd::fixed_size& size)
     : m_origin(origin), m_size(size)
 {
 
 }
 
-graphite::qd::fixed_rect::fixed_rect(const double x, const double y, const double width, const double height)
+graphite::qd::fixed_rect::fixed_rect(double x, double y, double width, double height)
     : m_origin(x, y), m_size(width, height)
-{
-
-}
-
-graphite::qd::fixed_rect::fixed_rect(const qd::fixed_rect& r)
-    : m_origin(r.m_origin), m_size(r.m_size)
 {
 
 }
@@ -464,22 +398,22 @@ auto graphite::qd::fixed_rect::size() const -> qd::fixed_size
     return m_size;
 }
 
-auto graphite::qd::fixed_rect::set_x(const double x) -> void
+auto graphite::qd::fixed_rect::set_x(const double& x) -> void
 {
     m_origin.set_x(x);
 }
 
-auto graphite::qd::fixed_rect::set_y(const double y) -> void
+auto graphite::qd::fixed_rect::set_y(const double& y) -> void
 {
     m_origin.set_y(y);
 }
 
-auto graphite::qd::fixed_rect::set_width(const double width) -> void
+auto graphite::qd::fixed_rect::set_width(const double& width) -> void
 {
     m_size.set_width(width);
 }
 
-auto graphite::qd::fixed_rect::set_height(const double height) -> void
+auto graphite::qd::fixed_rect::set_height(const double& height) -> void
 {
     m_size.set_height(height);
 }
