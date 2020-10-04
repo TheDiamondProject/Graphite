@@ -111,7 +111,7 @@ auto graphite::encoding::mac_roman::from_utf8(const std::string &str) -> std::ve
     size_t bytes = strlen(s);
     
     auto utf8 = unicode::hint::utf8();
-    for (auto i = 0; i < bytes;) {
+    for (size_t i = 0; i < bytes;) {
         
         // Determine the length of the current character, and then condense it down
         // into a single codepoint, which can then be mapped to a MacRoman value.
@@ -148,7 +148,7 @@ auto graphite::encoding::mac_roman::from_utf8(const std::string &str) -> std::ve
     return mac_roman_bytes;
 }
 
-auto graphite::encoding::mac_roman::to_utf8(std::vector<uint8_t> bytes) -> std::string
+auto graphite::encoding::mac_roman::to_utf8(const std::vector<uint8_t>& bytes) -> std::string
 {
     std::string result;
     
@@ -172,10 +172,10 @@ auto graphite::encoding::mac_roman::to_utf8(std::vector<uint8_t> bytes) -> std::
         
         // Build the UTF8 scalar from the unicode codepoint.
         int shift = static_cast<int>(utf8[0].m_bits * (n - 1));
-        result += ((cp >> shift & utf8[n].m_mask) | utf8[n].m_lead);
+        result += static_cast<char>(((cp >> shift & utf8[n].m_mask) | utf8[n].m_lead));
         shift -= utf8[0].m_bits;
         for (auto j = 1; j < n; ++j) {
-            result += ((cp >> shift & utf8[0].m_mask) | utf8[0].m_lead);
+            result += static_cast<char>(((cp >> shift & utf8[0].m_mask) | utf8[0].m_lead));
             shift -= utf8[0].m_bits;
         }
     }
