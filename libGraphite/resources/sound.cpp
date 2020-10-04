@@ -50,16 +50,16 @@ inline int32_t ima_predictor(int32_t predictor, int8_t nibble, int32_t index)
 
 // MARK: - Constructor
 
-graphite::resources::sound::sound(std::shared_ptr<data::data> data, int64_t id, const std::string name)
-    : m_ref_count(0), m_name(name), m_id(id)
+graphite::resources::sound::sound(std::shared_ptr<data::data> data, int64_t id, std::string name)
+    : m_ref_count(0), m_name(std::move(name)), m_id(id)
 {
     // Setup a reader for the snd data, and then parse it.
-    data::reader snd_reader(data);
+    data::reader snd_reader(std::move(data));
     parse(snd_reader);
 }
 
 graphite::resources::sound::sound(uint32_t sample_rate, uint8_t sample_bits, std::vector<std::vector<uint32_t>> sample_data)
-    : m_ref_count(0), m_name("Sound"), m_id(0), m_sample_rate_int(sample_rate), m_sample_rate_frac(0), m_sample_bits(sample_bits), m_sample_data(sample_data)
+    : m_ref_count(0), m_name("Sound"), m_id(0), m_sample_rate_int(sample_rate), m_sample_rate_frac(0), m_sample_bits(sample_bits), m_sample_data(std::move(sample_data))
 {
 
 }
@@ -74,15 +74,18 @@ auto graphite::resources::sound::load_resource(int64_t id) -> std::shared_ptr<gr
 
 // MARK: - Accessors
 
-auto graphite::resources::sound::sample_bits() -> uint8_t {
+auto graphite::resources::sound::sample_bits() const -> uint8_t
+{
     return m_sample_bits;
 }
 
-auto graphite::resources::sound::sample_rate() -> uint32_t {
+auto graphite::resources::sound::sample_rate() const -> uint32_t
+{
     return m_sample_rate_int;
 }
 
-auto graphite::resources::sound::samples() -> std::vector<std::vector<uint32_t>> {
+auto graphite::resources::sound::samples() -> std::vector<std::vector<uint32_t>>
+{
     return m_sample_data;
 }
 
@@ -101,7 +104,7 @@ auto graphite::resources::sound::parse(graphite::data::reader& snd_reader) -> vo
     // Save the position because our buffer commands reference data by offset from the record start
     auto reader_pos = snd_reader.position();
 
-    format snd_format = static_cast<format>(snd_reader.read_short());
+    auto snd_format = static_cast<format>(snd_reader.read_short());
 
     uint16_t channel_init_option = 0;
     if (snd_format == type1) {
@@ -145,7 +148,7 @@ auto graphite::resources::sound::parse(graphite::data::reader& snd_reader) -> vo
     // Move the reader to the buffer command's data offset
     snd_reader.set_position(reader_pos + commands[0].param2);
 
-    sound_header_record std_header;
+    sound_header_record std_header {};
 
     std_header.data_pointer = snd_reader.read_long();
     std_header.length = snd_reader.read_long();
@@ -159,7 +162,7 @@ auto graphite::resources::sound::parse(graphite::data::reader& snd_reader) -> vo
     m_sample_rate_frac = std_header.sample_rate & 0xFFFF;
 
     if (std_header.sample_encoding == extSH) {
-        extended_sound_header_record ext_header;
+        extended_sound_header_record ext_header {};
         ext_header.num_frames = snd_reader.read_long();
         // skip aiff_sample_rate, marker_chunk, instrument_chunks, aes_recording
         snd_reader.move(22);
@@ -179,7 +182,7 @@ auto graphite::resources::sound::parse(graphite::data::reader& snd_reader) -> vo
         }
     }
     else if (std_header.sample_encoding == cmpSH) {
-        compressed_sound_header_record cmp_header;
+        compressed_sound_header_record cmp_header {};
         cmp_header.num_frames = snd_reader.read_long();
         // skip aiff_sample_rate, marker_chunk
         snd_reader.move(14);
@@ -273,8 +276,7 @@ auto graphite::resources::sound::encode(graphite::data::writer& snd_writer) -> v
 
 // MARK: - Sound record construction
 
-graphite::resources::sound::command_record::command_record(const command cmd, const uint16_t param1,
-                                                           const uint32_t param2, const bool data_offset_flag)
+graphite::resources::sound::command_record::command_record(command cmd, uint16_t param1, uint32_t param2, bool data_offset_flag)
     : cmd(cmd), param1(param1), param2(param2), data_offset_flag(data_offset_flag)
 {
 

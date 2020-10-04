@@ -18,14 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <iostream>
 #include <limits>
 #include "libGraphite/rsrc/classic.hpp"
 #include "libGraphite/encoding/macroman/macroman.hpp"
 
 // MARK: - Parsing / Reading
 
-auto graphite::rsrc::classic::parse(std::shared_ptr<graphite::data::reader> reader) -> std::vector<std::shared_ptr<graphite::rsrc::type>>
+auto graphite::rsrc::classic::parse(const std::shared_ptr<graphite::data::reader>& reader) -> std::vector<std::shared_ptr<graphite::rsrc::type>>
 {
 	// 1. Resource File preamble, 
 	auto data_offset = reader->read_long();
@@ -104,7 +103,7 @@ auto graphite::rsrc::classic::parse(std::shared_ptr<graphite::data::reader> read
 			auto handle __attribute__((unused)) = reader->read_long();
 
 			// 5. Parse out of the name of the resource.
-			std::string name = "";
+			std::string name;
 			if (name_offset != std::numeric_limits<uint16_t>::max()) {
 				reader->save_position();
 				reader->set_position(map_offset + name_list_offset + name_offset);
@@ -135,7 +134,7 @@ auto graphite::rsrc::classic::parse(std::shared_ptr<graphite::data::reader> read
 
 // MARK: - Writing
 
-auto graphite::rsrc::classic::write(const std::string& path, std::vector<std::shared_ptr<graphite::rsrc::type>> types) -> void
+auto graphite::rsrc::classic::write(const std::string& path, const std::vector<std::shared_ptr<graphite::rsrc::type>>& types) -> void
 {
 	auto writer = std::make_shared<graphite::data::writer>();
 
@@ -154,10 +153,10 @@ auto graphite::rsrc::classic::write(const std::string& path, std::vector<std::sh
 	// 2. Iterate through all of the resources and write their data blobs to the file data.
     // When doing this we need to record the starting points of each resources data, as
     uint16_t resource_count = 0;
-    for (auto type : types) {
+    for (const auto& type : types) {
         resource_count += type->count();
         
-        for (auto resource : type->resources()) {
+        for (const auto& resource : type->resources()) {
             // Get the data for the resource and determine its size.
             auto data = resource->data();
             auto size = data->size();
@@ -197,7 +196,7 @@ auto graphite::rsrc::classic::write(const std::string& path, std::vector<std::sh
     // Now moving on to actually writing each of the type descriptors into the data.
     uint16_t resource_offset = sizeof(uint16_t) + (types.size() * resource_type_length);
     writer->write_short(types.size() - 1);
-    for (auto type : types) {
+    for (const auto& type : types) {
         // We need to ensure that the type code is 4 characters -- otherwise this file will be
         // massively corrupt when produced.
         auto mac_roman = graphite::encoding::mac_roman::from_utf8(type->code());
@@ -213,8 +212,8 @@ auto graphite::rsrc::classic::write(const std::string& path, std::vector<std::sh
     
     // 5. Now we're writing the actual resource headers.
     uint16_t name_offset = 0;
-    for (auto type : types) {
-        for (auto resource : type->resources()) {
+    for (const auto& type : types) {
+        for (const auto& resource : type->resources()) {
             
             auto id = resource->id();
             if (id < std::numeric_limits<int16_t>::min() || id > std::numeric_limits<int16_t>::max()) {
@@ -258,8 +257,8 @@ auto graphite::rsrc::classic::write(const std::string& path, std::vector<std::sh
     
     // 6. Finally we write out each of the resource names, and calculate the map length.
     name_offset = 0;
-    for (auto type : types) {
-        for (auto resource : type->resources()) {
+    for (const auto& type : types) {
+        for (const auto& resource : type->resources()) {
             if (resource->name().empty()) {
                 continue;
             }

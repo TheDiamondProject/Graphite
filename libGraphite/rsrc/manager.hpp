@@ -27,7 +27,7 @@
 #if !defined(GRAPHITE_RSRC_MANAGER)
 #define GRAPHITE_RSRC_MANAGER
 
-namespace graphite { namespace rsrc {
+namespace graphite::rsrc {
 
     /**
      * The Manager is a shared object within an application that is keeps track of
@@ -41,7 +41,7 @@ namespace graphite { namespace rsrc {
     {
     private:
         std::vector<std::shared_ptr<file>> m_files;
-        manager();
+        manager() = default;
 
     public:
     	manager(const manager&) = delete;
@@ -61,24 +61,24 @@ namespace graphite { namespace rsrc {
          * Import the specified file into the Manager. This will trigger a parsing
          * of the file if it hasn't already occurred.
          */
-        auto import_file(std::shared_ptr<file> file) -> void;
+        auto import_file(const std::shared_ptr<file>& file) -> void;
 
         /**
          *
          */
-        auto files() const -> std::vector<std::shared_ptr<file>>;
+        [[nodiscard]] auto files() const -> std::vector<std::shared_ptr<file>>;
 
         /**
          * Attempt to get the resource of the specified type and id.
          */
-        auto find(const std::string& type, const int64_t& id, const std::map<std::string, std::string>& attributes = {}) const -> std::weak_ptr<resource>;
+        [[nodiscard]] auto find(const std::string& type, const int64_t& id, const std::map<std::string, std::string>& attributes = {}) const -> std::weak_ptr<resource>;
 
         /**
          * Returns a list of type containers for the specified type code.
          */
-        auto get_type(const std::string& type, const std::map<std::string, std::string>& attributes = {}) const -> std::vector<std::weak_ptr<rsrc::type>>;
+        [[nodiscard]] auto get_type(const std::string& type, const std::map<std::string, std::string>& attributes = {}) const -> std::vector<std::weak_ptr<rsrc::type>>;
     };
 
-}}
+}
 
 #endif

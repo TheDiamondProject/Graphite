@@ -36,17 +36,17 @@ graphite::qd::pixmap::pixmap(std::shared_ptr<data::data> px_data)
     : m_bounds(0, 0, 0, 0)
 {
     // Setup a new data reader for the pixmap
-    data::reader px_reader(px_data);
+    data::reader px_reader(std::move(px_data));
 
     // Read each of the member fields for the pixmap.
     m_base_address = px_reader.read_long();
-    m_row_bytes = px_reader.read_signed_short() & 0x7FFF;
+    m_row_bytes = static_cast<int16_t>(static_cast<uint16_t>(px_reader.read_signed_short()) & 0x7FFFU);
     m_bounds = graphite::qd::rect::read(px_reader, qd::rect::qd);
     m_pm_version = px_reader.read_signed_short();
     m_pack_type = px_reader.read_signed_short();
     m_pack_size = px_reader.read_signed_long();
-    m_h_res = static_cast<double>(px_reader.read_signed_long() / static_cast<double>(1 << 16));
-    m_v_res = static_cast<double>(px_reader.read_signed_long() / static_cast<double>(1 << 16));
+    m_h_res = static_cast<double>(px_reader.read_signed_long() / static_cast<double>(1U << 16UL));
+    m_v_res = static_cast<double>(px_reader.read_signed_long() / static_cast<double>(1U << 16UL));
     m_pixel_type = px_reader.read_signed_short();
     m_pixel_size = px_reader.read_signed_short();
     m_cmp_count = px_reader.read_signed_short();
@@ -63,7 +63,7 @@ auto graphite::qd::pixmap::bounds() const -> graphite::qd::rect
     return m_bounds;
 }
 
-auto graphite::qd::pixmap::set_bounds(const graphite::qd::rect rect) -> void
+auto graphite::qd::pixmap::set_bounds(const graphite::qd::rect& rect) -> void
 {
     m_bounds = rect;
 }
@@ -73,7 +73,7 @@ auto graphite::qd::pixmap::row_bytes() const -> int16_t
     return m_row_bytes;
 }
 
-auto graphite::qd::pixmap::set_row_bytes(const int16_t row_bytes) -> void
+auto graphite::qd::pixmap::set_row_bytes(const int16_t& row_bytes) -> void
 {
     m_row_bytes = row_bytes;
 }
@@ -83,7 +83,7 @@ auto graphite::qd::pixmap::pack_type() const -> int16_t
     return m_pack_type;
 }
 
-auto graphite::qd::pixmap::set_pack_type(const int16_t pack_type) -> void
+auto graphite::qd::pixmap::set_pack_type(const int16_t& pack_type) -> void
 {
     m_pack_type = pack_type;
 }
@@ -93,7 +93,7 @@ auto graphite::qd::pixmap::pack_size() const -> int16_t
     return m_pack_size;
 }
 
-auto graphite::qd::pixmap::set_pack_size(const int16_t pack_size) -> void
+auto graphite::qd::pixmap::set_pack_size(const int16_t& pack_size) -> void
 {
     m_pack_size = pack_size;
 }
@@ -103,7 +103,7 @@ auto graphite::qd::pixmap::pixel_type() const -> int16_t
     return m_pixel_type;
 }
 
-auto graphite::qd::pixmap::set_pixel_type(const int16_t pixel_type) -> void
+auto graphite::qd::pixmap::set_pixel_type(const int16_t& pixel_type) -> void
 {
     m_pixel_type = pixel_type;
 }
@@ -113,7 +113,7 @@ auto graphite::qd::pixmap::pixel_size() const -> int16_t
     return m_pixel_size;
 }
 
-auto graphite::qd::pixmap::set_pixel_size(const int16_t pixel_size) -> void
+auto graphite::qd::pixmap::set_pixel_size(const int16_t& pixel_size) -> void
 {
     m_pixel_size = pixel_size;
 }
@@ -123,7 +123,7 @@ auto graphite::qd::pixmap::cmp_count() const -> int16_t
     return m_cmp_count;
 }
 
-auto graphite::qd::pixmap::set_cmp_count(const int16_t cmp_count) -> void
+auto graphite::qd::pixmap::set_cmp_count(const int16_t& cmp_count) -> void
 {
     m_cmp_count = cmp_count;
 }
@@ -133,7 +133,7 @@ auto graphite::qd::pixmap::cmp_size() const -> int16_t
     return m_cmp_size;
 }
 
-auto graphite::qd::pixmap::set_cmp_size(const int16_t cmp_size) -> void
+auto graphite::qd::pixmap::set_cmp_size(const int16_t& cmp_size) -> void
 {
     m_cmp_size = cmp_size;
 }
@@ -148,14 +148,14 @@ auto graphite::qd::pixmap::pm_table() const -> uint32_t
     return m_pm_table;
 }
 
-auto graphite::qd::pixmap::set_pm_table(const uint32_t pm_table) -> void
+auto graphite::qd::pixmap::set_pm_table(const uint32_t& pm_table) -> void
 {
     m_pm_table = pm_table;
 }
 
 // MARK: -
 
-auto graphite::qd::pixmap::build_pixel_data(std::vector<uint16_t> color_values, uint16_t pixel_size) -> std::shared_ptr<graphite::data::data>
+auto graphite::qd::pixmap::build_pixel_data(const std::vector<uint16_t>& color_values, uint16_t pixel_size) -> std::shared_ptr<graphite::data::data>
 {
     graphite::data::writer pmap_data(std::make_shared<graphite::data::data>());
     m_pixel_size = m_cmp_size = pixel_size;
@@ -163,8 +163,8 @@ auto graphite::qd::pixmap::build_pixel_data(std::vector<uint16_t> color_values, 
 
     if (pixel_size == 8) {
         m_row_bytes = m_bounds.width();
-        for (auto n = 0; n < color_values.size(); ++n) {
-            pmap_data.write_byte(static_cast<uint8_t>(color_values[n] & 0xFF));
+        for (auto color_value : color_values) {
+            pmap_data.write_byte(static_cast<uint8_t>(color_value & 0xFF));
         }
     }
     else {
@@ -183,7 +183,7 @@ auto graphite::qd::pixmap::build_pixel_data(std::vector<uint16_t> color_values, 
                     scratch = 0;
                 }
                 auto n = y * width + x;
-                uint8_t value = static_cast<uint8_t>(color_values[n] & mask);
+                auto value = static_cast<uint8_t>(color_values[n] & mask);
                 value <<= (diff - (bit_offset * pixel_size));
                 scratch |= value;
             }

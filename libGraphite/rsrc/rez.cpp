@@ -24,7 +24,7 @@
 
 // MARK: - Parsing / Reading
 
-auto graphite::rsrc::rez::parse(std::shared_ptr<graphite::data::reader> reader) -> std::vector<std::shared_ptr<graphite::rsrc::type>>
+auto graphite::rsrc::rez::parse(const std::shared_ptr<graphite::data::reader>& reader) -> std::vector<std::shared_ptr<graphite::rsrc::type>>
 {
     // TODO: .rez implementation
     return {};
@@ -32,7 +32,7 @@ auto graphite::rsrc::rez::parse(std::shared_ptr<graphite::data::reader> reader) 
 
 // MARK: - Writing
 
-auto graphite::rsrc::rez::write(const std::string& path, std::vector<std::shared_ptr<graphite::rsrc::type>> types) -> void
+auto graphite::rsrc::rez::write(const std::string& path, const std::vector<std::shared_ptr<graphite::rsrc::type>>& types) -> void
 {
     auto writer = std::make_shared<graphite::data::writer>();
     writer->data()->set_byte_order(graphite::data::data::byte_order::lsb);
@@ -47,7 +47,7 @@ auto graphite::rsrc::rez::write(const std::string& path, std::vector<std::shared
 
     // Count up the total number of resources
     uint32_t resource_count = 0;
-    for (auto type : types) {
+    for (const auto& type : types) {
         resource_count += type->count();
     }
 
@@ -70,8 +70,8 @@ auto graphite::rsrc::rez::write(const std::string& path, std::vector<std::shared
     writer->write_long(1); // Unknown value
     writer->write_long(index);
     writer->write_long(entry_count);
-    for (auto type : types) {
-        for (auto resource : type->resources()) {
+    for (const auto& type : types) {
+        for (const auto& resource : type->resources()) {
             // Get the data for the resource and determine its size.
             auto data = resource->data();
             auto size = data->size();
@@ -95,8 +95,8 @@ auto graphite::rsrc::rez::write(const std::string& path, std::vector<std::shared
     writer->write_cstr(map_name);
 
     // Write each resource
-    for (auto type : types) {
-        for (auto resource : type->resources()) {
+    for (const auto& type : types) {
+        for (const auto& resource : type->resources()) {
             writer->write_data(resource->data());
         }
     }
@@ -108,7 +108,7 @@ auto graphite::rsrc::rez::write(const std::string& path, std::vector<std::shared
     writer->write_long(type_count);
 
     // Type counts and offsets
-    for (auto type : types) {
+    for (const auto& type : types) {
         auto count = type->count();
         writer->write_cstr(type->code(), 4);
         writer->write_long(type_offset);
@@ -117,8 +117,8 @@ auto graphite::rsrc::rez::write(const std::string& path, std::vector<std::shared
     }
 
     // Info for each resource
-    for (auto type : types) {
-        for (auto resource : type->resources()) {
+    for (const auto& type : types) {
+        for (const auto& resource : type->resources()) {
             writer->write_long(index++);
             writer->write_cstr(type->code(), 4);
             writer->write_signed_short(static_cast<int16_t>(resource->id()));

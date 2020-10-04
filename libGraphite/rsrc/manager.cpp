@@ -24,10 +24,6 @@
 
 // MARK: - Singleton
 
-graphite::rsrc::manager::manager()
-{
-    
-}
 
 auto graphite::rsrc::manager::shared_manager() -> graphite::rsrc::manager&
 {
@@ -37,7 +33,7 @@ auto graphite::rsrc::manager::shared_manager() -> graphite::rsrc::manager&
 
 // MARK: - File Management
 
-auto graphite::rsrc::manager::import_file(std::shared_ptr<graphite::rsrc::file> file) -> void
+auto graphite::rsrc::manager::import_file(const std::shared_ptr<graphite::rsrc::file>& file) -> void
 {
     m_files.push_back(file);
 }
@@ -51,8 +47,8 @@ auto graphite::rsrc::manager::files() const -> std::vector<std::shared_ptr<file>
 
 auto graphite::rsrc::manager::find(const std::string& type, const int64_t& id, const std::map<std::string, std::string>& attributes) const -> std::weak_ptr<graphite::rsrc::resource>
 {
-    for (auto i = m_files.rbegin(); i != m_files.rend(); ++i) {
-        auto res = (*i)->find(type, id, attributes);
+    for (const auto& file : m_files) {
+        auto res = file->find(type, id, attributes);
         if (!res.expired()) {
             return res;
         }
@@ -63,8 +59,8 @@ auto graphite::rsrc::manager::find(const std::string& type, const int64_t& id, c
 auto graphite::rsrc::manager::get_type(const std::string &type, const std::map<std::string, std::string>& attributes) const -> std::vector<std::weak_ptr<rsrc::type>>
 {
     std::vector<std::weak_ptr<rsrc::type>> v;
-    for (auto i = m_files.rbegin(); i != m_files.rend(); ++i) {
-        v.emplace_back((*i)->type_container(type, attributes));
+    for (const auto& file : m_files) {
+        v.emplace_back(file->type_container(type, attributes));
     }
     return v;
 }

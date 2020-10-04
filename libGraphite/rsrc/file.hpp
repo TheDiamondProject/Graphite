@@ -28,7 +28,7 @@
 #if !defined(GRAPHITE_RSRC_FILE)
 #define GRAPHITE_RSRC_FILE
 
-namespace graphite { namespace rsrc {
+namespace graphite::rsrc {
 
     /**
      * The `graphite::rsrc::file` represents a ResourceFork file.
@@ -58,7 +58,7 @@ namespace graphite { namespace rsrc {
         enum format { classic, extended, rez };
 
     private:
-        std::string m_path { "" };
+        std::string m_path;
         std::vector<std::shared_ptr<type>> m_types;
         std::shared_ptr<graphite::data::data> m_data { nullptr };
         format m_format { classic };
@@ -73,7 +73,7 @@ namespace graphite { namespace rsrc {
          * Construct a new `graphite::rsrc::file` by loading the contents of the specified
          * file.
          */
-        explicit file(const std::string& path);
+        explicit file(std::string path);
 
         /**
          * Read and parse the contents of the resource file at the specified location.
@@ -90,22 +90,22 @@ namespace graphite { namespace rsrc {
         /**
          * Returns the name of the file.
          */
-        auto name() const -> std::string;
+        [[nodiscard]] auto name() const -> std::string;
 
         /**
          * Returns the number of types contained in the resource file.
          */
-        auto type_count() const -> std::size_t;
+        [[nodiscard]] auto type_count() const -> std::size_t;
         
         /**
          * Returns the list of all types contained in the resource file.
          */
-        auto types() const -> std::vector<std::shared_ptr<type>>;
+        [[nodiscard]] auto types() const -> std::vector<std::shared_ptr<type>>;
 
         /**
          * Reports the current format of the resource file.
          */
-        auto current_format() const -> format;
+        [[nodiscard]] auto current_format() const -> format;
 
         /**
          * Add a resource into the receiver.
@@ -129,6 +129,6 @@ namespace graphite { namespace rsrc {
         auto find(const std::string& type, const int64_t& id, const std::map<std::string, std::string> &attributes) -> std::weak_ptr<resource>;
     };
 
-}}
+}
 
 #endif

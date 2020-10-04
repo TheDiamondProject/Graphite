@@ -26,7 +26,7 @@
 #if !defined(GRAPHITE_RSRC_RESOURCE)
 #define GRAPHITE_RSRC_RESOURCE
 
-namespace graphite { namespace rsrc {
+namespace graphite::rsrc {
 
     class type;
 
@@ -37,7 +37,7 @@ namespace graphite { namespace rsrc {
     class resource
     {
     private:
-        int64_t m_id;
+        int64_t m_id {};
         std::weak_ptr<graphite::rsrc::type> m_type;
         std::string m_name;
         std::shared_ptr<graphite::data::data> m_data;
@@ -48,17 +48,17 @@ namespace graphite { namespace rsrc {
     	 * Construct a new resource instance, without an explicit type or
     	 * data.
     	 */
-    	resource(int64_t id, const std::string& name);
+    	resource(int64_t id, std::string name);
 
     	/**
     	 * Construct a new resource instance with the specified type, and data.
     	 */
-    	resource(int64_t id, std::weak_ptr<graphite::rsrc::type> type, const std::string& name, std::shared_ptr<graphite::data::data> data);
+    	resource(int64_t id, std::weak_ptr<graphite::rsrc::type> type, std::string name, std::shared_ptr<graphite::data::data> data);
 
     	/**
     	 * Returns the ID of the resource.
     	 */
-    	auto id() const -> int64_t;
+    	[[nodiscard]] auto id() const -> int64_t;
 
     	/**
     	 * Set the ID of the resource.
@@ -68,7 +68,7 @@ namespace graphite { namespace rsrc {
     	/**
     	 * Returns the name of the resource.
     	 */
-    	auto name() const -> std::string;
+    	[[nodiscard]] auto name() const -> std::string;
 
     	/**
     	 * Set the name of the resource.
@@ -78,17 +78,17 @@ namespace graphite { namespace rsrc {
     	/**
     	 * Returns the type container of the resource.
     	 */
-    	auto type() const -> std::weak_ptr<graphite::rsrc::type>;
+    	[[nodiscard]] auto type() const -> std::weak_ptr<graphite::rsrc::type>;
 
     	/**
     	 * Set the type container of the resource.
     	 */
-    	auto set_type(std::weak_ptr<graphite::rsrc::type> type) -> void;
+    	auto set_type(const std::weak_ptr<graphite::rsrc::type>& type) -> void;
 
     	/**
     	 * Returns the type code of the resource.
     	 */
-    	auto type_code() const -> std::string;
+    	[[nodiscard]] auto type_code() const -> std::string;
 
     	/**
     	 * Returns a shared pointer to the contained data.
@@ -98,14 +98,14 @@ namespace graphite { namespace rsrc {
     	/**
     	 * Store the location of the data within the resource file.
     	 */
-    	auto set_data_offset(std::size_t offset) -> void;
+    	auto set_data_offset(const std::size_t& offset) -> void;
 
     	/**
     	 * The location of the data within the resource file.
     	 */
-    	auto data_offset() const -> std::size_t;
+    	[[nodiscard]] auto data_offset() const -> std::size_t;
     };
 
-}}
+}
 
 #endif

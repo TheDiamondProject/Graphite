@@ -23,8 +23,8 @@
 
 // MARK: - Constructor
 
-graphite::rsrc::resource::resource(int64_t id, const std::string& name)
-	: m_id(id), m_name(name)
+graphite::rsrc::resource::resource(int64_t id, std::string name)
+	: m_id(id), m_name(std::move(name))
 {
 	
 }
@@ -32,10 +32,10 @@ graphite::rsrc::resource::resource(int64_t id, const std::string& name)
 graphite::rsrc::resource::resource(
 	int64_t id, 
 	std::weak_ptr<graphite::rsrc::type> type, 
-	const std::string& name, 
+	std::string name,
 	std::shared_ptr<graphite::data::data> data
 )
-	: m_id(id), m_name(name), m_type(type), m_data(data)
+	: m_id(id), m_name(std::move(name)), m_type(std::move(type)), m_data(std::move(data))
 {
 	
 }
@@ -69,7 +69,7 @@ auto graphite::rsrc::resource::type() const -> std::weak_ptr<graphite::rsrc::typ
 	return m_type;
 }
 
-auto graphite::rsrc::resource::set_type(std::weak_ptr<graphite::rsrc::type> type) -> void
+auto graphite::rsrc::resource::set_type(const std::weak_ptr<graphite::rsrc::type>& type) -> void
 {
 	m_type = type;
 }
@@ -94,7 +94,7 @@ auto graphite::rsrc::resource::data() -> std::shared_ptr<graphite::data::data>
 
 // MARK: - 
 
-auto graphite::rsrc::resource::set_data_offset(std::size_t offset) -> void
+auto graphite::rsrc::resource::set_data_offset(const std::size_t& offset) -> void
 {
 	m_data_offset = offset;
 }

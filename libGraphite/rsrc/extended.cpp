@@ -24,7 +24,7 @@
 
 // MARK: - Parsing / Reading
 
-auto graphite::rsrc::extended::parse(std::shared_ptr<graphite::data::reader> reader) -> std::vector<std::shared_ptr<graphite::rsrc::type>>
+auto graphite::rsrc::extended::parse(const std::shared_ptr<graphite::data::reader>& reader) -> std::vector<std::shared_ptr<graphite::rsrc::type>>
 {
 	// 1. Resource File preamble, 
     auto version __attribute__((unused)) = reader->read_quad();
@@ -146,7 +146,7 @@ auto graphite::rsrc::extended::parse(std::shared_ptr<graphite::data::reader> rea
 
 // MARK: - Writing
 
-auto graphite::rsrc::extended::write(const std::string& path, std::vector<std::shared_ptr<graphite::rsrc::type>> types) -> void
+auto graphite::rsrc::extended::write(const std::string& path, const std::vector<std::shared_ptr<graphite::rsrc::type>>& types) -> void
 {
 	auto writer = std::make_shared<graphite::data::writer>();
 

@@ -2,7 +2,7 @@
 // Created by Tom Hancocks on 24/03/2020.
 //
 
-#include <complex>
+#include <cmath>
 #include <algorithm>
 #include "libGraphite/quickdraw/rle.hpp"
 #include "libGraphite/rsrc/manager.hpp"
@@ -12,14 +12,14 @@ static const auto rle_grid_width = 6;
 // MARK: - Constructor
 
 graphite::qd::rle::rle(std::shared_ptr<data::data> data, int64_t id, std::string name)
-        : m_id(id), m_name(name)
+    : m_id(id), m_name(std::move(name))
 {
-    auto reader = data::reader(data);
+    auto reader = data::reader(std::move(data));
     parse(reader);
 }
 
 graphite::qd::rle::rle(qd::size frame_size, uint16_t frame_count)
-        : m_id(0), m_name("RLE"), m_frame_size(frame_size), m_frame_count(frame_count), m_bpp(16), m_palette_id(0)
+    : m_id(0), m_name("RLE"), m_frame_size(frame_size), m_frame_count(frame_count), m_bpp(16), m_palette_id(0)
 {
     // Determine what the grid will be. We need to round up to the next whole number and have blank tiles
     // if the frame count is not divisible by the grid width constant.
@@ -78,7 +78,7 @@ auto graphite::qd::rle::frame_surface(int frame) const -> std::shared_ptr<qd::su
     return surface;
 }
 
-auto graphite::qd::rle::write_frame(int frame, std::shared_ptr<qd::surface> surface) -> void
+auto graphite::qd::rle::write_frame(int frame, const std::shared_ptr<qd::surface>& surface) -> void
 {
     auto dst_rect = frame_rect(frame);
     auto src_size = surface->size();

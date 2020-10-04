@@ -10,7 +10,7 @@
 #include "libGraphite/quickdraw/geometry.hpp"
 #include "libGraphite/data/data.hpp"
 
-namespace graphite { namespace qd {
+namespace graphite::qd {
 
     enum pixel_format
     {
@@ -46,34 +46,34 @@ namespace graphite { namespace qd {
         static constexpr int length { 50 };
 
         pixmap();
-        pixmap(qd::rect frame);
-        pixmap(std::shared_ptr<data::data> data);
+        explicit pixmap(qd::rect frame);
+        explicit pixmap(std::shared_ptr<data::data> data);
 
-        auto bounds() const -> graphite::qd::rect;
-        auto row_bytes() const -> int16_t;
-        auto pack_type() const -> int16_t;
-        auto pack_size() const -> int16_t;
-        auto pixel_type() const -> int16_t;
-        auto pixel_size() const -> int16_t;
-        auto cmp_count() const -> int16_t;
-        auto cmp_size() const -> int16_t;
-        auto pixel_format() const -> enum pixel_format;
-        auto pm_table() const -> uint32_t;
+        [[nodiscard]] auto bounds() const -> graphite::qd::rect;
+        [[nodiscard]] auto row_bytes() const -> int16_t;
+        [[nodiscard]] auto pack_type() const -> int16_t;
+        [[nodiscard]] auto pack_size() const -> int16_t;
+        [[nodiscard]] auto pixel_type() const -> int16_t;
+        [[nodiscard]] auto pixel_size() const -> int16_t;
+        [[nodiscard]] auto cmp_count() const -> int16_t;
+        [[nodiscard]] auto cmp_size() const -> int16_t;
+        [[nodiscard]] auto pixel_format() const -> enum pixel_format;
+        [[nodiscard]] auto pm_table() const -> uint32_t;
 
-        auto set_bounds(const graphite::qd::rect rect) -> void;
-        auto set_row_bytes(const int16_t row_bytes) -> void;
-        auto set_pack_type(const int16_t pack_type) -> void;
-        auto set_pack_size(const int16_t pack_size) -> void;
-        auto set_pixel_type(const int16_t pixel_type) -> void;
-        auto set_pixel_size(const int16_t pixel_size) -> void;
-        auto set_cmp_count(const int16_t cmp_count) -> void;
-        auto set_cmp_size(const int16_t cmp_size) -> void;
-        auto set_pm_table(const uint32_t pm_table) -> void;
+        auto set_bounds(const graphite::qd::rect& rect) -> void;
+        auto set_row_bytes(const int16_t& row_bytes) -> void;
+        auto set_pack_type(const int16_t& pack_type) -> void;
+        auto set_pack_size(const int16_t& pack_size) -> void;
+        auto set_pixel_type(const int16_t& pixel_type) -> void;
+        auto set_pixel_size(const int16_t& pixel_size) -> void;
+        auto set_cmp_count(const int16_t& cmp_count) -> void;
+        auto set_cmp_size(const int16_t& cmp_size) -> void;
+        auto set_pm_table(const uint32_t& pm_table) -> void;
 
-        auto build_pixel_data(std::vector<uint16_t> color_values, uint16_t pixel_size) -> std::shared_ptr<graphite::data::data>;
+        auto build_pixel_data(const std::vector<uint16_t>& color_values, uint16_t pixel_size) -> std::shared_ptr<graphite::data::data>;
         auto write(graphite::data::writer& writer) -> void;
     };
 
-}};
+}
 
 #endif //GRAPHITE_PIXMAP_HPP

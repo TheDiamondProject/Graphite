@@ -7,10 +7,10 @@
 
 #include <cstdint>
 
-namespace graphite { namespace qd {
+namespace graphite::qd {
 
     /**
-     * A structure representing a 4-component color, as used by the internal quickdraw surface.
+     * A structure representing a 4-component color, as used by the internal QuickDraw surface.
      */
     struct color
     {
@@ -31,10 +31,10 @@ namespace graphite { namespace qd {
          */
         color(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha = 255);
 
-        auto red_component() const -> uint8_t;
-        auto green_component() const -> uint8_t;
-        auto blue_component() const -> uint8_t;
-        auto alpha_component() const -> uint8_t;
+        [[nodiscard]] auto red_component() const -> uint8_t;
+        [[nodiscard]] auto green_component() const -> uint8_t;
+        [[nodiscard]] auto blue_component() const -> uint8_t;
+        [[nodiscard]] auto alpha_component() const -> uint8_t;
         
         static auto black() -> color;
         static auto white() -> color;
@@ -48,10 +48,10 @@ namespace graphite { namespace qd {
         static auto darkGrey() -> color;
         static auto clear() -> color;
 
-        auto operator== (const color& rhs) -> bool;
+        auto operator== (const color& rhs) const -> bool;
     };
 
-}}
+}
 
 
 #endif //GRAPHITE_COLOR_HPP
