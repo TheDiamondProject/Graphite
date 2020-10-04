@@ -4,7 +4,7 @@
 
 #include "libGraphite/quickdraw/internal/packbits.hpp"
 
-auto graphite::qd::packbits::decode(std::vector<uint8_t> &out_data, std::vector<uint8_t> pack_data, std::size_t value_size) -> std::size_t
+auto graphite::qd::packbits::decode(std::vector<uint8_t> &out_data, const std::vector<uint8_t>& pack_data, std::size_t value_size) -> std::size_t
 {
     std::size_t pos = 0;
 
@@ -30,14 +30,14 @@ auto graphite::qd::packbits::decode(std::vector<uint8_t> &out_data, std::vector<
     return out_data.size();
 }
 
-auto graphite::qd::packbits::encode(std::vector<uint8_t> scanline_bytes) -> std::vector<uint8_t>
+auto graphite::qd::packbits::encode(const std::vector<uint8_t>& scanline_bytes) -> std::vector<uint8_t>
 {
     std::vector<uint8_t> result;
     std::vector<uint8_t> buffer(128);
 
     int offset = 0;
-    const int max = scanline_bytes.size() - 1;
-    const int max_minus_1 = max - 1;
+    const unsigned long max = scanline_bytes.size() - 1;
+    const unsigned long max_minus_1 = max - 1;
 
     while (offset <= max) {
         // Compressed run

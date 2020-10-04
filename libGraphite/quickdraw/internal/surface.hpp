@@ -10,7 +10,7 @@
 #include <libGraphite/quickdraw/geometry.hpp>
 #include "libGraphite/quickdraw/internal/color.hpp"
 
-namespace graphite { namespace qd
+namespace graphite::qd
 {
 
     /**
@@ -45,12 +45,12 @@ namespace graphite { namespace qd
         /**
          * Export the raw surface data.
          */
-        auto raw() const -> std::vector<uint32_t>;
+        [[nodiscard]] auto raw() const -> std::vector<uint32_t>;
 
         /**
          * Returns the size of the surface
          */
-        auto size() const -> qd::size;
+        [[nodiscard]] auto size() const -> qd::size;
 
         /**
          * Returns the color at the specified coordinate within the surface.
@@ -60,7 +60,7 @@ namespace graphite { namespace qd
          *
          * @note            This method of getting colors is _slow_. Use only for single point lookup.
          */
-        auto at(int x, int y) const -> graphite::qd::color;
+        [[nodiscard]] auto at(int x, int y) const -> graphite::qd::color;
 
         /**
          * Set the color at the specified coordinate within the surface.
@@ -93,7 +93,6 @@ namespace graphite { namespace qd
 
     };
 
-}}
-
+}
 
 #endif //GRAPHITE_SURFACE_H

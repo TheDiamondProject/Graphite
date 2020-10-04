@@ -12,7 +12,7 @@ graphite::qd::surface::surface(int width, int height)
 }
 
 graphite::qd::surface::surface(int width, int height, std::vector<graphite::qd::color> rgb)
-: m_width(width), m_height(height), m_data(rgb)
+: m_width(width), m_height(height), m_data(std::move(rgb))
 {
 }
 
@@ -21,11 +21,11 @@ graphite::qd::surface::surface(int width, int height, std::vector<graphite::qd::
 auto graphite::qd::surface::raw() const -> std::vector<uint32_t>
 {
     auto out = std::vector<uint32_t>();
-    for (auto i = m_data.begin(); i != m_data.end(); ++i) {
-        uint32_t color = ((*i).alpha_component() << 24)
-                | (*i).red_component()
-                | ((*i).green_component() << 8)
-                | ((*i).blue_component() << 16);
+    for (const auto& i : m_data) {
+        uint32_t color = (i.alpha_component() << 24)
+                | i.red_component()
+                | (i.green_component() << 8UL)
+                | (i.blue_component() << 16UL);
         out.push_back(color);
     }
     return out;

@@ -8,15 +8,15 @@
 #include <vector>
 #include <memory>
 
-namespace graphite { namespace qd {
+namespace graphite::qd {
 
     struct packbits
     {
     public:
-        static auto decode(std::vector<uint8_t> &out_data, std::vector<uint8_t> pack_data, std::size_t value_size) -> std::size_t;
-        static auto encode(std::vector<uint8_t> scanline_bytes) -> std::vector<uint8_t>;
+        static auto decode(std::vector<uint8_t> &out_data, const std::vector<uint8_t>& pack_data, std::size_t value_size) -> std::size_t;
+        static auto encode(const std::vector<uint8_t>& scanline_bytes) -> std::vector<uint8_t>;
     };
 
-}}
+}
 
 #endif //GRAPHITE_PACKBITS_HPP
