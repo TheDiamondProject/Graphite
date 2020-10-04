@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <map>
 #include "libGraphite/rsrc/file.hpp"
 
 #if !defined(GRAPHITE_RSRC_MANAGER)
@@ -70,12 +71,12 @@ namespace graphite { namespace rsrc {
         /**
          * Attempt to get the resource of the specified type and id.
          */
-        auto find(const std::string& type, const int64_t& id) const -> std::weak_ptr<resource>;
+        auto find(const std::string& type, const int64_t& id, const std::map<std::string, std::string>& attributes = {}) const -> std::weak_ptr<resource>;
 
         /**
          * Returns a list of type containers for the specified type code.
          */
-        auto get_type(const std::string& type) const -> std::vector<std::weak_ptr<rsrc::type>>;
+        auto get_type(const std::string& type, const std::map<std::string, std::string>& attributes = {}) const -> std::vector<std::weak_ptr<rsrc::type>>;
     };
 
 }}

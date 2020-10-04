@@ -20,16 +20,31 @@
 
 #include "libGraphite/rsrc/file.hpp"
 #include "libGraphite/data/writer.hpp"
+#include <iostream>
 
 int main(int argc, char const *argv[])
 {
     auto rf = std::make_shared<graphite::rsrc::file>();
     
-    auto writer = std::make_shared<graphite::data::writer>();
-    writer->write_cstr("Hello, World!");
-    rf->add_resource("test", 128, "test resource", writer->data());
+    auto english = std::make_shared<graphite::data::writer>();
+    english->write_cstr("Hello, World!");
+    rf->add_resource("test", 128, "test resource", english->data(), {
+        std::make_pair("lang", "en")
+    });
+
+    auto french = std::make_shared<graphite::data::writer>();
+    french->write_cstr("Bonjour, Monde!");
+    rf->add_resource("test", 128, "test resource", french->data(), {
+        std::make_pair("lang", "fr")
+    });
 
     // The resource file should be assembled at this point and just needs writting to disk.
-    rf->write("/Users/tomhancocks/Desktop/out.ndat", graphite::rsrc::file::format::classic);
+    rf->write("/tmp/localised.rsrc", graphite::rsrc::file::format::extended);
+
+
+    auto in_rf = std::make_shared<graphite::rsrc::file>("/tmp/localised.rsrc");
+    for (const auto& type : in_rf->types()) {
+        std::cout << "reading type: " << type->code() << type->attributes_string() << std::endl;
+    }
 	return 0;
 }

@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <map>
 #include "libGraphite/rsrc/resource.hpp"
 
 #if !defined(GRAPHITE_RSRC_TYPE)
@@ -36,18 +37,29 @@ namespace graphite { namespace rsrc {
     private:
         std::string m_code;
         std::vector<std::shared_ptr<resource>> m_resources;
+        std::map<std::string, std::string> m_attributes;
 
     public:
     	/**
     	 * Construct a new a resource type container with the specified
     	 * type code.
     	 */
-    	type(const std::string& code);
+    	explicit type(std::string  code, std::map<std::string, std::string>  attributes = {});
 
     	/**
     	 * Returns the type code of the receiver.
     	 */
     	auto code() const -> std::string;
+
+    	/**
+    	 * Returns the attribute map of the receiver.
+    	 */
+    	 auto attributes() const -> std::map<std::string, std::string>;
+
+    	/**
+    	 * Returns the attribute map of the receiver as a string.
+    	 */
+    	 auto attributes_string() const -> std::string;
 
     	/**
     	 * Returns a count of the number of resources associated to this type.
