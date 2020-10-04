@@ -12,7 +12,7 @@
 #include "libGraphite/data/reader.hpp"
 #include "libGraphite/data/writer.hpp"
 
-namespace graphite { namespace resources {
+namespace graphite::resources {
 
     class sound
     {
@@ -92,7 +92,7 @@ namespace graphite { namespace resources {
             uint32_t param2;
             bool data_offset_flag;
 
-            command_record(const command cmd, const uint16_t param1, const uint32_t param2, const bool data_offset_flag);
+            command_record(command cmd, uint16_t param1, uint32_t param2, bool data_offset_flag);
         };
 
         struct sound_header_record
@@ -145,32 +145,32 @@ namespace graphite { namespace resources {
         };
 
         // Basic resource information
-        int16_t m_id;
+        int16_t m_id {};
         std::string m_name;
 
         // Sound information
-        uint16_t m_ref_count;
-        uint32_t m_sample_rate_int;
-        uint16_t m_sample_rate_frac;
-        uint8_t m_sample_bits;
+        uint16_t m_ref_count {};
+        uint32_t m_sample_rate_int {};
+        uint16_t m_sample_rate_frac {};
+        uint8_t m_sample_bits {};
         std::vector<std::vector<uint32_t>> m_sample_data;
 
         auto parse(graphite::data::reader& snd_reader) -> void;
         auto encode(graphite::data::writer& snd_writer) -> void;
 
     public:
-        sound(std::shared_ptr<graphite::data::data> data, int64_t id = 0, std::string name = "");
+        explicit sound(std::shared_ptr<graphite::data::data> data, int64_t id = 0, std::string name = "");
         sound(uint32_t sample_rate, uint8_t sample_bits, std::vector<std::vector<uint32_t>> sample_data);
 
         static auto load_resource(int64_t id) -> std::shared_ptr<sound>;
 
-        auto sample_bits() -> uint8_t;
-        auto sample_rate() -> uint32_t;
+        [[nodiscard]] auto sample_bits() const -> uint8_t;
+        [[nodiscard]] auto sample_rate() const -> uint32_t;
         auto samples() -> std::vector<std::vector<uint32_t>>;
 
         auto data() -> std::shared_ptr<graphite::data::data>;
     };
 
-}};
+}
 
 #endif

@@ -8,18 +8,18 @@
 #include <string>
 #include "libGraphite/data/data.hpp"
 
-namespace graphite { namespace resources {
+namespace graphite::resources {
 
     struct string
     {
     private:
-        int64_t m_id;
+        int64_t m_id {};
         std::string m_name;
         std::string m_str;
         data::data m_data;
 
     public:
-        string(std::string str, std::shared_ptr<data::data> data, int64_t id = 0, const std::string name = "");
+        string(std::string str, std::shared_ptr<data::data> data, int64_t id = 0, std::string name = "");
 
         static auto load_resource(int64_t id) -> std::shared_ptr<string>;
 
@@ -27,10 +27,10 @@ namespace graphite { namespace resources {
         auto data() const -> data::data;
 
         auto set_string(const std::string& str) -> void;
-        auto set_data(data::data data) -> void;
+        auto set_data(const data::data& data) -> void;
     };
 
-}};
+}
 
 
 #endif //GRAPHITE_STRING_HPP

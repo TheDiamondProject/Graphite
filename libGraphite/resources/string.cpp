@@ -8,8 +8,8 @@
 
 // MARK: - Constructor
 
-graphite::resources::string::string(std::string str, std::shared_ptr<data::data> data, int64_t id, const std::string name)
-    : m_str(str), m_name(name), m_id(id)
+graphite::resources::string::string(std::string str, std::shared_ptr<data::data> data, int64_t id, std::string name)
+    : m_str(std::move(str)), m_name(std::move(name)), m_id(id)
 {
     // TODO: Add implementation to extract a new copy of the data that is not a pointer.
 }
@@ -42,7 +42,7 @@ auto graphite::resources::string::set_string(const std::string& str) -> void
     m_str = str;
 }
 
-auto graphite::resources::string::set_data(data::data data) -> void
+auto graphite::resources::string::set_data(const data::data& data) -> void
 {
     m_data = data;
 }

@@ -65,6 +65,6 @@ namespace graphite::qd {
         auto data() -> std::shared_ptr<graphite::data::data>;
     };
 
-}}
+}
 
 #endif //GRAPHITE_PICT_HPP

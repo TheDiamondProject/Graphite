@@ -60,7 +60,7 @@ auto graphite::rsrc::type::count() const -> std::size_t
 	return m_resources.size();
 }
 
-auto graphite::rsrc::type::add_resource(std::shared_ptr<graphite::rsrc::resource> resource) -> void
+auto graphite::rsrc::type::add_resource(const std::shared_ptr<graphite::rsrc::resource>& resource) -> void
 {
 	m_resources.push_back(resource);
 }
@@ -72,9 +72,9 @@ auto graphite::rsrc::type::resources() const -> std::vector<std::shared_ptr<grap
 
 auto graphite::rsrc::type::get(int16_t id) const -> std::weak_ptr<graphite::rsrc::resource>
 {
-    for (auto r = m_resources.begin(); r != m_resources.end(); ++r) {
-        if ((*r)->id() == id) {
-            return *r;
+    for (const auto& m_resource : m_resources) {
+        if (m_resource->id() == id) {
+            return m_resource;
         }
     }
     return std::weak_ptr<graphite::rsrc::resource>();

@@ -26,10 +26,10 @@
 
 // MARK: - Construct
 
-graphite::rsrc::file::file(const std::string& path)
-    : m_path(path)
+graphite::rsrc::file::file(std::string path)
+    : m_path(std::move(path))
 {
-	read(path);
+	read(m_path);
 }
 
 // MARK: - Accessors

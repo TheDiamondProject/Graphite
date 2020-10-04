@@ -38,7 +38,7 @@ int main(int argc, char const *argv[])
         std::make_pair("lang", "fr")
     });
 
-    // The resource file should be assembled at this point and just needs writting to disk.
+    // The resource file should be assembled at this point and just needs writing to disk.
     rf->write("/tmp/localised.rsrc", graphite::rsrc::file::format::extended);
 
 

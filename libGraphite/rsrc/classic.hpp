@@ -28,20 +28,20 @@
 #if !defined(GRAPHITE_RSRC_CLASSIC)
 #define GRAPHITE_RSRC_CLASSIC
 
-namespace graphite { namespace rsrc { namespace classic {
+namespace graphite::rsrc::classic {
 
     /**
      * Parse the specified/provided data object that represents a resource file
      * into a list of resource types.
      */
-    auto parse(std::shared_ptr<graphite::data::reader> reader) -> std::vector<std::shared_ptr<graphite::rsrc::type>>;
+    auto parse(const std::shared_ptr<graphite::data::reader>& reader) -> std::vector<std::shared_ptr<graphite::rsrc::type>>;
 
     /**
      * Build a data object that represents a resource file from the provided list
      * of resource types.
      */
-    auto write(const std::string& path, std::vector<std::shared_ptr<graphite::rsrc::type>> types) -> void;
+    auto write(const std::string& path, const std::vector<std::shared_ptr<graphite::rsrc::type>>& types) -> void;
 
-}}}
+}
 
 #endif
