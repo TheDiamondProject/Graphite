@@ -9,14 +9,14 @@
 // MARK: - Constructor
 
 graphite::qd::ppat::ppat(std::shared_ptr<graphite::data::data> data, int64_t id, std::string name)
-        : m_id(id), m_name(name)
+    : m_id(id), m_name(std::move(name))
 {
-    data::reader reader(data);
+    data::reader reader(std::move(data));
     parse(reader);
 }
 
 graphite::qd::ppat::ppat(std::shared_ptr<qd::surface> surface)
-        : m_surface(surface)
+    : m_surface(std::move(surface))
 {
 
 }

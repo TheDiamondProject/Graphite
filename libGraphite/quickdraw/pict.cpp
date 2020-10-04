@@ -10,20 +10,19 @@
 // MARK: - Constants
 
 #define kPICT_V2_MAGIC          0x001102ff
-#define kPACK_BITS_THRESHOLD    4
 
 // MARK: - Constructors
 
 graphite::qd::pict::pict(std::shared_ptr<graphite::data::data> data, int64_t id, std::string name)
-        : m_surface(nullptr), m_frame(0, 0, 100, 100), m_id(id), m_name(name)
+    : m_surface(nullptr), m_frame(0, 0, 100, 100), m_id(id), m_name(std::move(name))
 {
     // Setup a reader for the PICT data, and then parse it.
-    data::reader pict_reader(data);
+    data::reader pict_reader(std::move(data));
     parse(pict_reader);
 }
 
 graphite::qd::pict::pict(std::shared_ptr<graphite::qd::surface> surface)
-        : m_surface(surface), m_frame(qd::point::zero(), surface->size()), m_id(0), m_name("Picture")
+    : m_surface(std::move(surface)), m_frame(qd::point::zero(), surface->size()), m_id(0), m_name("Picture")
 {
 
 }
@@ -62,7 +61,7 @@ static inline auto read_bytes(graphite::data::reader& pict_reader, std::size_t s
 
 // MARK: - Parsing / Reading
 
-auto graphite::qd::pict::read_region(graphite::data::reader& pict_reader) -> graphite::qd::rect
+auto graphite::qd::pict::read_region(graphite::data::reader& pict_reader) const -> graphite::qd::rect
 {
     auto size = pict_reader.read_short();
     auto rect = graphite::qd::rect::read(pict_reader, qd::rect::qd);
@@ -105,8 +104,8 @@ auto graphite::qd::pict::read_pack_bits_rect(graphite::data::reader & pict_reade
 
         pict_reader.move(6);
 
-        double h_res = static_cast<double>(pict_reader.read_signed_long() / static_cast<double>(1 << 16));
-        double v_res = static_cast<double>(pict_reader.read_signed_long() / static_cast<double>(1 << 16));
+        auto h_res = static_cast<double>(pict_reader.read_signed_long() / static_cast<double>(1 << 16));
+        auto v_res = static_cast<double>(pict_reader.read_signed_long() / static_cast<double>(1 << 16));
 
         pict_reader.move(22);
 

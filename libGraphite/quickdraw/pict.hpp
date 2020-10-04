@@ -10,7 +10,7 @@
 #include "libGraphite/quickdraw/pixmap.hpp"
 #include "libGraphite/data/reader.hpp"
 
-namespace graphite { namespace qd {
+namespace graphite::qd {
 
     /**
      * The `graphite::qd::pict` class represents a QuickDraw Picture.
@@ -33,16 +33,16 @@ namespace graphite { namespace qd {
         };
 
     private:
-        int64_t m_id;
+        int64_t m_id {};
         std::string m_name;
         std::shared_ptr<graphite::qd::surface> m_surface;
         graphite::qd::rect m_frame;
-        double m_x_ratio;
-        double m_y_ratio;
+        double m_x_ratio {};
+        double m_y_ratio {};
         std::size_t m_size;
 
         auto parse(graphite::data::reader& pict_reader) -> void;
-        auto read_region(graphite::data::reader& pict_reader) -> graphite::qd::rect;
+        auto read_region(graphite::data::reader& pict_reader) const -> graphite::qd::rect;
         auto read_long_comment(graphite::data::reader& pict_reader) -> void;
         auto read_direct_bits_rect(graphite::data::reader& pict_reader) -> void;
         auto read_pack_bits_rect(graphite::data::reader & pict_reader) -> void;
@@ -54,13 +54,13 @@ namespace graphite { namespace qd {
         auto encode_direct_bits_rect(graphite::data::writer& pict_encoder) -> void;
 
     public:
-        pict(std::shared_ptr<graphite::data::data> data, int64_t id = 0, std::string name = "");
-        pict(std::shared_ptr<graphite::qd::surface> surface);
+        explicit pict(std::shared_ptr<graphite::data::data> data, int64_t id = 0, std::string name = "");
+        explicit pict(std::shared_ptr<graphite::qd::surface> surface);
 
         static auto load_resource(int64_t id) -> std::shared_ptr<pict>;
         static auto from_surface(std::shared_ptr<graphite::qd::surface> surface) -> std::shared_ptr<pict>;
 
-        auto image_surface() const -> std::weak_ptr<graphite::qd::surface>;
+        [[nodiscard]] auto image_surface() const -> std::weak_ptr<graphite::qd::surface>;
 
         auto data() -> std::shared_ptr<graphite::data::data>;
     };
