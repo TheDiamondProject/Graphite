@@ -36,7 +36,7 @@ graphite::data::data::data(std::size_t capacity, enum graphite::data::data::byte
 }
 
 graphite::data::data::data(std::shared_ptr<std::vector<char>> bytes, std::size_t size, std::size_t start, enum data::byte_order bo)
-    : m_bo(bo), m_data(bytes), m_size(size), m_start(start)
+    : m_bo(bo), m_data(std::move(bytes)), m_size(size), m_start(start)
 {
    	
 }

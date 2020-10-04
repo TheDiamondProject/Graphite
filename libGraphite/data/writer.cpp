@@ -34,7 +34,7 @@ graphite::data::writer::writer()
 }
 
 graphite::data::writer::writer(std::shared_ptr<graphite::data::data> data)
-    : m_data(data)
+    : m_data(std::move(data))
 {
     
 }
@@ -53,11 +53,11 @@ auto graphite::data::writer::swap(
     }
     
     T v = 0;
-    auto size = sizeof(T);
+    unsigned int size = sizeof(T);
     
-    for (auto i = 0; i < size; ++i) {
-        auto b = (size - i - 1) << 3;
-        v |= ((value >> b) & 0xFF) << (i << 3);
+    for (unsigned int i = 0; i < size; ++i) {
+        auto b = (size - i - 1) << 3U;
+        v |= ((value >> b) & 0xFF) << (i << 3U);
     }
     
     return v;
@@ -98,14 +98,14 @@ auto graphite::data::writer::move(int64_t delta) -> void
 // MARK: - Template Write
 
 template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type*>
-auto graphite::data::writer::write_integer(const T value) -> void
+auto graphite::data::writer::write_integer(T value) -> void
 {
-    auto size = sizeof(T);
+    unsigned int size = sizeof(T);
     auto swapped = swap(value, m_native_bo, m_data->current_byte_order());
     auto data = m_data->get();
     
-    for (auto i = 0; i < size; ++i) {
-        auto b = i << 3;
+    for (unsigned int i = 0; i < size; ++i) {
+        auto b = i << 3U;
         
         // Two modes for writing. If we're at the very end of data then we need to insert.
         // If we're not at the end of the data then we can either overwrite the current byte
@@ -115,7 +115,7 @@ auto graphite::data::writer::write_integer(const T value) -> void
             m_pos++;
         }
         else {
-            data->data()[m_pos++] = (swapped >> b) & 0xFF;
+            (*data)[m_pos++] = (swapped >> b) & 0xFF;
         }
     }
 }
@@ -212,7 +212,7 @@ auto graphite::data::writer::write_pstr(const std::string& str) -> void
     m_pos += bytes.size();
 }
 
-auto graphite::data::writer::write_data(std::shared_ptr<graphite::data::data> data) -> void
+auto graphite::data::writer::write_data(const std::shared_ptr<graphite::data::data>& data) -> void
 {
     auto bytes = data->get();
     auto vec = m_data->get();

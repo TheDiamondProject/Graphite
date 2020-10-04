@@ -26,7 +26,7 @@
 #include <string>
 #include <type_traits>
 
-namespace graphite { namespace data {
+namespace graphite::data {
 
 /**
  * The `graphite::data::data` class is used to store binary data in memory,
@@ -36,7 +36,7 @@ namespace graphite { namespace data {
     {
     public:
         /**
-         * The byte order represents the endianess of a data value.
+         * The byte order represents the endianness of a data value.
          */
         enum byte_order { msb, lsb };
 
@@ -50,12 +50,12 @@ namespace graphite { namespace data {
         /**
          * Construct a new empty `graphite::data::data` object.
          */
-        data(enum data::byte_order bo = msb);
+        explicit data(enum data::byte_order bo = msb);
 
         /**
          * Construct a new `graphite::data::data` object with the specified capacity.
          */
-        data(std::size_t capacity, enum data::byte_order bo = msb);
+        explicit data(std::size_t capacity, enum data::byte_order bo = msb);
 
         /**
          * Construct a new `graphite::data::data` object with the provided data.
@@ -102,6 +102,6 @@ namespace graphite { namespace data {
 
     };
 
-}}
+}
 
 #endif

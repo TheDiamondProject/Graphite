@@ -24,7 +24,7 @@
 #if !defined(GRAPHITE_DATA_WRITER)
 #define GRAPHITE_DATA_WRITER
 
-namespace graphite { namespace data {
+namespace graphite::data {
 
 /**
  * The `graphite::data::writer` class is used to write values into a
@@ -38,7 +38,7 @@ namespace graphite { namespace data {
         uint64_t m_pos { 0 };
 
         template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-        auto write_integer(const T value) -> void;
+        auto write_integer(T value) -> void;
 
         /**
          * Swap the bytes of an integer value from the source byte order to the specified
@@ -62,7 +62,7 @@ namespace graphite { namespace data {
          * Construct a new `graphite::data::writer` object using the specified
          * `graphite::data::data` object.
          */
-        writer(std::shared_ptr<graphite::data::data> data);
+        explicit writer(std::shared_ptr<graphite::data::data> data);
 
         /**
          * Returns the internal data object.
@@ -72,13 +72,13 @@ namespace graphite { namespace data {
         /**
          * Returns the current size of the underlying `graphite::data::data:: object.
          */
-        auto size() const -> std::size_t;
+        [[nodiscard]] auto size() const -> std::size_t;
 
         /**
          * Returns the current insertion position of the receiver within the underlying
          * `graphite::data::data` object.
          */
-        auto position() const -> uint64_t;
+        [[nodiscard]] auto position() const -> uint64_t;
 
         /**
          * Set the insertion position of the receiver within the underlying
@@ -151,7 +151,7 @@ namespace graphite { namespace data {
          * Write the specified `graphite::data::data` object into the output
          * data stream.
          */
-        auto write_data(std::shared_ptr<graphite::data::data> data) -> void;
+        auto write_data(const std::shared_ptr<graphite::data::data>& data) -> void;
 
         /**
          * Pad the contents of the underlying data object to the specified number of bytes.
@@ -165,6 +165,6 @@ namespace graphite { namespace data {
 
     };
 
-}}
+}
 
 #endif

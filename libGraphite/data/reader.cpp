@@ -29,7 +29,7 @@
 
 graphite::data::reader::reader(const std::string& path)
 {
-    // Atempt to open the file, and throw and exception if we failed to do so.
+    // Attempt to open the file, and throw and exception if we failed to do so.
     std::ifstream file(path, std::ios::binary);
     if (!file.is_open() || file.fail()) {
         throw std::runtime_error("Failed to open resource file: " + path);
@@ -45,7 +45,7 @@ graphite::data::reader::reader(const std::string& path)
     
     // Read the contents of the file into the vector.
     auto data = std::make_shared<std::vector<char>>(file_size);
-    file.read(&(*data.get())[0], file_size);
+    file.read(&(*data)[0], file_size);
     m_data = std::make_shared<graphite::data::data>(data, file_size, graphite::data::data::byte_order::msb);
     
     // Close the file and clean up.
@@ -53,7 +53,7 @@ graphite::data::reader::reader(const std::string& path)
 }
 
 graphite::data::reader::reader(std::shared_ptr<graphite::data::data> data, uint64_t pos)
-    : m_data(data), m_pos(pos)
+    : m_data(std::move(data)), m_pos(pos)
 {
 
 }
@@ -65,7 +65,7 @@ auto graphite::data::reader::swap(
     T value,
     enum graphite::data::data::byte_order value_bo,
     enum graphite::data::data::byte_order result_bo,
-    int64_t size
+    uint64_t size
 ) -> T {
     // Return the value immediately if the value byte order matches the result byte order.
     if (value_bo == result_bo) {
@@ -75,9 +75,9 @@ auto graphite::data::reader::swap(
     T v = 0;
     size = size == -1 ? sizeof(T) : size;
     
-    for (auto i = 0; i < size; ++i) {
-        auto b = (size - i - 1) << 3;
-        v |= ((value >> b) & 0xFF) << (i << 3);
+    for (typeof(size) i = 0; i < size; ++i) {
+        auto b = (size - i - 1) << 3ULL;
+        v |= ((value >> b) & 0xFF) << (i << 3ULL);
     }
     
     return v;
@@ -138,7 +138,7 @@ auto graphite::data::reader::restore_position() -> void
 // MARK: - Template Read
 
 template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type*>
-auto graphite::data::reader::read_integer(int64_t offset, graphite::data::reader::mode mode, int64_t size) -> T
+auto graphite::data::reader::read_integer(int64_t offset, graphite::data::reader::mode mode, uint64_t size) -> T
 {
     T v = 0;
     size = size == -1 ? sizeof(T) : size;
@@ -150,9 +150,9 @@ auto graphite::data::reader::read_integer(int64_t offset, graphite::data::reader
         throw std::runtime_error("Invalid data being read from.");
     }
     
-    for (auto i = 0; i < size; ++i) {
+    for (typeof(size) i = 0; i < size; ++i) {
         auto b = static_cast<uint8_t>(m_data->at(m_pos + offset + i));
-        v |= static_cast<T>(b) << (i << 3);
+        v |= static_cast<T>(b) << (i << 3ULL);
     }
     
     if (size > 1) {

@@ -24,7 +24,7 @@
 #include <memory>
 #include "libGraphite/data/data.hpp"
 
-namespace graphite { namespace data {
+namespace graphite::data {
 
 /**
  * The `graphite::data::reader` class is used to read values from a
@@ -50,7 +50,7 @@ namespace graphite { namespace data {
         uint64_t m_pos { 0 };
 
         template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-        auto read_integer(int64_t offset, reader::mode mode = advance, int64_t size = -1) -> T;
+        auto read_integer(int64_t offset, reader::mode mode = advance, uint64_t size = -1) -> T;
 
         /**
          * Swap the bytes of an integer value from the source byte order to the specified
@@ -61,7 +61,7 @@ namespace graphite { namespace data {
             T value,
             enum graphite::data::data::byte_order value_bo,
             enum graphite::data::data::byte_order result_bo,
-            int64_t size = -1
+            uint64_t size = -1
         ) -> T;
 
     public:
@@ -70,14 +70,14 @@ namespace graphite { namespace data {
          * Construct a new `graphite::data::reader` object using the data in
          * the specified file.
          */
-        reader(const std::string& path);
+        explicit reader(const std::string& path);
 
         /**
          * Construct a new `graphite::data::reader` object using the
          * specified `graphite::data::data` object, constraining the available
          * read region of the data.
          */
-        reader(std::shared_ptr<data> data, uint64_t pos = 0);
+        explicit reader(std::shared_ptr<data> data, uint64_t pos = 0);
 
         /**
          * Returns a shared copy of the raw data being used by the data slice.
@@ -91,19 +91,19 @@ namespace graphite { namespace data {
          * Note: This size will be the _constrained_ size, if the reader was
          * constrained.
          */
-        auto size() const -> std::size_t;
+        [[nodiscard]] auto size() const -> std::size_t;
 
         /**
          * Reports if the position of the receiver is at or past the end of the
          * the underlying data.
          */
-        auto eof() const -> bool;
+        [[nodiscard]] auto eof() const -> bool;
 
         /**
          * Reports the current position of the receiver relative to its own
          * constraints.
          */
-        auto position() const -> uint64_t;
+        [[nodiscard]] auto position() const -> uint64_t;
 
         /**
          * Set the position of the receiver, relative to its own constraints.
@@ -192,6 +192,6 @@ namespace graphite { namespace data {
 
     };
 
-}}
+}
 
 #endif
