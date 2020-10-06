@@ -80,6 +80,11 @@ namespace graphite::rsrc {
     	 * Returns the resource with the specified ID.
     	 */
     	[[nodiscard]] auto get(int16_t id) const -> std::weak_ptr<resource>;
+
+    	/**
+    	 * Returns a set of resources whose name begins with the specified text, or matches wholly.
+    	 */
+    	[[nodiscard]] auto get(const std::string& name_prefix) const -> std::vector<std::shared_ptr<resource>>;
     };
 
 }
