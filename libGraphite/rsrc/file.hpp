@@ -124,9 +124,15 @@ namespace graphite::rsrc {
                             const std::map<std::string, std::string>& attributes = {}) -> std::weak_ptr<graphite::rsrc::type>;
 
         /**
-         * Attempt to get the resource of the specified type and id.
+         * Attempt to get the resource of the specified type, id and attributes
          */
         auto find(const std::string& type, const int64_t& id, const std::map<std::string, std::string> &attributes) -> std::weak_ptr<resource>;
+
+        /**
+         * Retrieve a set of resources from the file, whose name begin with the specified prefix (or match exactly)
+         * for the specified type and attributes.
+         */
+        auto find(const std::string& type, const std::string& name_prefix, const std::map<std::string, std::string>& attributes) -> std::vector<std::shared_ptr<resource>>;
     };
 
 }

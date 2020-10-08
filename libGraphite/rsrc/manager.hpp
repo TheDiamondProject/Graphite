@@ -77,6 +77,12 @@ namespace graphite::rsrc {
          * Returns a list of type containers for the specified type code.
          */
         [[nodiscard]] auto get_type(const std::string& type, const std::map<std::string, std::string>& attributes = {}) const -> std::vector<std::weak_ptr<rsrc::type>>;
+
+        /**
+         * Retrieve a set of resources from the manager, whose name begin with the specified prefix (or match exactly)
+         * for the specified type and attributes.
+         */
+        [[nodiscard]] auto find(const std::string& type, const std::string& name_prefix, const std::map<std::string, std::string>& attributes) -> std::vector<std::shared_ptr<resource>>;
     };
 
 }

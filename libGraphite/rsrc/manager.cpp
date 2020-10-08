@@ -47,8 +47,8 @@ auto graphite::rsrc::manager::files() const -> std::vector<std::shared_ptr<file>
 
 auto graphite::rsrc::manager::find(const std::string& type, const int64_t& id, const std::map<std::string, std::string>& attributes) const -> std::weak_ptr<graphite::rsrc::resource>
 {
-    for (const auto& file : m_files) {
-        auto res = file->find(type, id, attributes);
+    for (auto i = m_files.rbegin(); i != m_files.rend(); ++i) {
+        auto res = (*i)->find(type, id, attributes);
         if (!res.expired()) {
             return res;
         }
@@ -61,6 +61,23 @@ auto graphite::rsrc::manager::get_type(const std::string &type, const std::map<s
     std::vector<std::weak_ptr<rsrc::type>> v;
     for (const auto& file : m_files) {
         v.emplace_back(file->type_container(type, attributes));
+    }
+    return v;
+}
+
+auto graphite::rsrc::manager::find(const std::string &type, const std::string &name_prefix,
+                                 const std::map<std::string, std::string> &attributes) -> std::vector<std::shared_ptr<resource>>
+{
+    std::vector<std::shared_ptr<resource>> v;
+    for (auto i = m_files.rbegin(); i != m_files.rend(); ++i) {
+        auto resources = (*i)->find(type, name_prefix, attributes);
+        for (const auto& r : resources) {
+            // The resource in the most recently loaded files, wins here. We're traversing the files in reverse order,
+            // and using the resource, only if it hasn't already been seen.
+            if (std::none_of(v.cbegin(), v.cend(), [r, v] (const std::shared_ptr<resource>& e) { return e->id() == r->id(); })) {
+                v.emplace_back(r);
+            }
+        }
     }
     return v;
 }

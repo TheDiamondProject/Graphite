@@ -178,5 +178,14 @@ auto graphite::rsrc::file::find(const std::string& type, const int64_t& id, cons
     if (auto container = type_container(type, attributes).lock()) {
         return container->get(id);
     }
-    return std::weak_ptr<graphite::rsrc::resource>();
+    return {};
+}
+
+auto graphite::rsrc::file::find(const std::string &type, const std::string &name_prefix,
+                                const std::map<std::string, std::string> &attributes) -> std::vector<std::shared_ptr<resource>>
+{
+    if (auto container = type_container(type, attributes).lock()) {
+        return container->get(name_prefix);
+    }
+    return {};
 }

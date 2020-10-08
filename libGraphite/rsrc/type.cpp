@@ -72,10 +72,25 @@ auto graphite::rsrc::type::resources() const -> std::vector<std::shared_ptr<grap
 
 auto graphite::rsrc::type::get(int16_t id) const -> std::weak_ptr<graphite::rsrc::resource>
 {
-    for (const auto& m_resource : m_resources) {
-        if (m_resource->id() == id) {
-            return m_resource;
+    for (const auto& resource : m_resources) {
+        if (resource->id() == id) {
+            return resource;
         }
     }
     return std::weak_ptr<graphite::rsrc::resource>();
+}
+
+auto graphite::rsrc::type::get(const std::string &name_prefix) const -> std::vector<std::shared_ptr<resource>>
+{
+    std::vector<std::shared_ptr<resource>> v;
+    for (const auto& resource : m_resources) {
+        const auto& name = resource->name();
+        if (name.length() == name_prefix.length() && name == name_prefix) {
+            v.emplace_back(resource);
+        }
+        else if (name.length() >= name_prefix.length() && name.substr(0, name_prefix.length()) == name_prefix) {
+            v.emplace_back(resource);
+        }
+    }
+    return v;
 }
