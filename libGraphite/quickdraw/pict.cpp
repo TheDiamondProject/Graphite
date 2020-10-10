@@ -22,7 +22,7 @@ graphite::qd::pict::pict(std::shared_ptr<graphite::data::data> data, int64_t id,
 }
 
 graphite::qd::pict::pict(std::shared_ptr<graphite::qd::surface> surface)
-    : m_surface(std::move(surface)), m_frame(qd::point::zero(), surface->size()), m_id(0), m_name("Picture")
+    : m_surface(std::move(surface)), m_frame(qd::point::zero(), m_surface->size()), m_id(0), m_name("Picture")
 {
 
 }
