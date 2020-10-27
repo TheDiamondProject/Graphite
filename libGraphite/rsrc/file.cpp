@@ -84,6 +84,9 @@ auto graphite::rsrc::file::read(const std::string& path) -> void
 	if (reader->read_quad(0, graphite::data::reader::mode::peek) == 1) {
 		m_format = graphite::rsrc::file::format::extended;
 	}
+    else if (reader->read_long(0, graphite::data::reader::mode::peek) == 'BRGR') {
+        m_format = graphite::rsrc::file::format::rez;
+    }
 	else {
 		m_format = graphite::rsrc::file::format::classic;
 	}
