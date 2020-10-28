@@ -30,6 +30,14 @@
 
 namespace graphite::rsrc::rez {
 
+    const std::string map_name = "resource.map";
+    const uint32_t rez_signature = 'BRGR';
+    const uint32_t rez_version = 1;
+    const uint32_t resource_offset_length = 12;
+    const uint32_t map_header_length = 8;
+    const uint32_t type_info_length = 12;
+    const uint32_t resource_info_length = 266;
+
     /**
      * Parse the specified/provided data object that represents a resource file
      * into a list of resource types.

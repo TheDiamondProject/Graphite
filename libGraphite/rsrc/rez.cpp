@@ -26,8 +26,80 @@
 
 auto graphite::rsrc::rez::parse(const std::shared_ptr<graphite::data::reader>& reader) -> std::vector<std::shared_ptr<graphite::rsrc::type>>
 {
-    // TODO: .rez implementation
-    return {};
+    // Read the preamble
+    if (reader->read_long() != rez_signature) {
+        throw std::runtime_error("[Rez File] Preamble 'signature' mismatch.");
+    }
+    reader->get()->set_byte_order(graphite::data::data::byte_order::lsb);
+    if (reader->read_long() != rez_version) {
+        throw std::runtime_error("[Rez File] Preamble 'version' mismatch.");
+    }
+    auto header_length = reader->read_long();
+    
+    // Read the header
+    reader->move(4); // Unknown value
+    auto first_index = reader->read_long();
+    auto count = reader->read_long();
+    uint32_t expected_header_length = 12 + (count * resource_offset_length) + map_name.size()+1;
+    if (header_length != expected_header_length) {
+        throw std::runtime_error("[Rez File] Preamble 'header_length' mismatch.");
+    }
+    
+    // Record the offsets
+    std::vector<uint64_t> offsets;
+    std::vector<uint64_t> sizes;
+    for (auto res_idx = 0; res_idx < count; res_idx++) {
+        offsets.push_back(static_cast<uint64_t>(reader->read_long()));
+        sizes.push_back(static_cast<uint64_t>(reader->read_long()));
+        reader->move(4); // Unknown value
+    }
+    if (reader->read_cstr() != map_name) {
+        throw std::runtime_error("[Rez File] Header 'map_name' mismatch.");
+    }
+    
+    // Read the resource map header
+    reader->get()->set_byte_order(graphite::data::data::byte_order::msb);
+    auto map_offset = offsets.back();
+    reader->set_position(map_offset);
+    reader->move(4); // Unknown value
+    auto type_count = reader->read_long();
+    
+    // Read the types
+    std::vector<std::shared_ptr<graphite::rsrc::type>> types;
+    for (auto type_idx = 0; type_idx < type_count; type_idx++) {
+        auto code = reader->read_cstr(4);
+        auto type_offset = static_cast<int64_t>(reader->read_long());
+        auto count = reader->read_long();
+        auto type = std::make_shared<graphite::rsrc::type>(code);
+        
+        reader->save_position();
+        reader->set_position(map_offset + type_offset);
+        
+        // Read the resource info
+        for (auto res_idx = 0; res_idx < count; res_idx++) {
+            auto index = reader->read_long();
+            auto code = reader->read_cstr(4);
+            if (code != type->code()) {
+                throw std::runtime_error("[Rez File] Resource 'type' mismatch.");
+            }
+            auto id = static_cast<int64_t>(reader->read_signed_short());
+            auto name = reader->read_cstr(256);
+            
+            // Read the resource's data
+            reader->save_position();
+            reader->set_position(offsets[index-first_index]);
+            auto slice = reader->read_data(sizes[index-first_index]);
+            reader->restore_position();
+            
+            auto resource = std::make_shared<graphite::rsrc::resource>(id, type, name, slice);
+            type->add_resource(resource);
+        }
+        
+        reader->restore_position();
+        types.push_back(type);
+    }
+    
+    return types;
 }
 
 // MARK: - Writing
@@ -35,15 +107,6 @@ auto graphite::rsrc::rez::parse(const std::shared_ptr<graphite::data::reader>& r
 auto graphite::rsrc::rez::write(const std::string& path, const std::vector<std::shared_ptr<graphite::rsrc::type>>& types) -> void
 {
     auto writer = std::make_shared<graphite::data::writer>();
-    writer->data()->set_byte_order(graphite::data::data::byte_order::lsb);
-
-    const std::string rez_signature = "BRGR";
-    const std::string map_name = "resource.map";
-    const uint32_t rez_version = 1;
-    const uint32_t resource_offset_length = 12;
-    const uint32_t map_header_length = 8;
-    const uint32_t type_info_length = 12;
-    const uint32_t resource_info_length = 266;
 
     // Count up the total number of resources
     uint32_t resource_count = 0;
@@ -58,7 +121,8 @@ auto graphite::rsrc::rez::write(const std::string& path, const std::vector<std::
     uint32_t header_length = 12 + (entry_count * resource_offset_length) + map_name.size()+1;
 
     // Write the preamble
-    writer->write_cstr(rez_signature, 4);
+    writer->write_long(rez_signature);
+    writer->data()->set_byte_order(graphite::data::data::byte_order::lsb);
     writer->write_long(rez_version);
     writer->write_long(header_length);
 
