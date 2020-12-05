@@ -46,7 +46,9 @@ auto graphite::qd::point::read(graphite::data::reader& reader, enum coding_type 
             return qd::point(x, y);
         }
         case coding_type::pict: {
-            return qd::point(reader.read_signed_short(), reader.read_signed_short());
+            auto x = reader.read_signed_short();
+            auto y = reader.read_signed_short();
+            return qd::point(x, y);
         }
     }
 }
@@ -164,7 +166,9 @@ auto graphite::qd::size::read(graphite::data::reader& reader, enum coding_type t
             return qd::size(width, height);
         }
         case coding_type::pict: {
-            return qd::size(reader.read_signed_short(), reader.read_signed_short());
+            auto width = reader.read_signed_short();
+            auto height = reader.read_signed_short();
+            return qd::size(width, height);
         }
     }
 }
@@ -328,7 +332,9 @@ auto graphite::qd::rect::read(graphite::data::reader& reader, enum coding_type t
             return qd::rect(origin, qd::size(origin.x() + opposite.x(), origin.y() + opposite.y()));
         }
         case coding_type::pict: {
-            return qd::rect(point::read(reader, point::pict), size::read(reader, size::pict));
+            auto origin = point::read(reader, point::pict);
+            auto sz = size::read(reader, size::pict);
+            return qd::rect(origin, sz);
         }
     }
 }
