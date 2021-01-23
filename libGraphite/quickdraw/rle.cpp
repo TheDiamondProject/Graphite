@@ -4,6 +4,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <stdexcept>
 #include "libGraphite/quickdraw/rle.hpp"
 #include "libGraphite/rsrc/manager.hpp"
 

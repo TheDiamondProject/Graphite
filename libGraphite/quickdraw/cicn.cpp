@@ -5,6 +5,7 @@
 #include "libGraphite/quickdraw/cicn.hpp"
 #include "libGraphite/rsrc/manager.hpp"
 #include <tuple>
+#include <stdexcept>
 
 // MARK: - Constructor
 

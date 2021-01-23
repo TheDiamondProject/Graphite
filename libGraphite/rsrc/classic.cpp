@@ -19,6 +19,8 @@
 // SOFTWARE.
 
 #include <limits>
+#include <stdexcept>
+#include "libGraphite/hints.hpp"
 #include "libGraphite/rsrc/classic.hpp"
 #include "libGraphite/encoding/macroman/macroman.hpp"
 
@@ -67,13 +69,13 @@ auto graphite::rsrc::classic::parse(const std::shared_ptr<graphite::data::reader
 	// 2. Now that the preamble is parsed and verified, parse the contents
 	// of the ResourceMap. The first two fields are used by the actual Resource Manager in
 	// the Classic Macintosh OS, but are not used by this implementation.
-	auto next_map __attribute__((unused)) = reader->read_long();
-	auto reference __attribute__((unused)) = reader->read_short();
+	GRAPHITE_UNUSED auto next_map = reader->read_long();
+	GRAPHITE_UNUSED auto reference = reader->read_short();
 
 	// Start to read the actual content of the resource map. This is the content that
 	// we actually care about. The first field is the flags/attributes of the resource
 	// fork.
-	auto flags __attribute__((unused)) = static_cast<graphite::rsrc::file::flags>(reader->read_short());
+	GRAPHITE_UNUSED auto flags = static_cast<graphite::rsrc::file::flags>(reader->read_short());
 
 	// The next fields are the offsets of the type list and the name list.
 	auto type_list_offset = static_cast<uint64_t>(reader->read_short());
@@ -98,9 +100,9 @@ auto graphite::rsrc::classic::parse(const std::shared_ptr<graphite::data::reader
 		for (auto res_idx = 0; res_idx < count; ++res_idx) {
 			auto id = static_cast<int64_t>(reader->read_signed_short());
 			auto name_offset = reader->read_short();
-			auto flags __attribute__((unused)) = reader->read_byte();
+            GRAPHITE_UNUSED auto flags = reader->read_byte();
 			auto resource_data_offset = reader->read_triple();
-			auto handle __attribute__((unused)) = reader->read_long();
+            GRAPHITE_UNUSED auto handle = reader->read_long();
 
 			// 5. Parse out of the name of the resource.
 			std::string name;

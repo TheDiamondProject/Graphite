@@ -3,6 +3,7 @@
 //
 
 #include <limits>
+#include <stdexcept>
 #include "libGraphite/quickdraw/clut.hpp"
 #include "libGraphite/rsrc/manager.hpp"
 
