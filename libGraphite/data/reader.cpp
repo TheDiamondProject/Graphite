@@ -75,7 +75,7 @@ auto graphite::data::reader::swap(
     T v = 0;
     size = size == -1 ? sizeof(T) : size;
     
-    for (typeof(size) i = 0; i < size; ++i) {
+    for (decltype(size) i = 0; i < size; ++i) {
         auto b = (size - i - 1) << 3ULL;
         v |= ((value >> b) & 0xFF) << (i << 3ULL);
     }
@@ -150,7 +150,7 @@ auto graphite::data::reader::read_integer(int64_t offset, graphite::data::reader
         throw std::runtime_error("Invalid data being read from.");
     }
     
-    for (typeof(size) i = 0; i < size; ++i) {
+    for (decltype(size) i = 0; i < size; ++i) {
         auto b = static_cast<uint8_t>(m_data->at(m_pos + offset + i));
         v |= static_cast<T>(b) << (i << 3ULL);
     }

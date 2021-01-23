@@ -2,6 +2,7 @@
 // Created by Tom Hancocks on 20/02/2020.
 //
 
+#include <stdexcept>
 #include <libGraphite/rsrc/manager.hpp>
 #include "libGraphite/quickdraw/pict.hpp"
 #include "libGraphite/quickdraw/internal/packbits.hpp"
@@ -115,7 +116,7 @@ auto graphite::qd::pict::read_pack_bits_rect(graphite::data::reader & pict_reade
     else {
         graphite::qd::pixmap pm = graphite::qd::pixmap(pict_reader.read_data(qd::pixmap::length));
         cmp_size = pm.cmp_size();
-        color_model = pm.pixel_format();
+        color_model = static_cast<graphite::qd::pixel_format>(pm.pixel_format());
         row_bytes = pm.row_bytes();
         bounds = pm.bounds();
     }
@@ -182,7 +183,7 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
         graphite::qd::pixmap pm = graphite::qd::pixmap(pict_reader.read_data(qd::pixmap::length));
         pack_type = pm.pack_type();
         cmp_count = pm.cmp_count();
-        color_model = pm.pixel_format();
+        color_model = static_cast<graphite::qd::pixel_format>(pm.pixel_format());
         row_bytes = pm.row_bytes();
         bounds = pm.bounds();
     }

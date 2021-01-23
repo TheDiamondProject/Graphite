@@ -57,7 +57,7 @@ namespace graphite::qd {
         [[nodiscard]] auto pixel_size() const -> int16_t;
         [[nodiscard]] auto cmp_count() const -> int16_t;
         [[nodiscard]] auto cmp_size() const -> int16_t;
-        [[nodiscard]] auto pixel_format() const -> enum pixel_format;
+        [[nodiscard]] auto pixel_format() const -> enum graphite::qd::pixel_format;
         [[nodiscard]] auto pm_table() const -> uint32_t;
 
         auto set_bounds(const graphite::qd::rect& rect) -> void;

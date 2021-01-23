@@ -5,7 +5,8 @@
 #include "libGraphite/resources/sound.hpp"
 #include "libGraphite/rsrc/manager.hpp"
 #include "libGraphite/data/reader.hpp"
-#import <algorithm>
+#include <algorithm>
+#include <stdexcept>
 
 // MARK: - IMA4 Decoding
 

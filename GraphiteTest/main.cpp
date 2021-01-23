@@ -39,10 +39,10 @@ int main(int argc, char const *argv[])
     });
 
     // The resource file should be assembled at this point and just needs writing to disk.
-    rf->write("/tmp/localised.rsrc", graphite::rsrc::file::format::extended);
+    rf->write("test.cdat", graphite::rsrc::file::format::extended);
 
 
-    auto in_rf = std::make_shared<graphite::rsrc::file>("/tmp/localised.rsrc");
+    auto in_rf = std::make_shared<graphite::rsrc::file>("test.cdat");
     for (const auto& type : in_rf->types()) {
         std::cout << "reading type: " << type->code() << type->attributes_string() << std::endl;
     }
