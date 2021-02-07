@@ -205,16 +205,15 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
     // Verify the type of PixMap. We can only accept certain types for the time being, until
     // support for decoding/rendering other types is added.
     std::vector<uint8_t> raw;
-    std::size_t raw_size = 0;
     switch (pack_type) {
         case 1:
         case 2:
         case 3: {
-            raw_size = row_bytes;
+            raw.reserve(row_bytes);
             break;
         }
         case 4: {
-            raw_size = cmp_count * row_bytes / 4;
+            raw.reserve(cmp_count * row_bytes / 4);
             break;
         }
         default: {
@@ -225,19 +224,20 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
     // Allocate a private memory buffer before going to the surface.
     std::vector<uint16_t> px_short_buffer;
     std::vector<uint32_t> px_long_buffer;
-
-    if (pack_type == 3) {
-        px_short_buffer = std::vector<uint16_t>(source_rect.height() * (row_bytes + 1) / 2);
-    }
-    else {
-        px_long_buffer = std::vector<uint32_t>(source_rect.height() * (row_bytes + 3) / 4);
-    }
-
     uint32_t px_buffer_offset = 0;
     uint16_t packed_bytes_count = 0;
     uint32_t height = source_rect.height();
     uint32_t width = source_rect.width();
     uint32_t bounds_width = bounds.width();
+    uint32_t source_length = width * height;
+
+    if (pack_type == 3) {
+        px_short_buffer = std::vector<uint16_t>(source_length);
+    }
+    else {
+        px_long_buffer = std::vector<uint32_t>(source_length);
+    }
+
     auto packing_enabled = ((pack_type == 3 ? 2 : 1) + (row_bytes > 250 ? 2 : 1)) <= bounds_width;
 
     for (uint32_t scanline = 0; scanline < height; ++scanline) {
@@ -290,7 +290,6 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
         px_buffer_offset += width;
     }
 
-    uint32_t source_length = width * height;
     std::vector<graphite::qd::color> rgb(source_length, graphite::qd::color::purple());
 
     if (pack_type == 3) {
