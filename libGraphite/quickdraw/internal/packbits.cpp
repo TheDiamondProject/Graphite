@@ -18,7 +18,9 @@ auto graphite::qd::packbits::decode(std::vector<uint8_t> &out_data, const std::v
         else if (count >= 128) {
             uint8_t run = 256 - count + 1;
             for (uint8_t i = 0; i < run; ++i) {
-                out_data.insert(out_data.end(), std::make_move_iterator(pack_data.begin() + pos), std::make_move_iterator(pack_data.begin() + pos + value_size));
+                for (uint8_t j = 0; j < value_size; ++j) {
+                    out_data.push_back(pack_data[pos + j]);
+                }
             }
             pos += value_size;
         }
