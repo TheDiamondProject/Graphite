@@ -132,10 +132,11 @@ auto graphite::qd::pict::read_pack_bits_rect(graphite::data::reader & pict_reade
     std::vector<uint8_t> rgb;
     std::size_t rgb_buffer_offset = 0;
     uint16_t packed_bytes_count = 0;
-    uint32_t source_length = source_rect.width() * source_rect.height();
-    std::vector<graphite::qd::color> surface_data;
+    uint32_t height = source_rect.height();
+    uint32_t width = source_rect.width();
+    uint32_t source_length = width * height;
 
-    for (auto scanline = 0; scanline < source_rect.height(); ++scanline) {
+    for (auto scanline = 0; scanline < height; ++scanline) {
         raw.clear();
 
         if (row_bytes >= 8) {
@@ -149,24 +150,23 @@ auto graphite::qd::pict::read_pack_bits_rect(graphite::data::reader & pict_reade
             auto packed_data = read_bytes(pict_reader, packed_bytes_count);
             qd::packbits::decode(raw, packed_data, sizeof(uint8_t));
             // Decoded packbits may contain more data than the row requires - trim it to width
-            raw.resize(source_rect.width());
+            raw.resize(width);
         }
         else {
             raw = read_bytes(pict_reader, row_bytes);
         }
 
+        // Note: we're just appending to the surface here rather than drawing into the destination rect
         rgb_buffer_offset += row_bytes;
         if (cmp_size == 1) {
             for (auto component : raw) {
-                surface_data.emplace_back(color_table.get(component));
+                m_surface.get()->set(m_size++, color_table.get(component));
             }
         }
         else {
             rgb.insert(rgb.end(), raw.begin(), raw.end());
         }
     }
-
-    m_surface = std::make_shared<graphite::qd::surface>(destination_rect.width(), destination_rect.height(), surface_data);
 }
 
 auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_reader) -> void
@@ -205,16 +205,15 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
     // Verify the type of PixMap. We can only accept certain types for the time being, until
     // support for decoding/rendering other types is added.
     std::vector<uint8_t> raw;
-    std::size_t raw_size = 0;
     switch (pack_type) {
         case 1:
         case 2:
         case 3: {
-            raw_size = row_bytes;
+            raw.reserve(row_bytes);
             break;
         }
         case 4: {
-            raw_size = cmp_count * row_bytes / 4;
+            raw.reserve(cmp_count * row_bytes / 4);
             break;
         }
         default: {
@@ -225,19 +224,20 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
     // Allocate a private memory buffer before going to the surface.
     std::vector<uint16_t> px_short_buffer;
     std::vector<uint32_t> px_long_buffer;
-
-    if (pack_type == 3) {
-        px_short_buffer = std::vector<uint16_t>(source_rect.height() * (row_bytes + 1) / 2);
-    }
-    else {
-        px_long_buffer = std::vector<uint32_t>(source_rect.height() * (row_bytes + 3) / 4);
-    }
-
     uint32_t px_buffer_offset = 0;
     uint16_t packed_bytes_count = 0;
     uint32_t height = source_rect.height();
     uint32_t width = source_rect.width();
     uint32_t bounds_width = bounds.width();
+    uint32_t source_length = width * height;
+
+    if (pack_type == 3) {
+        px_short_buffer = std::vector<uint16_t>(source_length);
+    }
+    else {
+        px_long_buffer = std::vector<uint32_t>(source_length);
+    }
+
     auto packing_enabled = ((pack_type == 3 ? 2 : 1) + (row_bytes > 250 ? 2 : 1)) <= bounds_width;
 
     for (uint32_t scanline = 0; scanline < height; ++scanline) {
@@ -290,29 +290,23 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
         px_buffer_offset += width;
     }
 
-    uint32_t source_length = width * height;
-    std::vector<graphite::qd::color> rgb(source_length, graphite::qd::color::purple());
-
     if (pack_type == 3) {
-        for (uint32_t p = 0, i = 0; i < source_length; ++i) {
-            uint16_t v = px_short_buffer[i];
-            rgb[p++] = graphite::qd::color(static_cast<uint8_t>(((v & 0x7c00) >> 10) << 3),
-                                           static_cast<uint8_t>(((v & 0x03e0) >> 5) << 3),
-                                           static_cast<uint8_t>((v & 0x001f) << 3));
+        for (auto v : px_short_buffer) {
+            graphite::qd::color color(static_cast<uint8_t>(((v & 0x7c00) >> 10) << 3),
+                                      static_cast<uint8_t>(((v & 0x03e0) >> 5) << 3),
+                                      static_cast<uint8_t>((v & 0x001f) << 3));
+            m_surface.get()->set(m_size++, color);
         }
     }
     else {
-        for (uint32_t p = 0, i = 0; i < source_length; ++i) {
-            uint32_t v = px_long_buffer[i];
-            rgb[p++] = graphite::qd::color(static_cast<uint8_t>((v & 0xFF0000) >> 16),
-                                           static_cast<uint8_t>((v & 0xFF00) >> 8),
-                                           static_cast<uint8_t>(v & 0xFF),
-                                           static_cast<uint8_t>((v & 0xFF000000) >> 24));
+        for (auto v : px_long_buffer) {
+            graphite::qd::color color(static_cast<uint8_t>((v & 0xFF0000) >> 16),
+                                      static_cast<uint8_t>((v & 0xFF00) >> 8),
+                                      static_cast<uint8_t>(v & 0xFF),
+                                      static_cast<uint8_t>((v & 0xFF000000) >> 24));
+            m_surface.get()->set(m_size++, color);
         }
     }
-
-    m_size = rgb.size();
-    m_surface = std::make_shared<graphite::qd::surface>(width, height, rgb);
 }
 
 auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
@@ -354,6 +348,9 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
 
     // Begin parsing PICT opcodes.
     qd::rect clip_rect(0, 0, 0, 0);
+
+    m_size = 0;
+    m_surface = std::make_shared<graphite::qd::surface>(m_frame.width(), m_frame.height());
 
     while (!pict_reader.eof()) {
         // Make sure we are correctly aligned.

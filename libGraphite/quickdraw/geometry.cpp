@@ -329,7 +329,7 @@ auto graphite::qd::rect::read(graphite::data::reader& reader, enum coding_type t
         case coding_type::qd: {
             auto origin = qd::point::read(reader, point::qd);
             auto opposite = qd::point::read(reader, point::qd);
-            return qd::rect(origin, qd::size(origin.x() + opposite.x(), origin.y() + opposite.y()));
+            return qd::rect(origin, qd::size(opposite.x() - origin.x(), opposite.y() - origin.y()));
         }
         case coding_type::pict: {
             auto origin = point::read(reader, point::pict);

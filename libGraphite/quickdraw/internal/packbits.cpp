@@ -12,6 +12,9 @@ auto graphite::qd::packbits::decode(std::vector<uint8_t> &out_data, const std::v
         auto count = pack_data[pos++];
         if (count >= 0 && count < 128) {
             uint16_t run = (1 + count) * value_size;
+            if ((pos + run) > pack_data.size()) {
+                throw std::runtime_error("Unable to decode packbits.");
+            }
             out_data.insert(out_data.end(), std::make_move_iterator(pack_data.begin() + pos), std::make_move_iterator(pack_data.begin() + pos + run));
             pos += run;
         }
