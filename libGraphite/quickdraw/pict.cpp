@@ -309,6 +309,65 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
     }
 }
 
+auto graphite::qd::pict::read_compressed_quicktime(graphite::data::reader &pict_reader) -> void
+{
+    auto length = pict_reader.read_long();
+    pict_reader.move(38);
+    auto matte_size = pict_reader.read_long();
+    auto matte_rect = qd::rect::read(pict_reader, qd::rect::qd);
+    pict_reader.move(2);
+    auto source_rect = qd::rect::read(pict_reader, qd::rect::qd);
+    pict_reader.move(4);
+    auto mask_size = pict_reader.read_long();
+    
+    if (matte_size > 0) {
+        read_image_description(pict_reader);
+    }
+    
+    if (mask_size > 0) {
+        pict_reader.move(mask_size);
+    }
+    
+    read_image_description(pict_reader);
+}
+
+auto graphite::qd::pict::read_uncompressed_quicktime(graphite::data::reader &pict_reader) -> void
+{
+    auto length = pict_reader.read_long();
+    pict_reader.move(38);
+    auto matte_size = pict_reader.read_long();
+    auto matte_rect = qd::rect::read(pict_reader, qd::rect::qd);
+    
+    if (matte_size > 0) {
+        read_image_description(pict_reader);
+    }
+}
+
+auto graphite::qd::pict::read_image_description(graphite::data::reader &pict_reader) -> void
+{
+    auto length = pict_reader.read_long();
+    if (length != 86) {
+        throw std::runtime_error("Invalid PICT image description: " + std::to_string(m_id) + ", " + m_name);
+    }
+    auto compressor = pict_reader.read_long();
+    pict_reader.move(24);
+    auto width = pict_reader.read_short();
+    auto height = pict_reader.read_short();
+    pict_reader.move(8);
+    auto data_size = pict_reader.read_long();
+    pict_reader.move(34);
+    auto depth = pict_reader.read_short();
+    if (depth > 32) {
+        depth -= 32; // grayscale
+    }
+    auto clut = pict_reader.read_signed_short();
+    
+    switch (compressor) {
+        default:
+            pict_reader.move(data_size);
+    }
+}
+
 auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
 {
     pict_reader.move(2);
@@ -384,9 +443,13 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
             case opcode::def_hilite: {
                 break;
             }
-            case opcode::compressed_quicktime:
+            case opcode::compressed_quicktime: {
+                read_compressed_quicktime(pict_reader);
+                break;
+            }
             case opcode::uncompressed_quicktime: {
-                throw std::runtime_error("Encountered an incompatible PICT: " + std::to_string(m_id) + ", " + m_name);
+                read_uncompressed_quicktime(pict_reader);
+                break;
             }
         }
     }
