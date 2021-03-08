@@ -83,13 +83,14 @@ auto graphite::rsrc::rez::parse(const std::shared_ptr<graphite::data::reader>& r
                 throw std::runtime_error("[Rez File] Resource 'type' mismatch.");
             }
             auto id = static_cast<int64_t>(reader->read_signed_short());
-            auto name = reader->read_cstr(256);
+            // The name is padded to 256 bytes - note the end position before reading the cstr
+            auto nextOffset = reader->position() + 256;
+            auto name = reader->read_cstr();
             
             // Read the resource's data
-            reader->save_position();
             reader->set_position(offsets[index-first_index]);
             auto slice = reader->read_data(sizes[index-first_index]);
-            reader->restore_position();
+            reader->set_position(nextOffset);
             
             auto resource = std::make_shared<graphite::rsrc::resource>(id, type, name, slice);
             type->add_resource(resource);
