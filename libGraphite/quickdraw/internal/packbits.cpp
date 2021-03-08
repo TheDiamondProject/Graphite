@@ -68,7 +68,7 @@ auto graphite::qd::packbits::encode(const std::vector<uint8_t>& scanline_bytes) 
         if (run > 0) {
             result.emplace_back(run - 1);
             result.insert(result.end(), buffer.begin(), buffer.begin() + run);
-            buffer.clear();
+            buffer = std::vector<uint8_t>(128);
         }
 
         if (offset == max && (run <= 0 || run >= 128)) {
