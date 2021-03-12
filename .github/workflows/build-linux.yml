@@ -1,0 +1,12 @@
+on: [push]
+
+jobs:
+  build:
+    name: Build on Linux
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Run build
+        uses: ./.github/actions/build_linux
