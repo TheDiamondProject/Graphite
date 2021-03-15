@@ -2,6 +2,7 @@
 // Created by Tom Hancocks on 20/02/2020.
 //
 
+#include <stdexcept>
 #include "libGraphite/quickdraw/internal/packbits.hpp"
 
 auto graphite::qd::packbits::decode(std::vector<uint8_t> &out_data, const std::vector<uint8_t>& pack_data, std::size_t value_size) -> std::size_t
