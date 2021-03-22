@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <memory>
+#include <stdexcept>
 
 namespace graphite::qd {
 
