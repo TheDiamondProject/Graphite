@@ -87,39 +87,10 @@ auto graphite::qd::pict::read_long_comment(graphite::data::reader& pict_reader) 
 
 auto graphite::qd::pict::read_pack_bits_rect(graphite::data::reader & pict_reader) -> void
 {
-    graphite::qd::pixel_format color_model = b16_rgb555;
-    int16_t cmp_size;
-    int16_t row_bytes;
-    graphite::qd::rect bounds(0, 0, 0, 0);
-    qd::clut color_table;
-
-    // Determine if we're dealing a PixMap or an old style BitMap
-    bool is_pixmap = pict_reader.read_short(sizeof(uint32_t), data::reader::peek) & 0x8000;
-    if (!is_pixmap) {
-        // Most like an indexed Bitmap...
-        // WARNING: This is unverified code and will need to be further investigated to ensure correctness.
-        cmp_size = 1;
-        color_model = monochrome;
-        row_bytes = pict_reader.read_short() & 0x7FFF;
-        bounds = qd::rect::read(pict_reader, qd::rect::qd);
-
-        pict_reader.move(6);
-
-        auto h_res = static_cast<double>(pict_reader.read_signed_long() / static_cast<double>(1 << 16));
-        auto v_res = static_cast<double>(pict_reader.read_signed_long() / static_cast<double>(1 << 16));
-
-        pict_reader.move(22);
-
-        // Color Table
-        color_table = qd::clut(pict_reader);
-    }
-    else {
-        graphite::qd::pixmap pm = graphite::qd::pixmap(pict_reader.read_data(qd::pixmap::length));
-        cmp_size = pm.cmp_size();
-        color_model = static_cast<graphite::qd::pixel_format>(pm.pixel_format());
-        row_bytes = pm.row_bytes();
-        bounds = pm.bounds();
-    }
+    // The pixmap base address is omitted here, step back when reading
+    graphite::qd::pixmap pm(pict_reader.read_data(qd::pixmap::length, -sizeof(uint32_t)));
+    // Color Table
+    auto color_table = qd::clut(pict_reader);
 
     // Read the source and destination bounds
     auto source_rect = qd::rect::read(pict_reader, qd::rect::qd);
@@ -127,46 +98,30 @@ auto graphite::qd::pict::read_pack_bits_rect(graphite::data::reader & pict_reade
 
     auto transfer_mode = pict_reader.read_short();
 
-    // Setup pixel buffer for RGB Values
+    // Setup pixel buffer for raw values
     std::vector<uint8_t> raw;
-    std::vector<uint8_t> rgb;
-    std::size_t rgb_buffer_offset = 0;
-    uint16_t packed_bytes_count = 0;
-    uint32_t height = source_rect.height();
-    uint32_t width = source_rect.width();
-    uint32_t source_length = width * height;
-
-    for (auto scanline = 0; scanline < height; ++scanline) {
-        raw.clear();
-
-        if (row_bytes >= 8) {
+    auto row_bytes = pm.row_bytes();
+    auto height = pm.bounds().height();
+    
+    if (row_bytes >= 8) {
+        uint16_t packed_bytes_count = 0;
+        for (auto scanline = 0; scanline < height; ++scanline) {
             if (row_bytes > 250) {
                 packed_bytes_count = pict_reader.read_short();
             }
             else {
-                packed_bytes_count = static_cast<uint16_t>(pict_reader.read_byte());
+                packed_bytes_count = pict_reader.read_byte();
             }
 
             auto packed_data = read_bytes(pict_reader, packed_bytes_count);
             qd::packbits::decode(raw, packed_data, sizeof(uint8_t));
-            // Decoded packbits may contain more data than the row requires - trim it to width
-            raw.resize(width);
-        }
-        else {
-            raw = read_bytes(pict_reader, row_bytes);
-        }
-
-        // Note: we're just appending to the surface here rather than drawing into the destination rect
-        rgb_buffer_offset += row_bytes;
-        if (cmp_size == 1) {
-            for (auto component : raw) {
-                m_surface.get()->set(m_size++, color_table.get(component));
-            }
-        }
-        else {
-            rgb.insert(rgb.end(), raw.begin(), raw.end());
         }
     }
+    else {
+        raw = read_bytes(pict_reader, row_bytes * height);
+    }
+    
+    pm.build_surface(m_surface, raw, color_table);
 }
 
 auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_reader) -> void
@@ -295,7 +250,7 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
             graphite::qd::color color(static_cast<uint8_t>(((v & 0x7c00) >> 10) << 3),
                                       static_cast<uint8_t>(((v & 0x03e0) >> 5) << 3),
                                       static_cast<uint8_t>((v & 0x001f) << 3));
-            m_surface.get()->set(m_size++, color);
+            m_surface->set(m_size++, color);
         }
     }
     else {
@@ -304,7 +259,7 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
                                       static_cast<uint8_t>((v & 0xFF00) >> 8),
                                       static_cast<uint8_t>(v & 0xFF),
                                       static_cast<uint8_t>((v & 0xFF000000) >> 24));
-            m_surface.get()->set(m_size++, color);
+            m_surface->set(m_size++, color);
         }
     }
 }

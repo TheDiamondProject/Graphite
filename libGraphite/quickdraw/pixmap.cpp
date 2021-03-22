@@ -3,6 +3,8 @@
 //
 
 #include "libGraphite/quickdraw/pixmap.hpp"
+#include "libGraphite/quickdraw/clut.hpp"
+#include "libGraphite/quickdraw/internal/surface.hpp"
 #include "libGraphite/data/reader.hpp"
 
 // MARK: - Constructors
@@ -151,6 +153,38 @@ auto graphite::qd::pixmap::pm_table() const -> uint32_t
 auto graphite::qd::pixmap::set_pm_table(const uint32_t& pm_table) -> void
 {
     m_pm_table = pm_table;
+}
+
+// MARK: -
+
+auto graphite::qd::pixmap::build_surface(std::shared_ptr<graphite::qd::surface> surface, const std::vector<uint8_t>& pixel_data, const qd::clut& clut) -> void
+{
+    auto pixel_size = m_cmp_size * m_cmp_count;
+    
+    if (pixel_size == 8) {
+        for (auto y = 0; y < m_bounds.height(); ++y) {
+            auto y_offset = (y * m_row_bytes);
+            for (auto x = 0; x < m_bounds.width(); ++x) {
+                auto byte = pixel_data[y_offset + x];
+                surface->set(x, y, clut.get(byte));
+            }
+        }
+    }
+    else {
+        auto mod = 8 / pixel_size;
+        auto mask = (1 << pixel_size) - 1;
+        auto diff = 8 - pixel_size;
+
+        for (auto y = 0; y < m_bounds.height(); ++y) {
+            auto y_offset = (y * m_row_bytes);
+            for (auto x = 0; x < m_bounds.width(); ++x) {
+                auto byte = pixel_data[y_offset + (x / mod)];
+                auto byte_offset = diff - ((x % mod) * pixel_size);
+                auto v = (byte >> byte_offset) & mask;
+                surface->set(x, y, clut.get(v));
+            }
+        }
+    }
 }
 
 // MARK: -
