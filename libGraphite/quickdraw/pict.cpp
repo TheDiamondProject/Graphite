@@ -101,6 +101,7 @@ auto graphite::qd::pict::read_pack_bits_rect(graphite::data::reader & pict_reade
     // Setup pixel buffer for raw values
     std::vector<uint8_t> raw;
     auto row_bytes = pm.row_bytes();
+    auto width = pm.bounds().width();
     auto height = pm.bounds().height();
     
     if (row_bytes >= 8) {
@@ -121,7 +122,8 @@ auto graphite::qd::pict::read_pack_bits_rect(graphite::data::reader & pict_reade
         raw = read_bytes(pict_reader, row_bytes * height);
     }
     
-    pm.build_surface(m_surface, raw, color_table);
+    pm.build_surface(m_surface, raw, color_table, m_size);
+    m_size += width * height;
 }
 
 auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_reader) -> void

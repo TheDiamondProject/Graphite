@@ -157,7 +157,11 @@ auto graphite::qd::pixmap::set_pm_table(const uint32_t& pm_table) -> void
 
 // MARK: -
 
-auto graphite::qd::pixmap::build_surface(std::shared_ptr<graphite::qd::surface> surface, const std::vector<uint8_t>& pixel_data, const qd::clut& clut) -> void
+auto graphite::qd::pixmap::build_surface(
+    std::shared_ptr<graphite::qd::surface> surface,
+    const std::vector<uint8_t>& pixel_data,
+    const qd::clut& clut,
+    int64_t offset) -> void
 {
     auto pixel_size = m_cmp_size * m_cmp_count;
     
@@ -166,7 +170,7 @@ auto graphite::qd::pixmap::build_surface(std::shared_ptr<graphite::qd::surface> 
             auto y_offset = (y * m_row_bytes);
             for (auto x = 0; x < m_bounds.width(); ++x) {
                 auto byte = pixel_data[y_offset + x];
-                surface->set(x, y, clut.get(byte));
+                surface->set(offset++, clut.get(byte));
             }
         }
     }
@@ -181,7 +185,7 @@ auto graphite::qd::pixmap::build_surface(std::shared_ptr<graphite::qd::surface> 
                 auto byte = pixel_data[y_offset + (x / mod)];
                 auto byte_offset = diff - ((x % mod) * pixel_size);
                 auto v = (byte >> byte_offset) & mask;
-                surface->set(x, y, clut.get(v));
+                surface->set(offset++, clut.get(v));
             }
         }
     }
