@@ -1,0 +1,17 @@
+on: [push]
+
+jobs:
+  build:
+    name: Build on macOS
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install depdendencies
+        run: brew install cmake
+
+      - name: Run build
+        run: |
+          cmake -H. -Bbuild
+          cmake --build build -- -j2
