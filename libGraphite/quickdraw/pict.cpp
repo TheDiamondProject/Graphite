@@ -347,7 +347,7 @@ auto graphite::qd::pict::read_image_description(graphite::data::reader &pict_rea
 {
     auto length = pict_reader.read_long();
     if (length != 86) {
-        throw std::runtime_error("Invalid PICT image description: " + std::to_string(m_id) + ", " + m_name);
+        throw std::runtime_error("Invalid QuickTime image description in PICT: " + std::to_string(m_id) + ", " + m_name);
     }
     auto compressor = pict_reader.read_long();
     pict_reader.move(24);
@@ -362,9 +362,20 @@ auto graphite::qd::pict::read_image_description(graphite::data::reader &pict_rea
     }
     auto clut = pict_reader.read_signed_short();
     
+    if (compressor == 'rle ' && clut == 40) {
+        // Grayscale rle is often just garbage, skip over this and hope we find the real image later.
+        pict_reader.move(data_size);
+        return;
+    }
+    
     switch (compressor) {
         default:
-            pict_reader.move(data_size);
+            std::string comp;
+            comp.push_back(compressor >> 24);
+            comp.push_back(compressor >> 16);
+            comp.push_back(compressor >> 8);
+            comp.push_back(compressor);
+            throw std::runtime_error("Unsupported QuickTime compressor '" + comp + "' in PICT: " + std::to_string(m_id) + ", " + m_name);
     }
 }
 
@@ -445,7 +456,9 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
             }
             case opcode::compressed_quicktime: {
                 read_compressed_quicktime(pict_reader);
-                break;
+                // Compressed quicktime data is often followed by drawing routines telling you that you need
+                // quicktime to decode the image. We should skip these and just return after a successful decode.
+                return;
             }
             case opcode::uncompressed_quicktime: {
                 read_uncompressed_quicktime(pict_reader);
