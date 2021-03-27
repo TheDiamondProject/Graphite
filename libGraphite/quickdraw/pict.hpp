@@ -22,6 +22,7 @@ namespace graphite::qd {
         {
             nop = 0x0000,
             clip_region = 0x0001,
+            bits_rect = 0x0090,
             pack_bits_rect = 0x0098,
             direct_bits_rect = 0x009a,
             eof = 0x00ff,
@@ -40,12 +41,13 @@ namespace graphite::qd {
         double m_x_ratio {};
         double m_y_ratio {};
         std::size_t m_size;
+        bool m_v1;
 
         auto parse(graphite::data::reader& pict_reader) -> void;
         auto read_region(graphite::data::reader& pict_reader) const -> graphite::qd::rect;
         auto read_long_comment(graphite::data::reader& pict_reader) -> void;
         auto read_direct_bits_rect(graphite::data::reader& pict_reader) -> void;
-        auto read_pack_bits_rect(graphite::data::reader & pict_reader) -> void;
+        auto read_indirect_bits_rect(graphite::data::reader& pict_reader, bool packed) -> void;
         auto read_compressed_quicktime(graphite::data::reader & pict_reader) -> void;
         auto read_uncompressed_quicktime(graphite::data::reader & pict_reader) -> void;
         auto read_image_description(graphite::data::reader & pict_reader) -> void;

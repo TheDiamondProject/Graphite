@@ -10,6 +10,7 @@
 
 // MARK: - Constants
 
+#define kPICT_V1_MAGIC          0x1101
 #define kPICT_V2_MAGIC          0x001102ff
 
 // MARK: - Constructors
@@ -85,12 +86,27 @@ auto graphite::qd::pict::read_long_comment(graphite::data::reader& pict_reader) 
     pict_reader.move(length);
 }
 
-auto graphite::qd::pict::read_pack_bits_rect(graphite::data::reader & pict_reader) -> void
+auto graphite::qd::pict::read_indirect_bits_rect(graphite::data::reader& pict_reader, bool packed) -> void
 {
-    // The pixmap base address is omitted here, step back when reading
-    graphite::qd::pixmap pm(pict_reader.read_data(qd::pixmap::length, -sizeof(uint32_t)));
-    // Color Table
-    auto color_table = qd::clut(pict_reader);
+    qd::pixmap pm;
+    qd::clut color_table;
+    if (!m_v1) {
+        // The pixmap base address is omitted here, step back when reading
+        pm = qd::pixmap(pict_reader.read_data(qd::pixmap::length, -sizeof(uint32_t)));
+        // Color Table
+        color_table = qd::clut(pict_reader);
+    }
+    else {
+        // Old style bitmap
+        pm.set_pack_type(1);
+        pm.set_cmp_count(1);
+        pm.set_cmp_size(1);
+        pm.set_row_bytes(pict_reader.read_short());
+        pm.set_bounds(qd::rect::read(pict_reader, qd::rect::qd));
+        // Monochrome color table
+        color_table.set(qd::color(255, 255, 255));
+        color_table.set(qd::color(0, 0, 0));
+    }
 
     // Read the source and destination bounds
     auto source_rect = qd::rect::read(pict_reader, qd::rect::qd);
@@ -104,7 +120,7 @@ auto graphite::qd::pict::read_pack_bits_rect(graphite::data::reader & pict_reade
     auto width = pm.bounds().width();
     auto height = pm.bounds().height();
     
-    if (row_bytes >= 8) {
+    if (packed) {
         uint16_t packed_bytes_count = 0;
         for (auto scanline = 0; scanline < height; ++scanline) {
             if (row_bytes > 250) {
@@ -128,30 +144,12 @@ auto graphite::qd::pict::read_pack_bits_rect(graphite::data::reader & pict_reade
 
 auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_reader) -> void
 {
-    graphite::qd::pixel_format color_model = b16_rgb555;
-    int16_t pack_type;
-    int16_t cmp_count;
-    int16_t row_bytes;
-    graphite::qd::rect bounds(0, 0, 0, 0);
-
-    // Determine if we're dealing a PixMap or an old style BitMap
-    bool is_pixmap = pict_reader.read_short(sizeof(uint32_t), data::reader::peek) & 0x8000;
-    if (is_pixmap) {
-        graphite::qd::pixmap pm = graphite::qd::pixmap(pict_reader.read_data(qd::pixmap::length));
-        pack_type = pm.pack_type();
-        cmp_count = pm.cmp_count();
-        color_model = static_cast<graphite::qd::pixel_format>(pm.pixel_format());
-        row_bytes = pm.row_bytes();
-        bounds = pm.bounds();
-    }
-    else {
-        // Old style bitmap
-        pack_type = 1;
-        cmp_count = 1;
-        color_model = monochrome;
-        row_bytes = pict_reader.read_short() & 0x7FFF;
-        bounds = qd::rect::read(pict_reader, qd::rect::qd);
-    }
+    graphite::qd::pixmap pm = graphite::qd::pixmap(pict_reader.read_data(qd::pixmap::length));
+    auto pack_type = pm.pack_type();
+    auto cmp_count = pm.cmp_count();
+    auto color_model = static_cast<graphite::qd::pixel_format>(pm.pixel_format());
+    auto row_bytes = pm.row_bytes();
+    auto bounds = pm.bounds();
 
     // Read the source and destination bounds
     auto source_rect = qd::rect::read(pict_reader, qd::rect::qd);
@@ -343,35 +341,41 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
     m_frame = qd::rect::read(pict_reader, qd::rect::qd);
 
     // We are only dealing with v2 Pictures for the time being...
-    if (pict_reader.read_long() != kPICT_V2_MAGIC) {
-        throw std::runtime_error("Encountered an incompatible PICT: " + std::to_string(m_id) + ", " + m_name);
-    }
+    if (pict_reader.read_short(0, data::reader::peek) == kPICT_V1_MAGIC) {
+        pict_reader.move(2);
+        m_v1 = true;
+    } else {
+        if (pict_reader.read_long() != kPICT_V2_MAGIC) {
+            throw std::runtime_error("Encountered an incompatible PICT: " + std::to_string(m_id) + ", " + m_name);
+        }
+        m_v1 = false;
+        
+        // The very first thing we should find is an extended header opcode. Read this
+        // outside of the main opcode loop as it should only appear once.
+        if (static_cast<opcode>(pict_reader.read_short()) != opcode::ext_header) {
+            throw std::runtime_error("Expected to find PICT Extended Header.");
+        }
 
-    // The very first thing we should find is an extended header opcode. Read this
-    // outside of the main opcode loop as it should only appear once.
-    if (static_cast<opcode>(pict_reader.read_short()) != opcode::ext_header) {
-        throw std::runtime_error("Expected to find PICT Extended Header.");
-    }
+        if ((pict_reader.read_long() >> 16) != 0xFFFE) {
+            // Standard header variant
+            auto rect = qd::fixed_rect::read(pict_reader);
+            m_x_ratio = m_frame.width() / rect.width();
+            m_y_ratio = m_frame.height() / rect.height();
+        }
+        else {
+            // Extended header variant
+            pict_reader.move(sizeof(uint32_t) * 2);
+            auto rect = qd::rect::read(pict_reader, qd::rect::qd);
+            m_x_ratio = static_cast<double>(m_frame.width()) / rect.width();
+            m_y_ratio = static_cast<double>(m_frame.height()) / rect.height();
+        }
 
-    if ((pict_reader.read_long() >> 16) != 0xFFFE) {
-        // Standard header variant
-        auto rect = qd::fixed_rect::read(pict_reader);
-        m_x_ratio = m_frame.width() / rect.width();
-        m_y_ratio = m_frame.height() / rect.height();
+        if (m_x_ratio <= 0 || m_y_ratio <= 0) {
+            throw std::runtime_error("Invalid PICT resource. Content aspect ratio is not valid: " + std::to_string(m_id) + ", " + m_name);
+        }
+        
+        pict_reader.move(4);
     }
-    else {
-        // Extended header variant
-        pict_reader.move(sizeof(uint32_t) * 2);
-        auto rect = qd::rect::read(pict_reader, qd::rect::qd);
-        m_x_ratio = static_cast<double>(m_frame.width()) / rect.width();
-        m_y_ratio = static_cast<double>(m_frame.height()) / rect.height();
-    }
-
-    if (m_x_ratio <= 0 || m_y_ratio <= 0) {
-        throw std::runtime_error("Invalid PICT resource. Content aspect ratio is not valid: " + std::to_string(m_id) + ", " + m_name);
-    }
-
-    pict_reader.move(4);
 
     // Begin parsing PICT opcodes.
     qd::rect clip_rect(0, 0, 0, 0);
@@ -379,10 +383,15 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
     m_size = 0;
     m_surface = std::make_shared<graphite::qd::surface>(m_frame.width(), m_frame.height());
 
+    opcode op;
     while (!pict_reader.eof()) {
-        // Make sure we are correctly aligned.
-        pict_reader.move(pict_reader.position() % sizeof(uint16_t));
-        auto op = static_cast<opcode>(pict_reader.read_short());
+        if (m_v1) {
+            op = static_cast<opcode>(pict_reader.read_byte());
+        } else {
+            // Make sure we are correctly aligned.
+            pict_reader.move(pict_reader.position() % sizeof(uint16_t));
+            op = static_cast<opcode>(pict_reader.read_short());
+        }
 
         if (op == opcode::eof) {
             break;
@@ -393,8 +402,12 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
                 clip_rect = read_region(pict_reader);
                 break;
             }
+            case opcode::bits_rect: {
+                read_indirect_bits_rect(pict_reader, false);
+                break;
+            }
             case opcode::pack_bits_rect: {
-                read_pack_bits_rect(pict_reader);
+                read_indirect_bits_rect(pict_reader, true);
                 break;
             }
             case opcode::direct_bits_rect: {
