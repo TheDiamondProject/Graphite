@@ -161,16 +161,17 @@ auto graphite::qd::pixmap::build_surface(
     std::shared_ptr<graphite::qd::surface> surface,
     const std::vector<uint8_t>& pixel_data,
     const qd::clut& clut,
-    int64_t offset) -> void
+    qd::rect destination) -> void
 {
     auto pixel_size = m_cmp_size * m_cmp_count;
+    auto origin = destination.origin();
     
     if (pixel_size == 8) {
         for (auto y = 0; y < m_bounds.height(); ++y) {
             auto y_offset = (y * m_row_bytes);
             for (auto x = 0; x < m_bounds.width(); ++x) {
                 auto byte = pixel_data[y_offset + x];
-                surface->set(offset++, clut.get(byte));
+                surface->set(origin.x() + x, origin.y() + y, clut.get(byte));
             }
         }
     }
@@ -185,7 +186,7 @@ auto graphite::qd::pixmap::build_surface(
                 auto byte = pixel_data[y_offset + (x / mod)];
                 auto byte_offset = diff - ((x % mod) * pixel_size);
                 auto v = (byte >> byte_offset) & mask;
-                surface->set(offset++, clut.get(v));
+                surface->set(origin.x() + x, origin.y() + y, clut.get(v));
             }
         }
     }
