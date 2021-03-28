@@ -76,7 +76,7 @@ namespace graphite::qd {
             std::shared_ptr<graphite::qd::surface> surface,
             const std::vector<uint8_t>& pixel_data,
             const qd::clut& clut,
-            qd::rect destination = qd::rect(0, 0, 0, 0)
+            qd::rect destination
         ) -> void;
         auto build_pixel_data(const std::vector<uint16_t>& color_values, uint16_t pixel_size) -> std::shared_ptr<graphite::data::data>;
         auto write(graphite::data::writer& writer) -> void;

@@ -64,7 +64,7 @@ auto graphite::qd::ppat::parse(graphite::data::reader& reader) -> void
     // Now that all information has been extracted from the resource, proceed and attempt to render it.
     m_surface = std::make_shared<graphite::qd::surface>(m_pixmap.bounds().width(), m_pixmap.bounds().height());
 
-    m_pixmap.build_surface(m_surface, std::vector<uint8_t>(pmap_data.begin(), pmap_data.end()), m_clut);
+    m_pixmap.build_surface(m_surface, std::vector<uint8_t>(pmap_data.begin(), pmap_data.end()), m_clut, m_pixmap.bounds());
 }
 
 // MARK: - Encoder
