@@ -46,7 +46,7 @@ graphite::data::data::data(std::shared_ptr<std::vector<char>> bytes, std::size_t
 auto graphite::data::data::relative_offset(int64_t offset) const -> int64_t
 {
 	if (offset > m_size || offset < 0) {
-		throw std::logic_error("Attempted to calculate an offset that went beyond the boundaries of the data slice.");
+		throw std::out_of_range("Attempted to calculate an offset that went beyond the boundaries of the data slice.");
 	}
 	return m_start + offset;
 }
