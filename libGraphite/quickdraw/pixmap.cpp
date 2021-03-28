@@ -163,15 +163,19 @@ auto graphite::qd::pixmap::build_surface(
     const qd::clut& clut,
     qd::rect destination) -> void
 {
+    auto orign = destination.origin();
+    auto size = destination.size();
+    if (pixel_data.size() < size.height() * m_row_bytes) {
+        throw std::runtime_error("Insufficent data to build surface from pixmap.");
+    }
     auto pixel_size = m_cmp_size * m_cmp_count;
-    auto origin = destination.origin();
     
     if (pixel_size == 8) {
-        for (auto y = 0; y < m_bounds.height(); ++y) {
+        for (auto y = 0; y < size.height(); ++y) {
             auto y_offset = (y * m_row_bytes);
-            for (auto x = 0; x < m_bounds.width(); ++x) {
+            for (auto x = 0; x < size.width(); ++x) {
                 auto byte = pixel_data[y_offset + x];
-                surface->set(origin.x() + x, origin.y() + y, clut.get(byte));
+                surface->set(orign.x() + x, orign.y() + y, clut.get(byte));
             }
         }
     }
@@ -180,13 +184,13 @@ auto graphite::qd::pixmap::build_surface(
         auto mask = (1 << pixel_size) - 1;
         auto diff = 8 - pixel_size;
 
-        for (auto y = 0; y < m_bounds.height(); ++y) {
+        for (auto y = 0; y < size.height(); ++y) {
             auto y_offset = (y * m_row_bytes);
-            for (auto x = 0; x < m_bounds.width(); ++x) {
+            for (auto x = 0; x < size.width(); ++x) {
                 auto byte = pixel_data[y_offset + (x / mod)];
                 auto byte_offset = diff - ((x % mod) * pixel_size);
                 auto v = (byte >> byte_offset) & mask;
-                surface->set(origin.x() + x, origin.y() + y, clut.get(v));
+                surface->set(orign.x() + x, orign.y() + y, clut.get(v));
             }
         }
     }

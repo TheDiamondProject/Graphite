@@ -138,6 +138,9 @@ auto graphite::qd::pict::read_indirect_bits_rect(graphite::data::reader& pict_re
         raw = read_bytes(pict_reader, row_bytes * height);
     }
     
+    auto origin = destination_rect.origin();
+    destination_rect.set_x(origin.x() - m_frame.origin().x());
+    destination_rect.set_y(origin.y() - m_frame.origin().y());
     pm.build_surface(m_surface, raw, color_table, destination_rect);
     m_size += width * height;
 }
