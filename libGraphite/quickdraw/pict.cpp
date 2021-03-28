@@ -86,7 +86,7 @@ auto graphite::qd::pict::read_long_comment(graphite::data::reader& pict_reader) 
     pict_reader.move(length);
 }
 
-auto graphite::qd::pict::read_indirect_bits_rect(graphite::data::reader& pict_reader, bool packed) -> void
+auto graphite::qd::pict::read_indirect_bits_rect(graphite::data::reader& pict_reader, bool packed, bool skip_region) -> void
 {
     qd::pixmap pm;
     qd::clut color_table;
@@ -115,6 +115,13 @@ auto graphite::qd::pict::read_indirect_bits_rect(graphite::data::reader& pict_re
     auto destination_rect = qd::rect::read(pict_reader, qd::rect::qd);
 
     auto transfer_mode = pict_reader.read_short();
+    
+    if (skip_region) {
+        auto skip = pict_reader.read_short();
+        if (skip > 2) {
+            pict_reader.move(skip - 2);
+        }
+    }
 
     // Setup pixel buffer for raw values
     std::vector<uint8_t> raw;
@@ -409,11 +416,19 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
                 break;
             }
             case opcode::bits_rect: {
-                read_indirect_bits_rect(pict_reader, false);
+                read_indirect_bits_rect(pict_reader, false, false);
+                break;
+            }
+            case opcode::bits_region: {
+                read_indirect_bits_rect(pict_reader, false, true);
                 break;
             }
             case opcode::pack_bits_rect: {
-                read_indirect_bits_rect(pict_reader, true);
+                read_indirect_bits_rect(pict_reader, true, false);
+                break;
+            }
+            case opcode::pack_bits_region: {
+                read_indirect_bits_rect(pict_reader, true, true);
                 break;
             }
             case opcode::direct_bits_rect: {
