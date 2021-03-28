@@ -90,7 +90,9 @@ auto graphite::qd::pict::read_indirect_bits_rect(graphite::data::reader& pict_re
 {
     qd::pixmap pm;
     qd::clut color_table;
-    if (!m_v1) {
+    // Determine if we're dealing a PixMap or an old style BitMap
+    bool is_pixmap = pict_reader.read_short(0, data::reader::peek) & 0x8000;
+    if (is_pixmap) {
         // The pixmap base address is omitted here, step back when reading
         pm = qd::pixmap(pict_reader.read_data(qd::pixmap::length, -sizeof(uint32_t)));
         // Color Table
@@ -342,16 +344,16 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
     pict_reader.move(2);
 
     m_frame = qd::rect::read(pict_reader, qd::rect::qd);
+    bool v1 = false;
 
-    // We are only dealing with v2 Pictures for the time being...
+    // Check which version of PICT we're dealing with
     if (pict_reader.read_short(0, data::reader::peek) == kPICT_V1_MAGIC) {
         pict_reader.move(2);
-        m_v1 = true;
+        v1 = true;
     } else {
         if (pict_reader.read_long() != kPICT_V2_MAGIC) {
-            throw std::runtime_error("Encountered an incompatible PICT: " + std::to_string(m_id) + ", " + m_name);
+            throw std::runtime_error("Invalid PICT resource. Incorrect header: " + std::to_string(m_id) + ", " + m_name);
         }
-        m_v1 = false;
         
         // The very first thing we should find is an extended header opcode. Read this
         // outside of the main opcode loop as it should only appear once.
@@ -371,6 +373,7 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
             auto rect = qd::rect::read(pict_reader, qd::rect::qd);
             m_x_ratio = static_cast<double>(m_frame.width()) / rect.width();
             m_y_ratio = static_cast<double>(m_frame.height()) / rect.height();
+            m_frame = rect;
         }
 
         if (m_x_ratio <= 0 || m_y_ratio <= 0) {
@@ -388,7 +391,7 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
 
     opcode op;
     while (!pict_reader.eof()) {
-        if (m_v1) {
+        if (v1) {
             op = static_cast<opcode>(pict_reader.read_byte());
         } else {
             // Make sure we are correctly aligned.
@@ -421,6 +424,14 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
                 read_long_comment(pict_reader);
                 break;
             }
+            case opcode::short_comment: {
+                pict_reader.move(2);
+                break;
+            }
+            case opcode::op_color: {
+                pict_reader.move(6);
+                break;
+            }
             case opcode::nop:
             case opcode::eof:
             case opcode::ext_header:
@@ -436,6 +447,9 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
             case opcode::uncompressed_quicktime: {
                 read_uncompressed_quicktime(pict_reader);
                 break;
+            }
+            default: {
+                throw std::runtime_error("Encountered an incompatible PICT: " + std::to_string(m_id) + ", " + m_name);
             }
         }
     }

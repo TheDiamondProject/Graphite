@@ -27,6 +27,8 @@ namespace graphite::qd {
             direct_bits_rect = 0x009a,
             eof = 0x00ff,
             def_hilite = 0x001e,
+            op_color = 0x001f,
+            short_comment = 0x00a0,
             long_comment = 0x00a1,
             ext_header = 0x0c00,
             compressed_quicktime = 0x8200,
@@ -41,7 +43,6 @@ namespace graphite::qd {
         double m_x_ratio {};
         double m_y_ratio {};
         std::size_t m_size;
-        bool m_v1;
 
         auto parse(graphite::data::reader& pict_reader) -> void;
         auto read_region(graphite::data::reader& pict_reader) const -> graphite::qd::rect;
