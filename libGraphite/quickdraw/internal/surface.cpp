@@ -43,11 +43,17 @@ auto graphite::qd::surface::at(int x, int y) const -> graphite::qd::color
 
 auto graphite::qd::surface::set(int x, int y, graphite::qd::color color) -> void
 {
+    if (x >= m_width || y >= m_height) {
+        throw std::runtime_error("Attempted to set pixel beyond bounds of surface.");
+    }
     m_data[(y * m_width) + x] = color;
 }
 
 auto graphite::qd::surface::set(int offset, graphite::qd::color color) -> void
 {
+    if (offset >= m_data.size()) {
+        throw std::runtime_error("Attempted to set pixel beyond bounds of surface.");
+    }
     m_data[offset] = color;
 }
 

@@ -7,7 +7,9 @@
 
 #include <cstdint>
 #include "libGraphite/data/reader.hpp"
+#include "libGraphite/quickdraw/clut.hpp"
 #include "libGraphite/quickdraw/geometry.hpp"
+#include "libGraphite/quickdraw/internal/surface.hpp"
 #include "libGraphite/data/data.hpp"
 
 namespace graphite::qd {
@@ -70,6 +72,12 @@ namespace graphite::qd {
         auto set_cmp_size(const int16_t& cmp_size) -> void;
         auto set_pm_table(const uint32_t& pm_table) -> void;
 
+        auto build_surface(
+            std::shared_ptr<graphite::qd::surface> surface,
+            const std::vector<uint8_t>& pixel_data,
+            const qd::clut& clut,
+            qd::rect destination
+        ) -> void;
         auto build_pixel_data(const std::vector<uint16_t>& color_values, uint16_t pixel_size) -> std::shared_ptr<graphite::data::data>;
         auto write(graphite::data::writer& writer) -> void;
     };

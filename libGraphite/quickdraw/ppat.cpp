@@ -56,7 +56,7 @@ auto graphite::qd::ppat::parse(graphite::data::reader& reader) -> void
 
     reader.set_position(m_pat_base_addr);
     auto pmap_data_size = m_pixmap.row_bytes() * m_pixmap.bounds().height();
-    auto pmap_data = reader.read_data(pmap_data_size);
+    auto pmap_data = reader.read_bytes(pmap_data_size);
 
     reader.set_position(m_pixmap.pm_table());
     m_clut = qd::clut(reader);
@@ -64,72 +64,7 @@ auto graphite::qd::ppat::parse(graphite::data::reader& reader) -> void
     // Now that all information has been extracted from the resource, proceed and attempt to render it.
     m_surface = std::make_shared<graphite::qd::surface>(m_pixmap.bounds().width(), m_pixmap.bounds().height());
 
-    if (m_pixmap.cmp_size() == 1 && m_pixmap.cmp_count() == 1) {
-
-        for (auto y = 0; y < m_pixmap.bounds().height(); ++y) {
-            auto y_offset = (y * m_pixmap.row_bytes());
-
-            for (auto x = 0; x < m_pixmap.bounds().width(); ++x) {
-                auto byte_offset = 7 - (x % 8);
-
-                auto byte = pmap_data->at(y_offset + (x / 8));
-                auto v = (byte >> byte_offset) & 0x1;
-
-                m_surface->set(x, y, m_clut.get(v));
-            }
-        }
-
-    }
-    else if ((m_pixmap.cmp_size() == 1 && m_pixmap.cmp_count() == 2) || (m_pixmap.cmp_size() == 2 && m_pixmap.cmp_count() == 1)) {
-
-        for (auto y = 0; y < m_pixmap.bounds().height(); ++y) {
-            auto y_offset = (y * m_pixmap.row_bytes());
-
-            for (auto x = 0; x < m_pixmap.bounds().width(); ++x) {
-                auto byte_offset = (3 - (x % 4)) << 1;
-
-                auto byte = pmap_data->at(y_offset + (x / 4));
-                auto v = (byte >> byte_offset) & 0x3;
-
-                m_surface->set(x, y, m_clut.get(v));
-            }
-        }
-
-    }
-    else if ((m_pixmap.cmp_size() == 1 && m_pixmap.cmp_count() == 4) || (m_pixmap.cmp_size() == 4 && m_pixmap.cmp_count() == 1)) {
-
-        for (auto y = 0; y < m_pixmap.bounds().height(); ++y) {
-            auto y_offset = (y * m_pixmap.row_bytes());
-
-            for (auto x = 0; x < m_pixmap.bounds().width(); ++x) {
-                auto byte_offset = (1 - (x % 2)) << 2;
-
-                auto byte = pmap_data->at(y_offset + (x / 2));
-                auto v = (byte >> byte_offset) & 0xF;
-
-                m_surface->set(x, y, m_clut.get(v));
-            }
-        }
-
-    }
-    else if ((m_pixmap.cmp_size() == 1 && m_pixmap.cmp_count() == 8) || (m_pixmap.cmp_size() == 8 && m_pixmap.cmp_count() == 1)) {
-
-        for (auto y = 0; y < m_pixmap.bounds().height(); ++y) {
-            auto y_offset = (y * m_pixmap.row_bytes());
-
-            for (auto x = 0; x < m_pixmap.bounds().width(); ++x) {
-                auto byte = static_cast<uint8_t>(pmap_data->at(y_offset + x));
-
-                m_surface->set(x, y, m_clut.get(byte));
-            }
-        }
-
-    }
-    else {
-        throw std::runtime_error("Currently unsupported ppat configuration: cmp_size=" +
-                                 std::to_string(m_pixmap.cmp_size()) +
-                                 ", cmp_count=" + std::to_string(m_pixmap.cmp_count()));
-    }
+    m_pixmap.build_surface(m_surface, std::vector<uint8_t>(pmap_data.begin(), pmap_data.end()), m_clut, m_pixmap.bounds());
 }
 
 // MARK: - Encoder
