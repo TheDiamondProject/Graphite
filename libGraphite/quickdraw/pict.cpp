@@ -258,9 +258,9 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
 
     if (pack_type == 3) {
         for (auto v : px_short_buffer) {
-            graphite::qd::color color(static_cast<uint8_t>(((v & 0x7c00) >> 10) << 3),
-                                      static_cast<uint8_t>(((v & 0x03e0) >> 5) << 3),
-                                      static_cast<uint8_t>((v & 0x001f) << 3));
+            graphite::qd::color color(static_cast<uint8_t>(((v & 0x7c00) >> 10) * 0xFF / 0x1F),
+                                      static_cast<uint8_t>(((v & 0x03e0) >> 5) * 0xFF / 0x1F),
+                                      static_cast<uint8_t>((v & 0x001f) * 0xFF / 0x1F));
             m_surface->set(m_size++, color);
         }
     }
