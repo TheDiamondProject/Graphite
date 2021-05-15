@@ -154,6 +154,10 @@ auto graphite::encoding::mac_roman::to_utf8(const std::vector<uint8_t>& bytes) -
     
     auto utf8 = unicode::hint::utf8();
     for (auto c : bytes) {
+        if (c == 0) {
+            break;
+        }
+        
         // Get the codepoint and determine the length of the UTF8 scalar.
         auto cp = cp_table[c];
         
