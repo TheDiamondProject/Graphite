@@ -33,7 +33,7 @@ namespace graphite::data
     /**
      * The byte order represents the endianness of a data value.
      */
-    enum byte_order { msb, lsb };
+    enum byte_order : int { msb = 0, lsb = 1 };
 
     /**
      * The `graphite::data::data` class is used to store binary data in memory,
