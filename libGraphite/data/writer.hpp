@@ -33,7 +33,7 @@ namespace graphite::data {
     class writer
     {
     private:
-        graphite::data::data::byte_order m_native_bo { data::byte_order::lsb };
+        graphite::data::byte_order m_native_bo { lsb };
         std::shared_ptr<graphite::data::data> m_data { nullptr };
         uint64_t m_pos { 0 };
 
@@ -47,8 +47,8 @@ namespace graphite::data {
         template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
         auto swap(
                 T value,
-                enum graphite::data::data::byte_order value_bo,
-                enum graphite::data::data::byte_order result_bo
+                enum graphite::data::byte_order value_bo,
+                enum graphite::data::byte_order result_bo
         ) -> T;
 
     public:
