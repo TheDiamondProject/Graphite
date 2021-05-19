@@ -44,8 +44,8 @@ graphite::data::writer::writer(std::shared_ptr<graphite::data::data> data)
 template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type*>
 auto graphite::data::writer::swap(
     T value,
-    enum graphite::data::data::byte_order value_bo,
-    enum graphite::data::data::byte_order result_bo
+    enum graphite::data::byte_order value_bo,
+    enum graphite::data::byte_order result_bo
 ) -> T {
     // Return the value immediately if the value byte order matches the result byte order.
     if (value_bo == result_bo) {
