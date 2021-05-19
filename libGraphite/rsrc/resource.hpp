@@ -94,6 +94,11 @@ namespace graphite::rsrc {
     	 * Returns a shared pointer to the contained data.
     	 */
     	auto data() -> std::shared_ptr<graphite::data::data>;
+        
+    	/**
+    	 * Set the name of the resource.
+    	 */
+    	auto set_data(const std::shared_ptr<graphite::data::data>& data) -> void;
 
     	/**
     	 * Store the location of the data within the resource file.

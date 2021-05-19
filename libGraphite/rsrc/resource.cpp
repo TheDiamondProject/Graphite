@@ -92,6 +92,11 @@ auto graphite::rsrc::resource::data() -> std::shared_ptr<graphite::data::data>
 	return m_data;
 }
 
+auto graphite::rsrc::resource::set_data(const std::shared_ptr<graphite::data::data>& data) -> void
+{
+	m_data = data;
+}
+
 // MARK: - 
 
 auto graphite::rsrc::resource::set_data_offset(const std::size_t& offset) -> void
