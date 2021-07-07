@@ -96,3 +96,10 @@ auto graphite::data::data::at(std::size_t offset) const -> char
 	return m_data->at(relative_offset(offset));
 }
 
+// MARK: - Writer Assistance
+
+auto graphite::data::data::resync_size() -> void
+{
+    m_size = m_data->size();
+}
+
