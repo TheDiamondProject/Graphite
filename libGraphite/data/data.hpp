@@ -101,6 +101,12 @@ namespace graphite::data {
          */
         auto at(std::size_t offset) const -> char;
 
+        /**
+         * Resync the size of the data from the internal data vector. This is required
+         * when attempting to read back data from a resource that has just been written to.
+         */
+         auto resync_size() -> void;
+
     };
 
 }

@@ -118,6 +118,8 @@ auto graphite::data::writer::write_integer(T value) -> void
             (*data)[m_pos++] = (swapped >> b) & 0xFF;
         }
     }
+
+    m_data->resync_size();
 }
 
 
@@ -210,6 +212,7 @@ auto graphite::data::writer::write_pstr(const std::string& str) -> void
     auto vec = m_data->get();
     vec->insert(vec->end(), bytes.begin(), bytes.end());
     m_pos += bytes.size();
+    m_data->resync_size();
 }
 
 auto graphite::data::writer::write_data(const std::shared_ptr<graphite::data::data>& data) -> void
@@ -218,6 +221,7 @@ auto graphite::data::writer::write_data(const std::shared_ptr<graphite::data::da
     auto vec = m_data->get();
     vec->insert(vec->end(), bytes->begin() + data->start(), bytes->begin() + data->start() + data->size());
     m_pos += bytes->size();
+    m_data->resync_size();
 }
 
 auto graphite::data::writer::pad_to_size(std::size_t size) -> void
