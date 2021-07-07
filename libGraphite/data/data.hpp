@@ -27,22 +27,22 @@
 #include <type_traits>
 #include <stdexcept>
 
-namespace graphite::data {
+namespace graphite::data
+{
 
-/**
- * The `graphite::data::data` class is used to store binary data in memory,
- * and can be written to and read from disk.
- */
+    /**
+     * The byte order represents the endianness of a data value.
+     */
+    enum byte_order : int { msb = 0, lsb = 1 };
+
+    /**
+     * The `graphite::data::data` class is used to store binary data in memory,
+     * and can be written to and read from disk.
+     */
     class data: public std::enable_shared_from_this<data>
     {
-    public:
-        /**
-         * The byte order represents the endianness of a data value.
-         */
-        enum byte_order { msb, lsb };
-
     private:
-        enum data::byte_order m_bo { msb };
+        enum graphite::data::byte_order m_bo { msb };
         std::shared_ptr<std::vector<char>> m_data { nullptr };
         std::size_t m_start { 0 };
         std::size_t m_size { 0 };
@@ -51,17 +51,17 @@ namespace graphite::data {
         /**
          * Construct a new empty `graphite::data::data` object.
          */
-        explicit data(enum data::byte_order bo = msb);
+        explicit data(enum graphite::data::byte_order bo = msb);
 
         /**
          * Construct a new `graphite::data::data` object with the specified capacity.
          */
-        explicit data(std::size_t capacity, enum data::byte_order bo = msb);
+        explicit data(std::size_t capacity, enum graphite::data::byte_order bo = msb);
 
         /**
          * Construct a new `graphite::data::data` object with the provided data.
          */
-        data(std::shared_ptr<std::vector<char>> bytes, std::size_t size, std::size_t start = 0, enum data::byte_order bo = msb);
+        data(std::shared_ptr<std::vector<char>> bytes, std::size_t size, std::size_t start = 0, enum graphite::data::byte_order bo = msb);
 
         /**
          * Calculate an offset within the receiver's data.
@@ -81,7 +81,7 @@ namespace graphite::data {
         /**
          * Returns the intended byte order of the receiver.
          */
-        auto current_byte_order() const -> enum data::byte_order;
+        auto current_byte_order() const -> enum graphite::data::byte_order;
 
         /**
          * Set a new byte order for the receiver.
@@ -89,7 +89,7 @@ namespace graphite::data {
          * Warning: This can cause corruption of values being read or written if the
          * byte order is set incorrectly.
          */
-        auto set_byte_order(enum data::byte_order bo) -> void;
+        auto set_byte_order(enum graphite::data::byte_order bo) -> void;
 
         /**
          * Returns a pointer to the internal data vector of the receiver.

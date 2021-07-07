@@ -30,7 +30,7 @@ auto graphite::rsrc::rez::parse(const std::shared_ptr<graphite::data::reader>& r
     if (reader->read_long() != rez_signature) {
         throw std::runtime_error("[Rez File] Preamble 'signature' mismatch.");
     }
-    reader->get()->set_byte_order(graphite::data::data::byte_order::lsb);
+    reader->get()->set_byte_order(graphite::data::byte_order::lsb);
     if (reader->read_long() != rez_version) {
         throw std::runtime_error("[Rez File] Preamble 'version' mismatch.");
     }
@@ -58,7 +58,7 @@ auto graphite::rsrc::rez::parse(const std::shared_ptr<graphite::data::reader>& r
     }
     
     // Read the resource map header
-    reader->get()->set_byte_order(graphite::data::data::byte_order::msb);
+    reader->get()->set_byte_order(graphite::data::byte_order::msb);
     auto map_offset = offsets.back();
     reader->set_position(map_offset);
     reader->move(4); // Unknown value
@@ -123,7 +123,7 @@ auto graphite::rsrc::rez::write(const std::string& path, const std::vector<std::
 
     // Write the preamble
     writer->write_long(rez_signature);
-    writer->data()->set_byte_order(graphite::data::data::byte_order::lsb);
+    writer->data()->set_byte_order(graphite::data::byte_order::lsb);
     writer->write_long(rez_version);
     writer->write_long(header_length);
 
@@ -168,7 +168,7 @@ auto graphite::rsrc::rez::write(const std::string& path, const std::vector<std::
 
     // Write the resource map as big endian
     // Map header
-    writer->data()->set_byte_order(graphite::data::data::byte_order::msb);
+    writer->data()->set_byte_order(graphite::data::byte_order::msb);
     writer->write_long(8); // Unknown value
     writer->write_long(type_count);
 

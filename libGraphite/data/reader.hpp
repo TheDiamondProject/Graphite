@@ -44,7 +44,7 @@ namespace graphite::data {
         enum mode { advance, peek };
 
     private:
-        graphite::data::data::byte_order m_native_bo { data::byte_order::lsb };
+        graphite::data::byte_order m_native_bo { lsb };
         std::shared_ptr<data> m_data { nullptr };
         std::vector<uint64_t> m_pos_stack;
         uint64_t m_pos { 0 };
@@ -59,8 +59,8 @@ namespace graphite::data {
         template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
         auto swap(
             T value,
-            enum graphite::data::data::byte_order value_bo,
-            enum graphite::data::data::byte_order result_bo,
+            enum graphite::data::byte_order value_bo,
+            enum graphite::data::byte_order result_bo,
             uint64_t size = -1
         ) -> T;
 
