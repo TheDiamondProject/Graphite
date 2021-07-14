@@ -214,6 +214,7 @@ auto graphite::rsrc::classic::write(const std::string& path, const std::vector<s
     
     // 5. Now we're writing the actual resource headers.
     uint16_t name_offset = 0;
+    uint16_t name_len = 0;
     for (const auto& type : types) {
         for (const auto& resource : type->resources()) {
             
@@ -230,12 +231,18 @@ auto graphite::rsrc::classic::write(const std::string& path, const std::vector<s
                 writer->write_short(0xFFFF);
             }
             else {
+                if (name_offset + name_len >= 0xFFFF) {
+                    throw std::runtime_error("Attempted to write name offset exceeding maximum value.");
+                }
+                name_offset += name_len;
+                writer->write_short(name_offset);
+                
                 // Convert the name to MacRoman so that we can get the length of it when encoded.
                 auto mac_roman = graphite::encoding::mac_roman::from_utf8(resource->name());
-                uint16_t len = mac_roman.size();
-                
-                writer->write_short(name_offset);
-                name_offset += (len >= 0x100 ? 0xFF : len) + 1;
+                name_len = mac_roman.size() + 1;
+                if (name_len > 0x100) {
+                    name_len = 0x100;
+                }
             }
             
             // Write the resource attributes - these are currently hard coded as nothing.
@@ -279,7 +286,7 @@ auto graphite::rsrc::classic::write(const std::string& path, const std::vector<s
     if (writer->size() > 0xFFFFFF) {
         throw std::runtime_error("Attempted to write resource file exceeding maximum size.");
     }
-    map_length = static_cast<uint16_t>(writer->size() - map_offset);
+    map_length = static_cast<uint32_t>(writer->size() - map_offset);
 
     // 7. Fix the preamble values.
     writer->set_position(0);
