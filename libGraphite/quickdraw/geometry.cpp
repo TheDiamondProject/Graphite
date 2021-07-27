@@ -50,6 +50,9 @@ auto graphite::qd::point::read(graphite::data::reader& reader, enum coding_type 
             auto y = reader.read_signed_short();
             return qd::point(x, y);
         }
+        default: {
+            return qd::point(0, 0);
+        }
     }
 }
 
@@ -109,6 +112,9 @@ auto graphite::qd::fixed_point::read(graphite::data::reader& reader, enum coding
             auto y = static_cast<double>(reader.read_signed_long() / static_cast<double>(1 << 16));
             auto x = static_cast<double>(reader.read_signed_long() / static_cast<double>(1 << 16));
             return qd::fixed_point(x, y);
+        }
+        default: {
+            return qd::fixed_point(0, 0);
         }
     }
 }
@@ -170,6 +176,9 @@ auto graphite::qd::size::read(graphite::data::reader& reader, enum coding_type t
             auto height = reader.read_signed_short();
             return qd::size(width, height);
         }
+        default: {
+            return qd::size(0, 0);
+        }
     }
 }
 
@@ -229,6 +238,9 @@ auto graphite::qd::fixed_size::read(graphite::data::reader& reader, enum coding_
             auto height = static_cast<double>(reader.read_signed_long() / static_cast<double>(1 << 16));
             auto width = static_cast<double>(reader.read_signed_long() / static_cast<double>(1 << 16));
             return qd::fixed_size(width, height);
+        }
+        default: {
+            return qd::fixed_size(0, 0);
         }
     }
 }
@@ -336,6 +348,9 @@ auto graphite::qd::rect::read(graphite::data::reader& reader, enum coding_type t
             auto sz = size::read(reader, size::pict);
             return qd::rect(origin, sz);
         }
+        default: {
+            return qd::rect({0, 0}, {0, 0});
+        }
     }
 }
 
@@ -441,6 +456,9 @@ auto graphite::qd::fixed_rect::read(graphite::data::reader& reader, enum coding_
             auto origin = fixed_point::read(reader, fixed_point::qd);
             auto opposite = fixed_point::read(reader, fixed_point::qd);
             return qd::fixed_rect(origin, fixed_size(origin.x() + opposite.x(), origin.y() + opposite.y()));
+        }
+        default: {
+            return qd::fixed_rect({0, 0}, {0, 0});
         }
     }
 }
