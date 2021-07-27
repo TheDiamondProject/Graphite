@@ -46,7 +46,7 @@ graphite::data::reader::reader(const std::string& path)
     // Read the contents of the file into the vector.
     auto data = std::make_shared<std::vector<char>>(file_size);
     file.read(&(*data)[0], file_size);
-    m_data = std::make_shared<graphite::data::data>(data, file_size, graphite::data::data::byte_order::msb);
+    m_data = std::make_shared<graphite::data::data>(data, file_size, graphite::data::byte_order::msb);
     
     // Close the file and clean up.
     file.close();
@@ -63,8 +63,8 @@ graphite::data::reader::reader(std::shared_ptr<graphite::data::data> data, uint6
 template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type*>
 auto graphite::data::reader::swap(
     T value,
-    enum graphite::data::data::byte_order value_bo,
-    enum graphite::data::data::byte_order result_bo,
+    enum graphite::data::byte_order value_bo,
+    enum graphite::data::byte_order result_bo,
     uint64_t size
 ) -> T {
     // Return the value immediately if the value byte order matches the result byte order.
@@ -254,6 +254,10 @@ auto graphite::data::reader::read_pstr(int64_t offset, graphite::data::reader::m
         case peek: {
             auto length = read_byte(offset, peek);
             return read_cstr(length, offset + 1, peek);
+        }
+
+        default: {
+            return "";
         }
     }
 }

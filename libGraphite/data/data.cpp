@@ -23,19 +23,19 @@
 
 // MARK: - Constructor
 
-graphite::data::data::data(enum graphite::data::data::byte_order bo)
+graphite::data::data::data(enum graphite::data::byte_order bo)
     : m_bo(bo), m_data(std::make_shared<std::vector<char>>(0)), m_start(0), m_size(0)
 {
     
 }
 
-graphite::data::data::data(std::size_t capacity, enum graphite::data::data::byte_order bo)
+graphite::data::data::data(std::size_t capacity, enum graphite::data::byte_order bo)
     : m_bo(bo), m_data(std::make_shared<std::vector<char>>(0)), m_start(0), m_size(capacity)
 {
     
 }
 
-graphite::data::data::data(std::shared_ptr<std::vector<char>> bytes, std::size_t size, std::size_t start, enum data::byte_order bo)
+graphite::data::data::data(std::shared_ptr<std::vector<char>> bytes, std::size_t size, std::size_t start, enum graphite::data::byte_order bo)
     : m_bo(bo), m_data(std::move(bytes)), m_size(size), m_start(start)
 {
     if ((m_start + m_size) > m_data->size()) {
@@ -73,12 +73,12 @@ auto graphite::data::data::start() const -> std::size_t
     return m_start;
 }
 
-auto graphite::data::data::current_byte_order() const -> enum graphite::data::data::byte_order
+auto graphite::data::data::current_byte_order() const -> enum graphite::data::byte_order
 {
     return m_bo;
 }
 
-auto graphite::data::data::set_byte_order(enum data::byte_order bo) -> void
+auto graphite::data::data::set_byte_order(enum graphite::data::byte_order bo) -> void
 {
     m_bo = bo;
 }
