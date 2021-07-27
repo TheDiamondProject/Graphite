@@ -255,6 +255,10 @@ auto graphite::data::reader::read_pstr(int64_t offset, graphite::data::reader::m
             auto length = read_byte(offset, peek);
             return read_cstr(length, offset + 1, peek);
         }
+
+        default: {
+            return "";
+        }
     }
 }
 

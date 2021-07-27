@@ -228,8 +228,9 @@ auto graphite::rsrc::extended::write(const std::string& path, const std::vector<
         writer->write_quad(resource_offset);
         writer->write_quad(attribute_offset);
 
+        attribute_offset += sizeof(uint64_t);
         for (const auto& attribute : type->attributes()) {
-            attribute_offset += sizeof(uint64_t) + attribute.first.size() + attribute.second.size() + 2;
+            attribute_offset += attribute.first.size() + attribute.second.size() + 2;
         }
         resource_offset += type->count() * resource_length;
     }
