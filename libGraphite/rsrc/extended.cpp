@@ -85,10 +85,10 @@ auto graphite::rsrc::extended::parse(const std::shared_ptr<graphite::data::reade
 
 	// 3. Parse the list of Resource Types.
 	reader->set_position(map_offset + type_list_offset);
-	auto type_count = reader->read_quad();
+	auto type_count = static_cast<uint64_t>(reader->read_quad() + 1);
 	std::vector<std::shared_ptr<graphite::rsrc::type>> types;
 
-	for (auto type_idx = 0; type_idx <= type_count; ++type_idx) {
+	for (auto type_idx = 0; type_idx < type_count; ++type_idx) {
 		auto code = reader->read_cstr(4);
 		auto count = static_cast<uint64_t>(reader->read_quad() + 1);
 		auto first_resource_offset = static_cast<uint64_t>(reader->read_quad());
