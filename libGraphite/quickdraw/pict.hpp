@@ -22,11 +22,13 @@ namespace graphite::qd {
         {
             nop = 0x0000,
             clip_region = 0x0001,
+            origin = 0x000c,
             bits_rect = 0x0090,
             bits_region = 0x0091,
             pack_bits_rect = 0x0098,
             pack_bits_region = 0x0099,
             direct_bits_rect = 0x009a,
+            direct_bits_region = 0x009b,
             eof = 0x00ff,
             def_hilite = 0x001e,
             op_color = 0x001f,
@@ -49,7 +51,7 @@ namespace graphite::qd {
         auto parse(graphite::data::reader& pict_reader) -> void;
         auto read_region(graphite::data::reader& pict_reader) const -> graphite::qd::rect;
         auto read_long_comment(graphite::data::reader& pict_reader) -> void;
-        auto read_direct_bits_rect(graphite::data::reader& pict_reader) -> void;
+        auto read_direct_bits_rect(graphite::data::reader& pict_reader, bool skip_region) -> void;
         auto read_indirect_bits_rect(graphite::data::reader& pict_reader, bool packed, bool skip_region) -> void;
         auto read_compressed_quicktime(graphite::data::reader & pict_reader) -> void;
         auto read_uncompressed_quicktime(graphite::data::reader & pict_reader) -> void;

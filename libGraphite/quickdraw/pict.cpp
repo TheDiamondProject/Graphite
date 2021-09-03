@@ -153,7 +153,7 @@ auto graphite::qd::pict::read_indirect_bits_rect(graphite::data::reader& pict_re
     m_size += width * height;
 }
 
-auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_reader) -> void
+auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_reader, bool skip_region) -> void
 {
     graphite::qd::pixmap pm = graphite::qd::pixmap(pict_reader.read_data(qd::pixmap::length));
     auto pack_type = pm.pack_type();
@@ -167,6 +167,13 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
     auto destination_rect = qd::rect::read(pict_reader, qd::rect::qd);
 
     auto transfer_mode = pict_reader.read_short();
+    
+    if (skip_region) {
+        auto skip = pict_reader.read_short();
+        if (skip > 2) {
+            pict_reader.move(skip - 2);
+        }
+    }
 
     // Verify the type of PixMap. We can only accept certain types for the time being, until
     // support for decoding/rendering other types is added.
@@ -413,6 +420,11 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
                 clip_rect = read_region(pict_reader);
                 break;
             }
+            case opcode::origin: {
+                auto origin = graphite::qd::point::read(pict_reader, qd::point::pict);
+                m_frame.set_origin(origin);
+                break;
+            }
             case opcode::bits_rect: {
                 read_indirect_bits_rect(pict_reader, false, false);
                 break;
@@ -430,7 +442,11 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
                 break;
             }
             case opcode::direct_bits_rect: {
-                read_direct_bits_rect(pict_reader);
+                read_direct_bits_rect(pict_reader, false);
+                break;
+            }
+            case opcode::direct_bits_region: {
+                read_direct_bits_rect(pict_reader, true);
                 break;
             }
             case opcode::long_comment: {
