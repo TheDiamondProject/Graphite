@@ -40,12 +40,12 @@ auto graphite::qd::clut::size() const -> int
 
 auto graphite::qd::clut::at(int index) const -> graphite::qd::color
 {
-    return std::get<1>(m_entries[index]);
+    return m_entries.at(index);
 }
 
 auto graphite::qd::clut::get(int value) const -> graphite::qd::color
 {
-    return std::get<1>(m_entries[value % m_size]);
+    return m_entries.at(value);
 }
 
 auto graphite::qd::clut::set(const qd::color& color) -> uint16_t
@@ -59,7 +59,7 @@ auto graphite::qd::clut::set(const qd::color& color) -> uint16_t
             ++value;
         }
     }
-    m_entries.emplace_back(std::make_tuple(value, color));
+    m_entries.emplace(value, color);
     m_size = m_entries.size();
     return value;
 }
@@ -71,15 +71,14 @@ auto graphite::qd::clut::parse(graphite::data::reader& reader) -> void
     m_seed = reader.read_long();
     m_flags = static_cast<flags>(reader.read_short());
     m_size = reader.read_short() + 1;
-    m_entries.resize(m_size, std::make_tuple(0, qd::color(0, 0, 0)));
 
     for (auto i = 0; i < m_size; ++i) {
         auto value = reader.read_short();
         auto r = static_cast<uint8_t>((reader.read_short() / 65535.0) * 255);
         auto g = static_cast<uint8_t>((reader.read_short() / 65535.0) * 255);
         auto b = static_cast<uint8_t>((reader.read_short() / 65535.0) * 255);
-        int index = m_flags == device ? i : (value % m_size);
-        m_entries[index] = std::make_tuple(value, qd::color(r, g, b));
+        int index = m_flags == device ? i : value;
+        m_entries.emplace(index, qd::color(r, g, b));
     }
 }
 
