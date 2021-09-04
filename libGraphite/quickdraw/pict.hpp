@@ -30,8 +30,17 @@ namespace graphite::qd {
             direct_bits_rect = 0x009a,
             direct_bits_region = 0x009b,
             eof = 0x00ff,
+            rgb_fg_color = 0x001a,
+            rgb_bg_color = 0x001b,
+            hilite_mode = 0x001c,
+            hilite_color = 0x001d,
             def_hilite = 0x001e,
             op_color = 0x001f,
+            frame_region = 0x0080,
+            paint_region = 0x0081,
+            erase_region = 0x0082,
+            invert_region = 0x0083,
+            fill_region = 0x0084,
             short_comment = 0x00a0,
             long_comment = 0x00a1,
             ext_header = 0x0c00,
@@ -51,8 +60,8 @@ namespace graphite::qd {
         auto parse(graphite::data::reader& pict_reader) -> void;
         auto read_region(graphite::data::reader& pict_reader) const -> graphite::qd::rect;
         auto read_long_comment(graphite::data::reader& pict_reader) -> void;
-        auto read_direct_bits_rect(graphite::data::reader& pict_reader, bool skip_region) -> void;
-        auto read_indirect_bits_rect(graphite::data::reader& pict_reader, bool packed, bool skip_region) -> void;
+        auto read_direct_bits_rect(graphite::data::reader& pict_reader, bool region) -> void;
+        auto read_indirect_bits_rect(graphite::data::reader& pict_reader, bool packed, bool region) -> void;
         auto read_compressed_quicktime(graphite::data::reader & pict_reader) -> void;
         auto read_uncompressed_quicktime(graphite::data::reader & pict_reader) -> void;
         auto read_image_description(graphite::data::reader & pict_reader) -> void;
