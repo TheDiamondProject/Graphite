@@ -6,8 +6,7 @@
 #define GRAPHITE_CLUT_HPP
 
 #include <string>
-#include <vector>
-#include <tuple>
+#include <map>
 #include "libGraphite/quickdraw/internal/color.hpp"
 #include "libGraphite/data/reader.hpp"
 #include "libGraphite/data/writer.hpp"
@@ -26,7 +25,7 @@ namespace graphite::qd {
         uint32_t m_seed { 0 };
         enum flags m_flags { pixmap };
         uint16_t m_size { 0 };
-        std::vector<std::tuple<uint16_t, qd::color>> m_entries;
+        std::map<uint16_t, qd::color> m_entries;
 
         auto parse(data::reader& reader) -> void;
 
