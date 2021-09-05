@@ -73,8 +73,7 @@ auto graphite::qd::pict::read_region(graphite::data::reader& pict_reader) const 
     rect.set_width(rect.width() / m_x_ratio);
     rect.set_height(rect.height() / m_y_ratio);
 
-    auto points = (size - 10) >> 2;
-    pict_reader.move(points * 2 * sizeof(uint16_t));
+    pict_reader.move(size - 10);
 
     return rect;
 }
@@ -86,7 +85,7 @@ auto graphite::qd::pict::read_long_comment(graphite::data::reader& pict_reader) 
     pict_reader.move(length);
 }
 
-auto graphite::qd::pict::read_indirect_bits_rect(graphite::data::reader& pict_reader, bool packed, bool skip_region) -> void
+auto graphite::qd::pict::read_indirect_bits_rect(graphite::data::reader& pict_reader, bool packed, bool region) -> void
 {
     qd::pixmap pm;
     qd::clut color_table;
@@ -116,11 +115,8 @@ auto graphite::qd::pict::read_indirect_bits_rect(graphite::data::reader& pict_re
 
     auto transfer_mode = pict_reader.read_short();
     
-    if (skip_region) {
-        auto skip = pict_reader.read_short();
-        if (skip > 2) {
-            pict_reader.move(skip - 2);
-        }
+    if (region) {
+        read_region(pict_reader);
     }
 
     // Setup pixel buffer for raw values
@@ -153,7 +149,7 @@ auto graphite::qd::pict::read_indirect_bits_rect(graphite::data::reader& pict_re
     m_size += width * height;
 }
 
-auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_reader, bool skip_region) -> void
+auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_reader, bool region) -> void
 {
     graphite::qd::pixmap pm = graphite::qd::pixmap(pict_reader.read_data(qd::pixmap::length));
     auto pack_type = pm.pack_type();
@@ -168,11 +164,8 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
 
     auto transfer_mode = pict_reader.read_short();
     
-    if (skip_region) {
-        auto skip = pict_reader.read_short();
-        if (skip > 2) {
-            pict_reader.move(skip - 2);
-        }
+    if (region) {
+        read_region(pict_reader);
     }
 
     // Verify the type of PixMap. We can only accept certain types for the time being, until
@@ -457,13 +450,25 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
                 pict_reader.move(2);
                 break;
             }
+            case opcode::rgb_fg_color:
+            case opcode::rgb_bg_color:
+            case opcode::hilite_color:
             case opcode::op_color: {
                 pict_reader.move(6);
+                break;
+            }
+            case opcode::frame_region:
+            case opcode::paint_region:
+            case opcode::erase_region:
+            case opcode::invert_region:
+            case opcode::fill_region: {
+                read_region(pict_reader);
                 break;
             }
             case opcode::nop:
             case opcode::eof:
             case opcode::ext_header:
+            case opcode::hilite_mode:
             case opcode::def_hilite: {
                 break;
             }
