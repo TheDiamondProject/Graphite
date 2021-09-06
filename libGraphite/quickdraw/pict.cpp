@@ -379,6 +379,10 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
             auto rect = qd::rect::read(pict_reader, qd::rect::qd);
             m_x_ratio = static_cast<double>(m_frame.width()) / rect.width();
             m_y_ratio = static_cast<double>(m_frame.height()) / rect.height();
+            // This isn't strictly correct but it allows us to decode some images which
+            // would otherwise fail due to mismatched frame sizes. QuickDraw would normally
+            // scale such images down to fit the frame but here we just expand the frame.
+            m_frame.set_size(rect.size());
         }
 
         if (m_x_ratio <= 0 || m_y_ratio <= 0) {
