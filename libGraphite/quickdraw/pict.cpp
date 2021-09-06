@@ -328,8 +328,8 @@ auto graphite::qd::pict::read_image_description(graphite::data::reader &pict_rea
     }
     auto clut = pict_reader.read_signed_short();
     
-    if (compressor == 'rle ' && clut == 40) {
-        // Grayscale rle is often just garbage, skip over this and hope we find the real image later.
+    if (compressor == 'rle ') {
+        // rle is often garbage or redundant, skip over it and hope we find other image data later.
         pict_reader.move(data_size);
         return;
     }
@@ -397,6 +397,7 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
 
     m_size = 0;
     m_surface = std::make_shared<graphite::qd::surface>(m_frame.width(), m_frame.height());
+    bool has_bits = false;
 
     opcode op;
     while (!pict_reader.eof()) {
@@ -424,26 +425,32 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
             }
             case opcode::bits_rect: {
                 read_indirect_bits_rect(pict_reader, false, false);
+                has_bits = true;
                 break;
             }
             case opcode::bits_region: {
                 read_indirect_bits_rect(pict_reader, false, true);
+                has_bits = true;
                 break;
             }
             case opcode::pack_bits_rect: {
                 read_indirect_bits_rect(pict_reader, true, false);
+                has_bits = true;
                 break;
             }
             case opcode::pack_bits_region: {
                 read_indirect_bits_rect(pict_reader, true, true);
+                has_bits = true;
                 break;
             }
             case opcode::direct_bits_rect: {
                 read_direct_bits_rect(pict_reader, false);
+                has_bits = true;
                 break;
             }
             case opcode::direct_bits_region: {
                 read_direct_bits_rect(pict_reader, true);
+                has_bits = true;
                 break;
             }
             case opcode::long_comment: {
@@ -490,6 +497,11 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
                 throw std::runtime_error("Encountered an incompatible PICT: " + std::to_string(m_id) + ", " + m_name);
             }
         }
+    }
+    
+    // This is a safety check for QuickTime rle which is skipped over. If no other image data was found, throw an error.
+    if (!has_bits) {
+        throw std::runtime_error("Encountered an incompatible PICT: " + std::to_string(m_id) + ", " + m_name);
     }
 }
 
