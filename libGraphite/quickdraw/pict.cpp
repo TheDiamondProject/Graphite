@@ -341,7 +341,8 @@ auto graphite::qd::pict::read_image_description(graphite::data::reader &pict_rea
             comp.push_back(compressor >> 16);
             comp.push_back(compressor >> 8);
             comp.push_back(compressor);
-            throw std::runtime_error("Unsupported QuickTime compressor '" + comp + "' in PICT: " + std::to_string(m_id) + ", " + m_name);
+            throw std::runtime_error("Unsupported QuickTime compressor '" + comp + "' at offset " + std::to_string(pict_reader.position())
+                                     + " in PICT: " + std::to_string(m_id) + ", " + m_name);
     }
 }
 
