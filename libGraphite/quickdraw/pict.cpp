@@ -328,8 +328,8 @@ auto graphite::qd::pict::read_image_description(graphite::data::reader &pict_rea
     }
     auto clut = pict_reader.read_signed_short();
     
-    if (compressor == 'rle ' && clut == 40) {
-        // Grayscale rle is often just garbage, skip over this and hope we find the real image later.
+    if (compressor == 'rle ') {
+        // rle is often garbage or redundant, skip over it and hope we find other image data later.
         pict_reader.move(data_size);
         return;
     }
@@ -341,7 +341,8 @@ auto graphite::qd::pict::read_image_description(graphite::data::reader &pict_rea
             comp.push_back(compressor >> 16);
             comp.push_back(compressor >> 8);
             comp.push_back(compressor);
-            throw std::runtime_error("Unsupported QuickTime compressor '" + comp + "' in PICT: " + std::to_string(m_id) + ", " + m_name);
+            throw std::runtime_error("Unsupported QuickTime compressor '" + comp + "' at offset " + std::to_string(pict_reader.position())
+                                     + " in PICT: " + std::to_string(m_id) + ", " + m_name);
     }
 }
 
@@ -379,6 +380,10 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
             auto rect = qd::rect::read(pict_reader, qd::rect::qd);
             m_x_ratio = static_cast<double>(m_frame.width()) / rect.width();
             m_y_ratio = static_cast<double>(m_frame.height()) / rect.height();
+            // This isn't strictly correct but it allows us to decode some images which
+            // would otherwise fail due to mismatched frame sizes. QuickDraw would normally
+            // scale such images down to fit the frame but here we just expand the frame.
+            m_frame.set_size(rect.size());
         }
 
         if (m_x_ratio <= 0 || m_y_ratio <= 0) {
@@ -393,6 +398,7 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
 
     m_size = 0;
     m_surface = std::make_shared<graphite::qd::surface>(m_frame.width(), m_frame.height());
+    bool has_bits = false;
 
     opcode op;
     while (!pict_reader.eof()) {
@@ -420,26 +426,32 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
             }
             case opcode::bits_rect: {
                 read_indirect_bits_rect(pict_reader, false, false);
+                has_bits = true;
                 break;
             }
             case opcode::bits_region: {
                 read_indirect_bits_rect(pict_reader, false, true);
+                has_bits = true;
                 break;
             }
             case opcode::pack_bits_rect: {
                 read_indirect_bits_rect(pict_reader, true, false);
+                has_bits = true;
                 break;
             }
             case opcode::pack_bits_region: {
                 read_indirect_bits_rect(pict_reader, true, true);
+                has_bits = true;
                 break;
             }
             case opcode::direct_bits_rect: {
                 read_direct_bits_rect(pict_reader, false);
+                has_bits = true;
                 break;
             }
             case opcode::direct_bits_region: {
                 read_direct_bits_rect(pict_reader, true);
+                has_bits = true;
                 break;
             }
             case opcode::long_comment: {
@@ -486,6 +498,11 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
                 throw std::runtime_error("Encountered an incompatible PICT: " + std::to_string(m_id) + ", " + m_name);
             }
         }
+    }
+    
+    // This is a safety check for QuickTime rle which is skipped over. If no other image data was found, throw an error.
+    if (!has_bits) {
+        throw std::runtime_error("Encountered an incompatible PICT: " + std::to_string(m_id) + ", " + m_name);
     }
 }
 
