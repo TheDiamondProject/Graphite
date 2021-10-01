@@ -38,6 +38,10 @@ auto graphite::rsrc::classic::parse(const std::shared_ptr<graphite::data::reader
 	// We can do this in two ways. We can check the corresponding second header/preamble
 	// at the start of the resource map, and we can check the lengths provided equal the
 	// size of the file.
+    if (data_offset == 0 || map_offset == 0 || map_length == 0) {
+        throw std::runtime_error("[Classic Resource File] Invalid Preamble.");
+    }
+
 	auto rsrc_size = data_offset + data_length + map_length;
 	if (map_offset != data_offset + data_length) {
 		throw std::runtime_error("[Classic Resource File] ResourceMap starts at the unexpected location.");
