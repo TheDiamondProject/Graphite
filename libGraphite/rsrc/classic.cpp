@@ -38,6 +38,10 @@ auto graphite::rsrc::classic::parse(const std::shared_ptr<graphite::data::reader
 	// We can do this in two ways. We can check the corresponding second header/preamble
 	// at the start of the resource map, and we can check the lengths provided equal the
 	// size of the file.
+    if (data_offset == 0 || map_offset == 0 || map_length == 0) {
+        throw std::runtime_error("[Classic Resource File] Invalid Preamble.");
+    }
+
 	auto rsrc_size = data_offset + data_length + map_length;
 	if (map_offset != data_offset + data_length) {
 		throw std::runtime_error("[Classic Resource File] ResourceMap starts at the unexpected location.");
@@ -50,21 +54,29 @@ auto graphite::rsrc::classic::parse(const std::shared_ptr<graphite::data::reader
 	// Now move to the start of the resource map, and verify the contents of the preamble.
 	reader->set_position(map_offset);
 
-	if (reader->read_long() != data_offset) {
-		throw std::runtime_error("[Classic Resource File] Second Preamble 'data_offset' mismatch.");
-	}
+    auto data_offset2 = reader->read_long();
+    auto map_offset2 = reader->read_long();
+    auto data_length2 = reader->read_long();
+    auto map_length2 = reader->read_long();
 
-	if (reader->read_long() != map_offset) {
-		throw std::runtime_error("[Classic Resource File] Second Preamble 'map_offset' mismatch.");
-	}
+    // Ignore second preamble if all zero, as this can happen sometimes.
+    if (data_offset2 != 0 || map_offset2 != 0 || data_length2 != 0 || map_length2 != 0) {
+        if (data_offset2 != data_offset) {
+            throw std::runtime_error("[Classic Resource File] Second Preamble 'data_offset' mismatch.");
+        }
 
-	if (reader->read_long() != data_length) {
-		throw std::runtime_error("[Classic Resource File] Second Preamble 'data_length' mismatch.");
-	}
+        if (map_offset2 != map_offset) {
+            throw std::runtime_error("[Classic Resource File] Second Preamble 'map_offset' mismatch.");
+        }
 
-	if (reader->read_long() != map_length) {
-		throw std::runtime_error("[Classic Resource File] Second Preamble 'map_length' mismatch.");
-	}
+        if (data_length2 != data_length) {
+            throw std::runtime_error("[Classic Resource File] Second Preamble 'data_length' mismatch.");
+        }
+
+        if (map_length2 != map_length) {
+            throw std::runtime_error("[Classic Resource File] Second Preamble 'map_length' mismatch.");
+        }
+    }
 
 	// 2. Now that the preamble is parsed and verified, parse the contents
 	// of the ResourceMap. The first two fields are used by the actual Resource Manager in
