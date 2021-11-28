@@ -192,7 +192,7 @@ auto graphite::qd::cicn::data() -> std::shared_ptr<graphite::data::data>
                 color_values.emplace_back(m_clut.set(color));
             }
         }
-    } while(m_clut.size() >= 256);
+    } while(m_clut.size() > 256);
 
 
     // Determine what component configuration we need.
