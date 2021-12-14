@@ -38,11 +38,11 @@ jobs:
     strategy:
       matrix:
         env:
-          - { os: windows-latest, shell: msys2 {0}, msystem: MINGW64, arch: x86_64, compiler: LLVM, CC: clang, CXX: clang++ }
+          - { os: windows-latest, shell: msys2, msystem: MINGW64, arch: x86_64, compiler: LLVM, CC: clang, CXX: clang++ }
     runs-on: ${{ matrix.env.os }}
     defaults:
       run:
-        shell: ${{ matrix.env.shell }}
+        shell: ${{ matrix.env.shell }} {0}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
