@@ -1,0 +1,64 @@
+name: Graphite CI
+
+on: [push]
+
+jobs:
+  linux:
+    name: Build on Linux
+    strategy:
+      matrix:
+        env:
+          - { os: ubuntu-latest, compiler: LLVM, CC: clang, CXX: clang++ }
+    runs-on: ${{ matrix.env.os }}
+    steps:
+      - env:
+          CC: ${{ matrix.env.CC }}
+          CXX: ${{ matrix.env.CXX }}
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build
+        run: |
+          ./.github/actions/build.sh
+
+  macOS:
+    name: Build on macOS
+    strategy:
+      matrix:
+        os: [ macos-10.15, macos-11 ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build
+        run: |
+          ./.github/actions/build.sh
+
+  windows:
+    name: Build on Windows
+    strategy:
+      matrix:
+        env:
+          - { os: windows-latest, shell: msys2 {0}, msystem: MINGW64, arch: x86_64, compiler: LLVM, CC: clang, CXX: clang++ }
+    runs-on: ${{ matrix.env.os }}
+    defaults:
+      run:
+        shell: ${{ matrix.env.shell }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup MinGW/MSYS2
+        uses: actions/setup-msys2@v2
+        with:
+          msystem: ${{ matrix.env.msystem }}
+          install: git mingw-w64-${{ matrix.env.arch }}-toolchain
+      - name: Install dependencies
+        run: |
+          pacman -S --noconfirm mingw-w64-${{ matrix.env.arch }}-clang
+          pacman -S --noconfirm mingw-w64-${{ matrix.env.arch }}-cmake
+          pacman -S --noconfirm mingw-w64-${{ matrix.env.arch }}-ninja
+      - name: Build
+        env:
+          CC: ${{ matrix.env.CC }}
+          CXX: ${{ matrix.env.CXX }}
+        run: |
+          ./.github/actions/build.sh
