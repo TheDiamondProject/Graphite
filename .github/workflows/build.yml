@@ -11,12 +11,12 @@ jobs:
           - { os: ubuntu-latest, compiler: LLVM, CC: clang, CXX: clang++ }
     runs-on: ${{ matrix.env.os }}
     steps:
-      - env:
-          CC: ${{ matrix.env.CC }}
-          CXX: ${{ matrix.env.CXX }}
       - name: Checkout
         uses: actions/checkout@v2
       - name: Build
+        env:
+          CC: ${{ matrix.env.CC }}
+          CXX: ${{ matrix.env.CXX }}
         run: |
           ./.github/actions/build.sh
 
