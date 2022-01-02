@@ -62,6 +62,11 @@ auto graphite::rsrc::type::count() const -> std::size_t
 
 auto graphite::rsrc::type::add_resource(const std::shared_ptr<graphite::rsrc::resource>& resource) -> void
 {
+    // Search for an existing instance of this resource (same id)
+    m_resources.erase(std::remove_if(m_resources.begin(), m_resources.end(), [resource] (const auto& item) {
+        return item->id() == resource->id();
+    }), m_resources.end());
+
 	m_resources.push_back(resource);
 }
 

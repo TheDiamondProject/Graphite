@@ -72,6 +72,12 @@ auto graphite::rsrc::file::name() const -> std::string
     return out;
 }
 
+auto graphite::rsrc::file::path() const -> std::string
+{
+    return m_path;
+}
+
+
 // MARK: - File Reading
 
 auto graphite::rsrc::file::read(const std::string& path) -> void
@@ -82,13 +88,13 @@ auto graphite::rsrc::file::read(const std::string& path) -> void
 	m_data = reader->get();
 
 	// 1. Determine the file format and validity.
-	if (reader->read_quad(0, graphite::data::reader::mode::peek) == 1) {
+    if (reader->read_quad(0, graphite::data::reader::mode::peek) == 1) {
 		m_format = graphite::rsrc::file::format::extended;
 	}
     else if (reader->read_long(0, graphite::data::reader::mode::peek) == 'BRGR') {
         m_format = graphite::rsrc::file::format::rez;
     }
-	else {
+    else {
 		m_format = graphite::rsrc::file::format::classic;
 	}
 
@@ -126,6 +132,10 @@ auto graphite::rsrc::file::write(const std::string& path, enum graphite::rsrc::f
 		write_path = m_path;
 	}
 
+	// Update the file path accordingly.
+    m_path = write_path;
+
+	// Perform the write operation...
 	switch (fmt) {
 		case graphite::rsrc::file::format::classic: {
 			graphite::rsrc::classic::write(write_path, m_types);

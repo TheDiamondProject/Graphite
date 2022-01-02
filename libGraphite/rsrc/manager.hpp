@@ -64,6 +64,11 @@ namespace graphite::rsrc {
         auto import_file(const std::shared_ptr<file>& file) -> void;
 
         /**
+         * Unload the specified file from the Manager.
+         */
+        auto unload_file(const std::string& path) -> void;
+
+        /**
          *
          */
         [[nodiscard]] auto files() const -> std::vector<std::shared_ptr<file>>;

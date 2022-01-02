@@ -93,6 +93,11 @@ namespace graphite::rsrc {
         [[nodiscard]] auto name() const -> std::string;
 
         /**
+         * Returns the path of the file.
+         */
+        [[nodiscard]] auto path() const -> std::string;
+
+        /**
          * Returns the number of types contained in the resource file.
          */
         [[nodiscard]] auto type_count() const -> std::size_t;

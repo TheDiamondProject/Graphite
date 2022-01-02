@@ -44,6 +44,17 @@ auto graphite::rsrc::manager::files() const -> std::vector<std::shared_ptr<file>
     return m_files;
 }
 
+auto graphite::rsrc::manager::unload_file(const std::string &path) -> void
+{
+    std::vector<std::shared_ptr<graphite::rsrc::file>> updated_files;
+    for (const auto& file : m_files) {
+        if (file->path() != path) {
+            updated_files.emplace_back(file);
+        }
+    }
+    m_files = updated_files;
+}
+
 // MARK: - Resource Look Up
 
 auto graphite::rsrc::manager::find(const std::string& type, const int64_t& id, const std::map<std::string, std::string>& attributes) const -> std::weak_ptr<graphite::rsrc::resource>
