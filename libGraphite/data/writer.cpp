@@ -220,7 +220,7 @@ auto graphite::data::writer::write_data(const std::shared_ptr<graphite::data::da
     auto bytes = data->get();
     auto vec = m_data->get();
     vec->insert(vec->end(), bytes->begin() + data->start(), bytes->begin() + data->start() + data->size());
-    m_pos += bytes->size();
+    m_pos += data->size();
     m_data->resync_size();
 }
 
