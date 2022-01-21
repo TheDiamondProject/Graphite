@@ -458,15 +458,33 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
                 read_long_comment(pict_reader);
                 break;
             }
+            case opcode::pen_mode:
+            case opcode::short_line_from:
             case opcode::short_comment: {
                 pict_reader.move(2);
                 break;
             }
+            case opcode::pen_size:
+            case opcode::line_from: {
+                pict_reader.move(4);
+                break;
+            }
+            case opcode::short_line:
             case opcode::rgb_fg_color:
             case opcode::rgb_bg_color:
             case opcode::hilite_color:
             case opcode::op_color: {
                 pict_reader.move(6);
+                break;
+            }
+            case opcode::pen_pattern:
+            case opcode::line:
+            case opcode::frame_rect:
+            case opcode::paint_rect:
+            case opcode::erase_rect:
+            case opcode::invert_rect:
+            case opcode::fill_rect: {
+                pict_reader.move(8);
                 break;
             }
             case opcode::frame_region:
@@ -495,7 +513,7 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
                 break;
             }
             default: {
-                throw std::runtime_error("Encountered an incompatible PICT: " + std::to_string(m_id) + ", " + m_name);
+                throw std::runtime_error("Encountered an unsupported opcode " + std::to_string(op) + " in PICT: " + std::to_string(m_id) + ", " + m_name);
             }
         }
     }
