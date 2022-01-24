@@ -241,7 +241,7 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
                 }
             }
             else if (cmp_count == 4) {
-                // ARGB Formatted Data
+                // XRGB Formatted Data
                 for (uint32_t x = 0; x < width; x++) {
                     px_long_buffer[px_buffer_offset + x] =
                             ((raw[x] & 0xFF) << 24)
@@ -265,10 +265,10 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
     }
     else {
         for (auto v : px_long_buffer) {
+            // Ignore high byte
             graphite::qd::color color(static_cast<uint8_t>((v & 0xFF0000) >> 16),
                                       static_cast<uint8_t>((v & 0xFF00) >> 8),
-                                      static_cast<uint8_t>(v & 0xFF),
-                                      static_cast<uint8_t>((v & 0xFF000000) >> 24));
+                                      static_cast<uint8_t>(v & 0xFF));
             m_surface->set(m_size++, color);
         }
     }
