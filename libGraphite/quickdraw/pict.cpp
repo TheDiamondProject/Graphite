@@ -154,7 +154,6 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
     graphite::qd::pixmap pm = graphite::qd::pixmap(pict_reader.read_data(qd::pixmap::length));
     auto pack_type = pm.pack_type();
     auto cmp_count = pm.cmp_count();
-    auto color_model = static_cast<graphite::qd::pixel_format>(pm.pixel_format());
     auto row_bytes = pm.row_bytes();
     auto bounds = pm.bounds();
 
