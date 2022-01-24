@@ -67,7 +67,6 @@ namespace graphite::qd {
         graphite::qd::rect m_frame;
         double m_x_ratio {};
         double m_y_ratio {};
-        std::size_t m_size;
 
         auto parse(graphite::data::reader& pict_reader) -> void;
         auto read_region(graphite::data::reader& pict_reader) const -> graphite::qd::rect;

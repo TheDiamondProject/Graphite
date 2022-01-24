@@ -127,7 +127,7 @@ auto graphite::qd::pict::read_indirect_bits_rect(graphite::data::reader& pict_re
     
     if (packed) {
         uint16_t packed_bytes_count = 0;
-        for (auto scanline = 0; scanline < height; ++scanline) {
+        for (auto y = 0; y < height; ++y) {
             if (row_bytes > 250) {
                 packed_bytes_count = pict_reader.read_short();
             }
@@ -146,16 +146,11 @@ auto graphite::qd::pict::read_indirect_bits_rect(graphite::data::reader& pict_re
     destination_rect.set_x(destination_rect.x() - m_frame.origin().x());
     destination_rect.set_y(destination_rect.y() - m_frame.origin().y());
     pm.build_surface(m_surface, raw, color_table, destination_rect);
-    m_size += width * height;
 }
 
 auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_reader, bool region) -> void
 {
     graphite::qd::pixmap pm = graphite::qd::pixmap(pict_reader.read_data(qd::pixmap::length));
-    auto pack_type = pm.pack_type();
-    auto cmp_count = pm.cmp_count();
-    auto row_bytes = pm.row_bytes();
-    auto bounds = pm.bounds();
 
     // Read the source and destination bounds
     auto source_rect = qd::rect::read(pict_reader, qd::rect::qd);
@@ -166,10 +161,21 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
     if (region) {
         read_region(pict_reader);
     }
+    
+    // Setup pixel buffer for raw values
+    std::vector<uint8_t> raw;
+    uint16_t packed_bytes_count = 0;
+    auto pack_type = pm.pack_type();
+    auto cmp_count = pm.cmp_count();
+    auto row_bytes = pm.row_bytes();
+    auto height = source_rect.height();
+    auto width = source_rect.width();
+    auto bounds_width = pm.bounds().width();
+    auto origin_x = destination_rect.x() - m_frame.origin().x();
+    auto origin_y = destination_rect.y() - m_frame.origin().y();
 
     // Verify the type of PixMap. We can only accept certain types for the time being, until
     // support for decoding/rendering other types is added.
-    std::vector<uint8_t> raw;
     switch (pack_type) {
         case 1:
         case 2:
@@ -186,26 +192,9 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
         }
     }
 
-    // Allocate a private memory buffer before going to the surface.
-    std::vector<uint16_t> px_short_buffer;
-    std::vector<uint32_t> px_long_buffer;
-    uint32_t px_buffer_offset = 0;
-    uint16_t packed_bytes_count = 0;
-    uint32_t height = source_rect.height();
-    uint32_t width = source_rect.width();
-    uint32_t bounds_width = bounds.width();
-    uint32_t source_length = width * height;
-
-    if (pack_type == 3) {
-        px_short_buffer = std::vector<uint16_t>(source_length);
-    }
-    else {
-        px_long_buffer = std::vector<uint32_t>(source_length);
-    }
-
     auto packing_enabled = ((pack_type == 3 ? 2 : 1) + (row_bytes > 250 ? 2 : 1)) <= bounds_width;
 
-    for (uint32_t scanline = 0; scanline < height; ++scanline) {
+    for (auto y = 0; y < height; ++y) {
         raw.clear();
 
         if (pack_type > 2 && packing_enabled) {
@@ -225,51 +214,32 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
         }
 
         if (pack_type == 3) {
+            // 16-bit RGB555 Formatted Data
             for (uint32_t x = 0; x < width; ++x) {
-                px_short_buffer[px_buffer_offset + x] = (0xFF & raw[2 * x + 1]) | ((0xFF & raw[2 * x]) << 8);
+                uint16_t v = (raw[2 * x] << 8) | (raw[2 * x + 1]);
+                graphite::qd::color color(static_cast<uint8_t>(((v & 0x7c00) >> 10) * 0xFF / 0x1F),
+                                          static_cast<uint8_t>(((v & 0x03e0) >> 5) * 0xFF / 0x1F),
+                                          static_cast<uint8_t>((v & 0x001f) * 0xFF / 0x1F));
+                m_surface->set(x + origin_x, y + origin_y, color);
             }
         }
-        else {
-            if (cmp_count == 3) {
-                // RGB Formatted Data
-                for (uint32_t x = 0; x < width; x++) {
-                    px_long_buffer[px_buffer_offset + x] =
-                            0xFF000000
-                            | ((raw[x] & 0xFF) << 16)
-                            | ((raw[bounds_width + x] & 0xFF) << 8)
-                            | (raw[2 * bounds_width + x] & 0xFF);
-                }
-            }
-            else if (cmp_count == 4) {
-                // XRGB Formatted Data
-                for (uint32_t x = 0; x < width; x++) {
-                    px_long_buffer[px_buffer_offset + x] =
-                            ((raw[x] & 0xFF) << 24)
-                            | ((raw[bounds_width + x] & 0xFF) << 16)
-                            | ((raw[2 * bounds_width + x] & 0xFF) << 8)
-                            | (raw[3 * bounds_width + x] & 0xFF);
-                }
+        else if (cmp_count == 3) {
+            // 24-bit RGB Formatted Data
+            for (uint32_t x = 0; x < width; x++) {
+                graphite::qd::color color(raw[x],
+                                          raw[bounds_width + x],
+                                          raw[2 * bounds_width + x]);
+                m_surface->set(x + origin_x, y + origin_y, color);
             }
         }
-
-        px_buffer_offset += width;
-    }
-
-    if (pack_type == 3) {
-        for (auto v : px_short_buffer) {
-            graphite::qd::color color(static_cast<uint8_t>(((v & 0x7c00) >> 10) * 0xFF / 0x1F),
-                                      static_cast<uint8_t>(((v & 0x03e0) >> 5) * 0xFF / 0x1F),
-                                      static_cast<uint8_t>((v & 0x001f) * 0xFF / 0x1F));
-            m_surface->set(m_size++, color);
-        }
-    }
-    else {
-        for (auto v : px_long_buffer) {
-            // Ignore high byte
-            graphite::qd::color color(static_cast<uint8_t>((v & 0xFF0000) >> 16),
-                                      static_cast<uint8_t>((v & 0xFF00) >> 8),
-                                      static_cast<uint8_t>(v & 0xFF));
-            m_surface->set(m_size++, color);
+        else if (cmp_count == 4) {
+            // 32-bit XRGB Formatted Data - first component is ignored
+            for (uint32_t x = 0; x < width; x++) {
+                graphite::qd::color color(raw[bounds_width + x],
+                                          raw[2 * bounds_width + x],
+                                          raw[3 * bounds_width + x]);
+                m_surface->set(x + origin_x, y + origin_y, color);
+            }
         }
     }
 }
@@ -395,7 +365,6 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
     // Begin parsing PICT opcodes.
     qd::rect clip_rect(0, 0, 0, 0);
 
-    m_size = 0;
     m_surface = std::make_shared<graphite::qd::surface>(m_frame.width(), m_frame.height());
     bool has_bits = false;
 
@@ -527,6 +496,8 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
 
 auto graphite::qd::pict::encode(graphite::data::writer& pict_encoder) -> void
 {
+    // Ensure origin is zero before starting
+    m_frame.set_origin(qd::point(0, 0));
     encode_header(pict_encoder);
     encode_def_hilite(pict_encoder);
     encode_clip_region(pict_encoder);
