@@ -164,7 +164,6 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
     
     // Setup pixel buffer for raw values
     std::vector<uint8_t> raw;
-    uint16_t packed_bytes_count = 0;
     auto pack_type = pm.pack_type();
     auto cmp_count = pm.cmp_count();
     auto row_bytes = pm.row_bytes();
@@ -177,14 +176,8 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
     // Verify the type of PixMap. We can only accept certain types for the time being, until
     // support for decoding/rendering other types is added.
     switch (pack_type) {
-        case 1:
-        case 2:
-        case 3: {
-            raw.reserve(row_bytes);
-            break;
-        }
+        case 3:
         case 4: {
-            raw.reserve(cmp_count * row_bytes / 4);
             break;
         }
         default: {
@@ -192,12 +185,10 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
         }
     }
 
-    auto packing_enabled = ((pack_type == 3 ? 2 : 1) + (row_bytes > 250 ? 2 : 1)) <= bounds_width;
-
     for (auto y = 0; y < height; ++y) {
-        raw.clear();
-
-        if (pack_type > 2 && packing_enabled) {
+        if (row_bytes >= 8) {
+            raw.clear();
+            uint16_t packed_bytes_count = 0;
             if (row_bytes > 250) {
                 packed_bytes_count = pict_reader.read_short();
             }
@@ -223,7 +214,7 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
                 m_surface->set(x + origin_x, y + origin_y, color);
             }
         }
-        else if (cmp_count == 3) {
+        else if (cmp_count == 3 && row_bytes >= 8) {
             // 24-bit RGB Formatted Data
             for (uint32_t x = 0; x < width; x++) {
                 graphite::qd::color color(raw[x],
@@ -232,7 +223,7 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
                 m_surface->set(x + origin_x, y + origin_y, color);
             }
         }
-        else if (cmp_count == 4) {
+        else if (cmp_count == 3 || cmp_count == 4) {
             // 32-bit XRGB Formatted Data - first component is ignored
             for (uint32_t x = 0; x < width; x++) {
                 graphite::qd::color color(raw[bounds_width + x],
@@ -566,35 +557,37 @@ auto graphite::qd::pict::encode_direct_bits_rect(graphite::data::writer& pict_en
     pict_encoder.write_short(0); // Source Copy
 
     // Prepare to write out the actual image data.
-    std::vector<uint8_t> scanline_bytes(m_frame.width() * pm.cmp_count());
-    for (auto scanline = 0; scanline < m_frame.height(); ++scanline) {
-
-        if (pm.cmp_count() == 3) {
+    // Don't use packing if row bytes < 8
+    if (pm.row_bytes() < 8) {
+        for (auto scanline = 0; scanline < m_frame.height(); ++scanline) {
+            for (auto x = 0; x < m_frame.width(); ++x) {
+                auto pixel = m_surface->at(x, scanline);
+                pict_encoder.write_byte(0);
+                pict_encoder.write_byte(pixel.red_component());
+                pict_encoder.write_byte(pixel.green_component());
+                pict_encoder.write_byte(pixel.blue_component());
+            }
+        }
+    }
+    else {
+        std::vector<uint8_t> scanline_bytes(m_frame.width() * pm.cmp_count());
+        for (auto scanline = 0; scanline < m_frame.height(); ++scanline) {
             for (auto x = 0; x < m_frame.width(); ++x) {
                 auto pixel = m_surface->at(x, scanline);
                 scanline_bytes[x] = pixel.red_component();
                 scanline_bytes[x + m_frame.width()] = pixel.green_component();
                 scanline_bytes[x + m_frame.width() * 2] = pixel.blue_component();
             }
-        }
-        else if (pm.cmp_count() == 4) {
-            for (auto x = 0; x < m_frame.width(); ++x) {
-                auto pixel = m_surface->at(x, scanline);
-                scanline_bytes[x] = pixel.alpha_component();
-                scanline_bytes[x + m_frame.width()] = pixel.red_component();
-                scanline_bytes[x + m_frame.width() * 2] = pixel.green_component();
-                scanline_bytes[x + m_frame.width() * 3] = pixel.blue_component();
-            }
-        }
 
-        auto packed = packbits::encode(scanline_bytes);
-        if (pm.row_bytes() > 250) {
-            pict_encoder.write_short(packed.size());
+            auto packed = packbits::encode(scanline_bytes);
+            if (pm.row_bytes() > 250) {
+                pict_encoder.write_short(packed.size());
+            }
+            else {
+                pict_encoder.write_byte(packed.size());
+            }
+            pict_encoder.write_bytes(packed);
         }
-        else {
-            pict_encoder.write_byte(packed.size());
-        }
-        pict_encoder.write_bytes(packed);
     }
 }
 
