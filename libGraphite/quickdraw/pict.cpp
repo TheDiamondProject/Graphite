@@ -225,10 +225,7 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
                     break;
                 }
                 case packbits_word: {
-                    uint16_t v = (raw[2 * x] << 8) | (raw[2 * x + 1]);
-                    graphite::qd::color color(static_cast<uint8_t>(((v & 0x7c00) >> 10) * 0xFF / 0x1F),
-                                              static_cast<uint8_t>(((v & 0x03e0) >> 5) * 0xFF / 0x1F),
-                                              static_cast<uint8_t>((v & 0x001f) * 0xFF / 0x1F));
+                    graphite::qd::color color((raw[2 * x] << 8) | (raw[2 * x + 1]));
                     m_surface->set(x + copy_x, y + copy_y, color);
                     break;
                 }

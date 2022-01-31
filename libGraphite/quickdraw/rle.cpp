@@ -217,26 +217,19 @@ auto graphite::qd::rle::surface_offset(int32_t frame, int32_t line) const -> uin
 
 auto graphite::qd::rle::write_pixel(uint16_t pixel, uint8_t mask, uint64_t offset) -> void
 {
-    auto r = static_cast<uint8_t>((pixel & 0x7C00) >> 7);
-    auto g = static_cast<uint8_t>((pixel & 0x03E0) >> 2);
-    auto b = static_cast<uint8_t>((pixel & 0x001F) << 3);
-    m_surface->set(static_cast<int>(offset), qd::color(r, g, b));
+    m_surface->set(static_cast<int>(offset), qd::color(pixel));
 }
 
 auto graphite::qd::rle::write_pixel_variant1(uint32_t pixel, uint8_t mask, uint64_t offset) -> void
 {
-    auto r = static_cast<uint8_t>((pixel & 0x7C000000) >> 23);
-    auto g = static_cast<uint8_t>((pixel & 0x03E00000) >> 18);
-    auto b = static_cast<uint8_t>((pixel & 0x001F0000) << 13);
-    m_surface->set(static_cast<int>(offset), qd::color(r, g, b));
+    auto rgb555 = static_cast<uint16_t>(pixel >> 16);
+    m_surface->set(static_cast<int>(offset), qd::color(rgb555));
 }
 
 auto graphite::qd::rle::write_pixel_variant2(uint32_t pixel, uint8_t mask, uint64_t offset) -> void
 {
-    auto r = static_cast<uint8_t>((pixel & 0x00007C00) >> 7);
-    auto g = static_cast<uint8_t>((pixel & 0x000003E0) >> 2);
-    auto b = static_cast<uint8_t>((pixel & 0x0000001F) << 3);
-    m_surface->set(static_cast<int>(offset), qd::color(r, g, b));
+    auto rgb555 = static_cast<uint16_t>(pixel & 0x0000FFFF);
+    m_surface->set(static_cast<int>(offset), qd::color(rgb555));
 }
 
 // MARK: - Encoder / Writing
@@ -327,9 +320,7 @@ auto graphite::qd::rle::encode(graphite::data::writer& writer) -> void
                     }
 
                     // Write the pixel
-                    writer.write_short(pixel.blue_component() >> 3 |
-                                       (pixel.green_component() >> 3) << 5 |
-                                       (pixel.red_component() >> 3) << 10);
+                    writer.write_short(pixel.rgb555());
                 }
             }
 

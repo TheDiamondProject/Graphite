@@ -30,11 +30,18 @@ namespace graphite::qd {
          * @param alpha     The alpha component of the color
          */
         color(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha = 255);
+        
+        /**
+         * Construct a new color from a 16-bit rgb555 value.
+         * @param rgb555    The full 16-bit color value
+         */
+        color(uint16_t rgb555);
 
         [[nodiscard]] auto red_component() const -> uint8_t;
         [[nodiscard]] auto green_component() const -> uint8_t;
         [[nodiscard]] auto blue_component() const -> uint8_t;
         [[nodiscard]] auto alpha_component() const -> uint8_t;
+        [[nodiscard]] auto rgb555() const -> uint16_t;
         
         static auto black() -> color;
         static auto white() -> color;
