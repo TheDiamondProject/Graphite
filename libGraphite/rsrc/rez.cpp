@@ -40,7 +40,7 @@ auto graphite::rsrc::rez::parse(const std::shared_ptr<graphite::data::reader>& r
     reader->move(4); // Unknown value
     auto first_index = reader->read_long();
     auto count = reader->read_long();
-    uint32_t expected_header_length = 12 + (count * resource_offset_length) + map_name.size()+1;
+    uint32_t expected_header_length = 12 + (count * resource_offset_length) + static_cast<uint32_t>(map_name.size()+1);
     if (header_length != expected_header_length) {
         throw std::runtime_error("[Rez File] Preamble 'header_length' mismatch.");
     }
@@ -119,7 +119,7 @@ auto graphite::rsrc::rez::write(const std::string& path, const std::vector<std::
     uint32_t entry_count = resource_count + 1;
 
     // Calculate header length - this is from the end of the preamble to the start of the resource data
-    uint32_t header_length = 12 + (entry_count * resource_offset_length) + map_name.size()+1;
+    uint32_t header_length = 12 + (entry_count * resource_offset_length) + static_cast<uint32_t>(map_name.size()+1);
 
     // Write the preamble
     writer->write_long(rez_signature);
@@ -147,7 +147,7 @@ auto graphite::rsrc::rez::write(const std::string& path, const std::vector<std::
         }
     }
 
-    uint32_t type_count = types.size();
+    uint32_t type_count = static_cast<uint32_t>(types.size());
     // Calculate offset within map to start of resource info
     uint32_t type_offset = map_header_length + (type_count * type_info_length);
     uint32_t map_length = type_offset + (resource_count * resource_info_length);
@@ -177,7 +177,7 @@ auto graphite::rsrc::rez::write(const std::string& path, const std::vector<std::
         auto count = type->count();
         writer->write_cstr(type->code(), 4);
         writer->write_long(type_offset);
-        writer->write_long(count);
+        writer->write_long(static_cast<uint32_t>(count));
         type_offset += resource_info_length * count;
     }
 
