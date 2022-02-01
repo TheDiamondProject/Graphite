@@ -51,7 +51,7 @@ namespace graphite::qd {
         static constexpr int length { 50 };
 
         pixmap();
-        explicit pixmap(qd::rect frame);
+        explicit pixmap(qd::rect frame, bool rgb555 = false);
         explicit pixmap(std::shared_ptr<data::data> data);
 
         [[nodiscard]] auto bounds() const -> graphite::qd::rect;

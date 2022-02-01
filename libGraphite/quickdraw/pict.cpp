@@ -498,14 +498,14 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
 
 // MARK: - Encoder / Writing
 
-auto graphite::qd::pict::encode(graphite::data::writer& pict_encoder) -> void
+auto graphite::qd::pict::encode(graphite::data::writer& pict_encoder, bool rgb555) -> void
 {
     // Ensure origin is zero before starting
     m_frame.set_origin(qd::point(0, 0));
     encode_header(pict_encoder);
     encode_def_hilite(pict_encoder);
     encode_clip_region(pict_encoder);
-    encode_direct_bits_rect(pict_encoder);
+    encode_direct_bits_rect(pict_encoder, rgb555);
 
     // Make sure we're word aligned and put out the end of picture opcode.
     auto align_adjust = pict_encoder.position() % sizeof(uint16_t);
@@ -555,11 +555,11 @@ auto graphite::qd::pict::encode_clip_region(graphite::data::writer& pict_encoder
     m_frame.write(pict_encoder, rect::qd);
 }
 
-auto graphite::qd::pict::encode_direct_bits_rect(graphite::data::writer& pict_encoder) -> void
+auto graphite::qd::pict::encode_direct_bits_rect(graphite::data::writer& pict_encoder, bool rgb555) -> void
 {
     pict_encoder.write_short(static_cast<uint16_t>(opcode::direct_bits_rect));
 
-    qd::pixmap pm(m_frame);
+    qd::pixmap pm(m_frame, rgb555);
     pm.write(pict_encoder);
 
     // Source and destination frames - identical to the image frame.
@@ -575,11 +575,33 @@ auto graphite::qd::pict::encode_direct_bits_rect(graphite::data::writer& pict_en
         for (auto scanline = 0; scanline < m_frame.height(); ++scanline) {
             for (auto x = 0; x < m_frame.width(); ++x) {
                 auto pixel = m_surface->at(x, scanline);
-                pict_encoder.write_byte(0);
-                pict_encoder.write_byte(pixel.red_component());
-                pict_encoder.write_byte(pixel.green_component());
-                pict_encoder.write_byte(pixel.blue_component());
+                if (rgb555) {
+                    pict_encoder.write_short(pixel.rgb555());
+                } else {
+                    pict_encoder.write_byte(0);
+                    pict_encoder.write_byte(pixel.red_component());
+                    pict_encoder.write_byte(pixel.green_component());
+                    pict_encoder.write_byte(pixel.blue_component());
+                }
             }
+        }
+    }
+    else if (rgb555) {
+        std::vector<uint16_t> scanline_bytes(m_frame.width());
+        for (auto scanline = 0; scanline < m_frame.height(); ++scanline) {
+            for (auto x = 0; x < m_frame.width(); ++x) {
+                auto pixel = m_surface->at(x, scanline);
+                scanline_bytes[x] = pixel.rgb555();
+            }
+
+            auto packed = packbits::encode(scanline_bytes);
+            if (pm.row_bytes() > 250) {
+                pict_encoder.write_short(packed.size());
+            }
+            else {
+                pict_encoder.write_byte(packed.size());
+            }
+            pict_encoder.write_bytes(packed);
         }
     }
     else {
@@ -604,10 +626,10 @@ auto graphite::qd::pict::encode_direct_bits_rect(graphite::data::writer& pict_en
     }
 }
 
-auto graphite::qd::pict::data() -> std::shared_ptr<graphite::data::data>
+auto graphite::qd::pict::data(bool rgb555) -> std::shared_ptr<graphite::data::data>
 {
     auto data = std::make_shared<graphite::data::data>();
     graphite::data::writer writer(data);
-    encode(writer);
+    encode(writer, rgb555);
     return data;
 }

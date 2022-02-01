@@ -15,19 +15,19 @@ graphite::qd::pixmap::pixmap()
 
 }
 
-graphite::qd::pixmap::pixmap(qd::rect frame)
+graphite::qd::pixmap::pixmap(qd::rect frame, bool rgb555)
     : m_base_address(0x000000ff),
-      m_row_bytes(frame.width() * 4),
+      m_row_bytes(frame.width() * (rgb555 ? 2 : 4)),
       m_bounds(frame),
       m_pm_version(0),
-      m_pack_type(packbits_component),
+      m_pack_type(rgb555 ? packbits_word : packbits_component),
       m_pack_size(0),
       m_h_res(72),
       m_v_res(72),
       m_pixel_type(direct),
-      m_pixel_size(32),
+      m_pixel_size(rgb555 ? 16 : 32),
       m_cmp_count(3),
-      m_cmp_size(8),
+      m_cmp_size(rgb555 ? 5 : 8),
       m_plane_bytes(0),
       m_pm_table(0),
       m_pm_extension(0)

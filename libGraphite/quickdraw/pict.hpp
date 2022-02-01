@@ -77,11 +77,11 @@ namespace graphite::qd {
         auto read_uncompressed_quicktime(graphite::data::reader & pict_reader) -> void;
         auto read_image_description(graphite::data::reader & pict_reader) -> void;
 
-        auto encode(graphite::data::writer& pict_encoder) -> void;
+        auto encode(graphite::data::writer& pict_encoder, bool rgb555) -> void;
         auto encode_header(graphite::data::writer& pict_encoder) -> void;
         auto encode_def_hilite(graphite::data::writer& pict_encoder) -> void;
         auto encode_clip_region(graphite::data::writer& pict_encoder) -> void;
-        auto encode_direct_bits_rect(graphite::data::writer& pict_encoder) -> void;
+        auto encode_direct_bits_rect(graphite::data::writer& pict_encoder, bool rgb555) -> void;
 
     public:
         explicit pict(std::shared_ptr<graphite::data::data> data, int64_t id = 0, std::string name = "");
@@ -92,7 +92,7 @@ namespace graphite::qd {
 
         [[nodiscard]] auto image_surface() const -> std::weak_ptr<graphite::qd::surface>;
 
-        auto data() -> std::shared_ptr<graphite::data::data>;
+        auto data(bool rgb555 = false) -> std::shared_ptr<graphite::data::data>;
     };
 
 }
