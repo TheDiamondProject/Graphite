@@ -91,8 +91,11 @@ auto graphite::data::writer::set_position(uint64_t pos) -> void
 
 auto graphite::data::writer::move(int64_t delta) -> void
 {
-    // TODO: Bounds checking
     m_pos += delta;
+    auto data = m_data->get();
+    if (m_pos > data->size()) {
+        data->resize(m_pos, 0);
+    }
 }
 
 // MARK: - Template Write

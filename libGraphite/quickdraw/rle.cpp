@@ -148,7 +148,7 @@ auto graphite::qd::rle::parse(data::reader &reader) -> void
         switch (opcode) {
             case rle::opcode::eof: {
                 // Check that we're not erroneously encountering an EOF.
-                if (current_line != static_cast<int32_t>(m_frame_size.height() - 1)) {
+                if (current_line > static_cast<int32_t>(m_frame_size.height() - 1)) {
                     throw std::runtime_error("Incorrect number of scanlines in rlëD resource: " + std::to_string(m_id) + ", " + m_name);
                 }
 
@@ -217,26 +217,19 @@ auto graphite::qd::rle::surface_offset(int32_t frame, int32_t line) const -> uin
 
 auto graphite::qd::rle::write_pixel(uint16_t pixel, uint8_t mask, uint64_t offset) -> void
 {
-    auto r = static_cast<uint8_t>((pixel & 0x7C00) >> 7);
-    auto g = static_cast<uint8_t>((pixel & 0x03E0) >> 2);
-    auto b = static_cast<uint8_t>((pixel & 0x001F) << 3);
-    m_surface->set(static_cast<int>(offset), qd::color(r, g, b));
+    m_surface->set(static_cast<int>(offset), qd::color(pixel));
 }
 
 auto graphite::qd::rle::write_pixel_variant1(uint32_t pixel, uint8_t mask, uint64_t offset) -> void
 {
-    auto r = static_cast<uint8_t>((pixel & 0x7C000000) >> 23);
-    auto g = static_cast<uint8_t>((pixel & 0x03E00000) >> 18);
-    auto b = static_cast<uint8_t>((pixel & 0x001F0000) << 13);
-    m_surface->set(static_cast<int>(offset), qd::color(r, g, b));
+    auto rgb555 = static_cast<uint16_t>(pixel >> 16);
+    m_surface->set(static_cast<int>(offset), qd::color(rgb555));
 }
 
 auto graphite::qd::rle::write_pixel_variant2(uint32_t pixel, uint8_t mask, uint64_t offset) -> void
 {
-    auto r = static_cast<uint8_t>((pixel & 0x00007C00) >> 7);
-    auto g = static_cast<uint8_t>((pixel & 0x000003E0) >> 2);
-    auto b = static_cast<uint8_t>((pixel & 0x0000001F) << 3);
-    m_surface->set(static_cast<int>(offset), qd::color(r, g, b));
+    auto rgb555 = static_cast<uint16_t>(pixel & 0x0000FFFF);
+    m_surface->set(static_cast<int>(offset), qd::color(rgb555));
 }
 
 // MARK: - Encoder / Writing
@@ -259,10 +252,11 @@ auto graphite::qd::rle::encode(graphite::data::writer& writer) -> void
     // Write out the RLE frames
     for (auto f = 0; f < m_frame_count; f++) {
         auto frame = frame_rect(f);
+        auto line_count = 0;
 
         for (auto y = 0; y < frame.height(); y++) {
+            line_count++;
             auto line_start_pos = writer.position();
-            writer.write_long(0); // line start opcode placeholder -- we'll write it later
 
             opcode run_state = line_start;
             auto run_start_pos = line_start_pos + 4;
@@ -274,8 +268,6 @@ auto graphite::qd::rle::encode(graphite::data::writer& writer) -> void
                 if (pixel.alpha_component() == 0) {
                     if (run_state == line_start) {
                         // Start of a transparent run
-                        run_start_pos = writer.position();
-                        writer.write_long(0); // opcode placeholder
                         run_state = transparent_run;
                         run_count = advance;
                     }
@@ -296,13 +288,19 @@ auto graphite::qd::rle::encode(graphite::data::writer& writer) -> void
                         }
 
                         // Start transparent run
-                        run_start_pos = writer.position();
-                        writer.write_long(0); // opcode placeholder
                         run_state = transparent_run;
                         run_count = advance;
                     }
                 }
                 else {
+                    if (line_count != 0) {
+                        // First pixel data for this line, write the line start
+                        // Doing this only on demand allows us to omit trailing blank lines in the frame
+                        for (auto i = 0; i < line_count; ++i) {
+                            writer.write_long(line_start << 24);
+                        }
+                        line_count = 0;
+                    }
                     if (run_state == line_start) {
                         // Start of a pixel run
                         run_start_pos = writer.position();
@@ -312,7 +310,6 @@ auto graphite::qd::rle::encode(graphite::data::writer& writer) -> void
                     }
                     else if (run_state == transparent_run) {
                         // End of transparent run, start of pixel run
-                        writer.move(-4);
                         writer.write_long((transparent_run << 24) | (run_count & 0x00FFFFFF));
 
                         // Start pixel run
@@ -327,9 +324,7 @@ auto graphite::qd::rle::encode(graphite::data::writer& writer) -> void
                     }
 
                     // Write the pixel
-                    writer.write_short(pixel.blue_component() >> 3 |
-                                       (pixel.green_component() >> 3) << 5 |
-                                       (pixel.red_component() >> 3) << 10);
+                    writer.write_short(pixel.rgb555());
                 }
             }
 
@@ -341,20 +336,18 @@ auto graphite::qd::rle::encode(graphite::data::writer& writer) -> void
                 writer.set_position(run_end_pos);
 
                 // Pad to nearest 4-byte boundary
-                if ((run_end_pos - line_start_pos) & 3) {
-                    writer.move(4 - ((run_end_pos - line_start_pos) & 3));
+                if (run_count & 3) {
+                    writer.move(4 - (run_count & 3));
                 }
-            }
-            else if (run_state == transparent_run) {
-                // Erase the transparent run opcode placeholder -- remaining data is assumed transparent
-                writer.set_position(run_start_pos);
             }
 
             // Write out the opcode and size at the start of the line
-            auto line_end_pos = writer.position();
-            writer.set_position(line_start_pos);
-            writer.write_long((line_start << 24) | ((line_end_pos - line_start_pos - 4) & 0x00FFFFFF));
-            writer.set_position(line_end_pos);
+            if (run_state != line_start) {
+                auto line_end_pos = writer.position();
+                writer.set_position(line_start_pos);
+                writer.write_long((line_start << 24) | ((line_end_pos - line_start_pos - 4) & 0x00FFFFFF));
+                writer.set_position(line_end_pos);
+            }
         }
 
         // Mark end-of-frame

@@ -12,6 +12,15 @@ graphite::qd::color::color(uint8_t red, uint8_t green, uint8_t blue, uint8_t alp
 
 }
 
+graphite::qd::color::color(uint16_t rgb555)
+    : m_red(static_cast<uint8_t>(((rgb555 & 0x7c00) >> 10) * 0xFF / 0x1F)),
+      m_green(static_cast<uint8_t>(((rgb555 & 0x03e0) >> 5) * 0xFF / 0x1F)),
+      m_blue(static_cast<uint8_t>((rgb555 & 0x001f) * 0xFF / 0x1F)),
+      m_alpha(255)
+{
+
+}
+
 // MARK: - Accessors
 
 auto graphite::qd::color::red_component() const -> uint8_t
@@ -32,6 +41,11 @@ auto graphite::qd::color::blue_component() const -> uint8_t
 auto graphite::qd::color::alpha_component() const -> uint8_t
 {
     return m_alpha;
+}
+
+auto graphite::qd::color::rgb555() const -> uint16_t
+{
+    return (m_red >> 3) << 10 | (m_green >> 3) << 5 | (m_blue >> 3);
 }
 
 
