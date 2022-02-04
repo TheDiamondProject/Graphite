@@ -132,7 +132,7 @@ auto graphite::qd::pict::read_indirect_bits_rect(graphite::data::reader& pict_re
     auto width = pm.bounds().width();
     auto height = pm.bounds().height();
     
-    if (packed) {
+    if (packed && row_bytes >= 8) {
         uint16_t packed_bytes_count = 0;
         for (auto y = 0; y < height; ++y) {
             if (row_bytes > 250) {
@@ -453,12 +453,18 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
                 break;
             }
             case opcode::pen_pattern:
+            case opcode::fill_pattern:
             case opcode::line:
             case opcode::frame_rect:
             case opcode::paint_rect:
             case opcode::erase_rect:
             case opcode::invert_rect:
-            case opcode::fill_rect: {
+            case opcode::fill_rect:
+            case opcode::frame_same_rect:
+            case opcode::paint_same_rect:
+            case opcode::erase_same_rect:
+            case opcode::invert_same_rect:
+            case opcode::fill_same_rect: {
                 pict_reader.move(8);
                 break;
             }
