@@ -75,8 +75,6 @@ namespace graphite::qd {
         auto read_direct_bits_rect(graphite::data::reader& pict_reader, bool region) -> void;
         auto read_indirect_bits_rect(graphite::data::reader& pict_reader, bool packed, bool region) -> void;
         auto read_compressed_quicktime(graphite::data::reader & pict_reader) -> void;
-        auto read_uncompressed_quicktime(graphite::data::reader & pict_reader) -> void;
-        auto read_image_description(graphite::data::reader & pict_reader) -> void;
 
         auto encode(graphite::data::writer& pict_encoder, bool rgb555) -> void;
         auto encode_header(graphite::data::writer& pict_encoder) -> void;
