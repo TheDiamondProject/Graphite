@@ -5,6 +5,7 @@
 #include "libGraphite/quicktime/imagedesc.hpp"
 #include "libGraphite/quicktime/animation.hpp"
 #include "libGraphite/quicktime/planar.hpp"
+#include "libGraphite/quicktime/raw.hpp"
 
 // MARK: - Constructors
 
@@ -107,6 +108,10 @@ auto graphite::qt::imagedesc::read_image_data(data::reader &reader) -> void {
         }
         case '8BPS': {
             m_surface = std::make_shared<graphite::qd::surface>(qt::planar::decode(*this, reader));
+            break;
+        }
+        case 'raw ': {
+            m_surface = std::make_shared<graphite::qd::surface>(qt::raw::decode(*this, reader));
             break;
         }
         default: {
