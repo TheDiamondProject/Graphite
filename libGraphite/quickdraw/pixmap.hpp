@@ -14,6 +14,15 @@
 
 namespace graphite::qd {
 
+    enum pack_type
+    {
+        none = 0,
+        argb = 1,
+        rgb = 2, // Same as none
+        packbits_word = 3,
+        packbits_component = 4,
+    };
+
     enum pixel_type
     {
         indexed = 0,
@@ -27,7 +36,7 @@ namespace graphite::qd {
         int16_t m_row_bytes { 0 };
         graphite::qd::rect m_bounds { rect::zero() };
         int16_t m_pm_version { 0 };
-        int16_t m_pack_type { 0 };
+        enum pack_type m_pack_type { none };
         int32_t m_pack_size { 0 };
         double m_h_res { 72 };
         double m_v_res { 72 };
@@ -47,7 +56,7 @@ namespace graphite::qd {
 
         [[nodiscard]] auto bounds() const -> graphite::qd::rect;
         [[nodiscard]] auto row_bytes() const -> int16_t;
-        [[nodiscard]] auto pack_type() const -> int16_t;
+        [[nodiscard]] auto pack_type() const -> enum graphite::qd::pack_type;
         [[nodiscard]] auto pack_size() const -> int16_t;
         [[nodiscard]] auto pixel_type() const -> enum graphite::qd::pixel_type;
         [[nodiscard]] auto pixel_size() const -> int16_t;
@@ -58,7 +67,7 @@ namespace graphite::qd {
 
         auto set_bounds(const graphite::qd::rect& rect) -> void;
         auto set_row_bytes(const int16_t& row_bytes) -> void;
-        auto set_pack_type(const int16_t& pack_type) -> void;
+        auto set_pack_type(const graphite::qd::pack_type& pack_type) -> void;
         auto set_pack_size(const int16_t& pack_size) -> void;
         auto set_pixel_type(const graphite::qd::pixel_type& pixel_type) -> void;
         auto set_pixel_size(const int16_t& pixel_size) -> void;

@@ -99,7 +99,6 @@ auto graphite::qd::pict::read_indirect_bits_rect(graphite::data::reader& pict_re
     }
     else {
         // Old style bitmap
-        pm.set_pack_type(1);
         pm.set_cmp_count(1);
         pm.set_cmp_size(1);
         pm.set_row_bytes(pict_reader.read_short());
@@ -164,23 +163,11 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
     
     // Setup pixel buffer for raw values
     std::vector<uint8_t> raw;
-    auto pack_type = pm.pack_type();
-    auto cmp_count = pm.cmp_count();
     auto row_bytes = pm.row_bytes();
     auto width = pm.bounds().width();
     auto height = pm.bounds().height();
-
-    // Verify the type of PixMap. We can only accept certain types for the time being, until
-    // support for decoding/rendering other types is added.
-    switch (pack_type) {
-        case 3:
-        case 4: {
-            break;
-        }
-        default: {
-            throw std::runtime_error("Unsupported pack type " + std::to_string(pack_type) + " encountered in PICT: " + std::to_string(m_id) + ", " + m_name);
-        }
-    }
+    auto pack_type = pm.pack_type();
+    auto cmp_count = pm.cmp_count();
 
     // Calculate the bounds of the pixels we need to copy to the surface, clipping to fit if necessary
     auto copy_x = destination_rect.x() - m_frame.x();
@@ -188,8 +175,17 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
     auto copy_w = std::min(destination_rect.width(), static_cast<int16_t>(m_frame.width() - copy_x));
     auto copy_h = std::min(destination_rect.height(), static_cast<int16_t>(m_frame.height() - copy_y));
 
+    // When row bytes < 8, data is never packed. Raw format will instead match the pixel size, either 16-bit words or 32-bit argb.
+    auto packed = row_bytes >= 8 && pack_type >= packbits_word;
+    if (row_bytes < 8 && pack_type != packbits_word) {
+        pack_type = argb;
+    } else if (pack_type == none || pack_type == rgb) {
+        // Row bytes is always width * 4, but alpha is omitted here so make sure we only read width * 3.
+        row_bytes = width * 3;
+    }
+
     for (auto y = 0; y < height; ++y) {
-        if (row_bytes >= 8) {
+        if (packed) {
             raw.clear();
             uint16_t packed_bytes_count;
             if (row_bytes > 250) {
@@ -201,7 +197,7 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
 
             // Create a temporary buffer to read the packed data into, on the stack.
             auto packed_data = read_bytes(pict_reader, packed_bytes_count);
-            qd::packbits::decode(raw, packed_data, pack_type == 3 ? sizeof(uint16_t) : sizeof(uint8_t));
+            qd::packbits::decode(raw, packed_data, pack_type == packbits_word ? sizeof(uint16_t) : sizeof(uint8_t));
         }
         else {
             raw = read_bytes(pict_reader, row_bytes);
@@ -211,32 +207,45 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
             continue;
         }
 
-        if (pack_type == 3) {
-            // 16-bit RGB555 Formatted Data
-            for (uint32_t x = 0; x < copy_w; ++x) {
-                uint16_t v = (raw[2 * x] << 8) | (raw[2 * x + 1]);
-                graphite::qd::color color(static_cast<uint8_t>(((v & 0x7c00) >> 10) * 0xFF / 0x1F),
-                                          static_cast<uint8_t>(((v & 0x03e0) >> 5) * 0xFF / 0x1F),
-                                          static_cast<uint8_t>((v & 0x001f) * 0xFF / 0x1F));
-                m_surface->set(x + copy_x, y + copy_y, color);
-            }
-        }
-        else if (cmp_count == 3 && row_bytes >= 8) {
-            // 24-bit RGB Formatted Data
-            for (uint32_t x = 0; x < copy_w; ++x) {
-                graphite::qd::color color(raw[x],
-                                          raw[width + x],
-                                          raw[2 * width + x]);
-                m_surface->set(x + copy_x, y + copy_y, color);
-            }
-        }
-        else if (cmp_count == 3 || cmp_count == 4) {
-            // 32-bit XRGB Formatted Data - first component is ignored
-            for (uint32_t x = 0; x < copy_w; ++x) {
-                graphite::qd::color color(raw[width + x],
-                                          raw[2 * width + x],
-                                          raw[3 * width + x]);
-                m_surface->set(x + copy_x, y + copy_y, color);
+        for (auto x = 0; x < copy_w; ++x) {
+            switch (pack_type) {
+                case none:
+                case rgb: {
+                    graphite::qd::color color(raw[3 * x],
+                                              raw[3 * x + 1],
+                                              raw[3 * x + 2]);
+                    m_surface->set(x + copy_x, y + copy_y, color);
+                    break;
+                }
+                case argb: {
+                    graphite::qd::color color(raw[4 * x + 1],
+                                              raw[4 * x + 2],
+                                              raw[4 * x + 3]);
+                    m_surface->set(x + copy_x, y + copy_y, color);
+                    break;
+                }
+                case packbits_word: {
+                    uint16_t v = (raw[2 * x] << 8) | (raw[2 * x + 1]);
+                    graphite::qd::color color(static_cast<uint8_t>(((v & 0x7c00) >> 10) * 0xFF / 0x1F),
+                                              static_cast<uint8_t>(((v & 0x03e0) >> 5) * 0xFF / 0x1F),
+                                              static_cast<uint8_t>((v & 0x001f) * 0xFF / 0x1F));
+                    m_surface->set(x + copy_x, y + copy_y, color);
+                    break;
+                }
+                case packbits_component: {
+                    if (cmp_count == 3) {
+                        graphite::qd::color color(raw[x],
+                                                  raw[width + x],
+                                                  raw[2 * width + x]);
+                        m_surface->set(x + copy_x, y + copy_y, color);
+                    } else if (cmp_count == 4) {
+                        graphite::qd::color color(raw[width + x],
+                                                  raw[2 * width + x],
+                                                  raw[3 * width + x]);
+                        m_surface->set(x + copy_x, y + copy_y, color);
+                    }
+                    break;
+                }
             }
         }
     }
