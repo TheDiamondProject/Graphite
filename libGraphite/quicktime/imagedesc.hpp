@@ -22,6 +22,7 @@ namespace graphite::qt {
         int16_t m_height { 0 };
         int32_t m_data_size { 0 };
         int16_t m_depth { 0 };
+        int32_t m_data_offset { 0 };
         std::shared_ptr<qd::clut> m_clut { nullptr };
         std::shared_ptr<qd::surface> m_surface { nullptr };
 
@@ -36,6 +37,7 @@ namespace graphite::qt {
         [[nodiscard]] auto height() const -> int16_t;
         [[nodiscard]] auto data_size() const -> int32_t;
         [[nodiscard]] auto depth() const -> int16_t;
+        [[nodiscard]] auto data_offset() const -> int32_t;
         [[nodiscard]] auto clut() const -> std::shared_ptr<qd::clut>;
         [[nodiscard]] auto surface() const -> std::shared_ptr<qd::surface>;
     };

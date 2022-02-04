@@ -4,6 +4,7 @@
 
 #include "libGraphite/quicktime/imagedesc.hpp"
 #include "libGraphite/quicktime/animation.hpp"
+#include "libGraphite/quicktime/planar.hpp"
 
 // MARK: - Constructors
 
@@ -37,10 +38,9 @@ graphite::qt::imagedesc::imagedesc(data::reader& reader)
             throw std::runtime_error("Color table not found: clut " + std::to_string(clut));
         }
     }
-    auto bytes_read = reader.position() - start;
-    if (bytes_read < m_length) {
-        reader.move(m_length - bytes_read);
-    }
+
+    // Record the number remaining bytes of the image description before the data start
+    m_data_offset = m_length - static_cast<int32_t>(reader.position() - start);
 
     read_image_data(reader);
 }
@@ -82,6 +82,11 @@ auto graphite::qt::imagedesc::depth() const -> int16_t
     return m_depth;
 }
 
+auto graphite::qt::imagedesc::data_offset() const -> int32_t
+{
+    return m_data_offset;
+}
+
 auto graphite::qt::imagedesc::clut() const -> std::shared_ptr<qd::clut>
 {
     return m_clut;
@@ -100,13 +105,17 @@ auto graphite::qt::imagedesc::read_image_data(data::reader &reader) -> void {
             m_surface = std::make_shared<graphite::qd::surface>(qt::animation::decode(*this, reader));
             break;
         }
+        case '8BPS': {
+            m_surface = std::make_shared<graphite::qd::surface>(qt::planar::decode(*this, reader));
+            break;
+        }
         default: {
             std::string comp;
             comp.push_back(m_compressor >> 24);
             comp.push_back(m_compressor >> 16);
             comp.push_back(m_compressor >> 8);
             comp.push_back(m_compressor);
-            throw std::runtime_error("Unsupported QuickTime compressor '" + comp + "' (offset " + std::to_string(reader.position()) + ")");
+            throw std::runtime_error("Unsupported QuickTime compressor '" + comp + "' (offset " + std::to_string(reader.position() + m_data_offset) + ")");
         }
     }
 }
