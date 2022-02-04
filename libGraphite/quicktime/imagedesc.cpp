@@ -3,6 +3,7 @@
 //
 
 #include "libGraphite/quicktime/imagedesc.hpp"
+#include "libGraphite/quicktime/animation.hpp"
 
 // MARK: - Constructors
 
@@ -95,6 +96,10 @@ auto graphite::qt::imagedesc::surface() const -> std::shared_ptr<qd::surface>
 
 auto graphite::qt::imagedesc::read_image_data(data::reader &reader) -> void {
     switch (m_compressor) {
+        case 'rle ': {
+            m_surface = std::make_shared<graphite::qd::surface>(qt::animation::decode(*this, reader));
+            break;
+        }
         default: {
             std::string comp;
             comp.push_back(m_compressor >> 24);

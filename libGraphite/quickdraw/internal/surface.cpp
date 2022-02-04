@@ -43,7 +43,10 @@ auto graphite::qd::surface::at(int x, int y) const -> graphite::qd::color
 
 auto graphite::qd::surface::set(int x, int y, graphite::qd::color color) -> void
 {
-    if (x >= m_width || y >= m_height) {
+    if (x >= m_width) {
+        // Silently ignore - this can happen e.g. when decoding images with multiple pixels per byte and the image is an odd width.
+        return;
+    } else if (y >= m_height) {
         throw std::runtime_error("Attempted to set pixel beyond bounds of surface.");
     }
     m_data[(y * m_width) + x] = color;
