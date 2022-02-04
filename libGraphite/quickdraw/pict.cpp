@@ -99,7 +99,6 @@ auto graphite::qd::pict::read_indirect_bits_rect(graphite::data::reader& pict_re
     }
     else {
         // Old style bitmap
-        pm.set_pack_type(1);
         pm.set_cmp_count(1);
         pm.set_cmp_size(1);
         pm.set_row_bytes(pict_reader.read_short());
@@ -127,7 +126,7 @@ auto graphite::qd::pict::read_indirect_bits_rect(graphite::data::reader& pict_re
     
     if (packed) {
         uint16_t packed_bytes_count = 0;
-        for (auto scanline = 0; scanline < height; ++scanline) {
+        for (auto y = 0; y < height; ++y) {
             if (row_bytes > 250) {
                 packed_bytes_count = pict_reader.read_short();
             }
@@ -143,20 +142,14 @@ auto graphite::qd::pict::read_indirect_bits_rect(graphite::data::reader& pict_re
         raw = read_bytes(pict_reader, row_bytes * height);
     }
     
-    destination_rect.set_x(destination_rect.x() - m_frame.origin().x());
-    destination_rect.set_y(destination_rect.y() - m_frame.origin().y());
+    destination_rect.set_x(destination_rect.x() - m_frame.x());
+    destination_rect.set_y(destination_rect.y() - m_frame.y());
     pm.build_surface(m_surface, raw, color_table, destination_rect);
-    m_size += width * height;
 }
 
 auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_reader, bool region) -> void
 {
     graphite::qd::pixmap pm = graphite::qd::pixmap(pict_reader.read_data(qd::pixmap::length));
-    auto pack_type = pm.pack_type();
-    auto cmp_count = pm.cmp_count();
-    auto color_model = static_cast<graphite::qd::pixel_format>(pm.pixel_format());
-    auto row_bytes = pm.row_bytes();
-    auto bounds = pm.bounds();
 
     // Read the source and destination bounds
     auto source_rect = qd::rect::read(pict_reader, qd::rect::qd);
@@ -167,49 +160,34 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
     if (region) {
         read_region(pict_reader);
     }
-
-    // Verify the type of PixMap. We can only accept certain types for the time being, until
-    // support for decoding/rendering other types is added.
+    
+    // Setup pixel buffer for raw values
     std::vector<uint8_t> raw;
-    switch (pack_type) {
-        case 1:
-        case 2:
-        case 3: {
-            raw.reserve(row_bytes);
-            break;
-        }
-        case 4: {
-            raw.reserve(cmp_count * row_bytes / 4);
-            break;
-        }
-        default: {
-            throw std::runtime_error("Unsupported pack type " + std::to_string(pack_type) + " encountered in PICT: " + std::to_string(m_id) + ", " + m_name);
-        }
+    auto row_bytes = pm.row_bytes();
+    auto width = pm.bounds().width();
+    auto height = pm.bounds().height();
+    auto pack_type = pm.pack_type();
+    auto cmp_count = pm.cmp_count();
+
+    // Calculate the bounds of the pixels we need to copy to the surface, clipping to fit if necessary
+    auto copy_x = destination_rect.x() - m_frame.x();
+    auto copy_y = destination_rect.y() - m_frame.y();
+    auto copy_w = std::min(destination_rect.width(), static_cast<int16_t>(m_frame.width() - copy_x));
+    auto copy_h = std::min(destination_rect.height(), static_cast<int16_t>(m_frame.height() - copy_y));
+
+    // When row bytes < 8, data is never packed. Raw format will instead match the pixel size, either 16-bit words or 32-bit argb.
+    auto packed = row_bytes >= 8 && pack_type >= packbits_word;
+    if (row_bytes < 8 && pack_type != packbits_word) {
+        pack_type = argb;
+    } else if (pack_type == none || pack_type == rgb) {
+        // Row bytes is always width * 4, but alpha is omitted here so make sure we only read width * 3.
+        row_bytes = width * 3;
     }
 
-    // Allocate a private memory buffer before going to the surface.
-    std::vector<uint16_t> px_short_buffer;
-    std::vector<uint32_t> px_long_buffer;
-    uint32_t px_buffer_offset = 0;
-    uint16_t packed_bytes_count = 0;
-    uint32_t height = source_rect.height();
-    uint32_t width = source_rect.width();
-    uint32_t bounds_width = bounds.width();
-    uint32_t source_length = width * height;
-
-    if (pack_type == 3) {
-        px_short_buffer = std::vector<uint16_t>(source_length);
-    }
-    else {
-        px_long_buffer = std::vector<uint32_t>(source_length);
-    }
-
-    auto packing_enabled = ((pack_type == 3 ? 2 : 1) + (row_bytes > 250 ? 2 : 1)) <= bounds_width;
-
-    for (uint32_t scanline = 0; scanline < height; ++scanline) {
-        raw.clear();
-
-        if (pack_type > 2 && packing_enabled) {
+    for (auto y = 0; y < height; ++y) {
+        if (packed) {
+            raw.clear();
+            uint16_t packed_bytes_count;
             if (row_bytes > 250) {
                 packed_bytes_count = pict_reader.read_short();
             }
@@ -219,58 +197,56 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
 
             // Create a temporary buffer to read the packed data into, on the stack.
             auto packed_data = read_bytes(pict_reader, packed_bytes_count);
-            qd::packbits::decode(raw, packed_data, pack_type == 3 ? sizeof(uint16_t) : sizeof(uint8_t));
+            qd::packbits::decode(raw, packed_data, pack_type == packbits_word ? sizeof(uint16_t) : sizeof(uint8_t));
         }
         else {
             raw = read_bytes(pict_reader, row_bytes);
         }
 
-        if (pack_type == 3) {
-            for (uint32_t x = 0; x < width; ++x) {
-                px_short_buffer[px_buffer_offset + x] = (0xFF & raw[2 * x + 1]) | ((0xFF & raw[2 * x]) << 8);
-            }
-        }
-        else {
-            if (cmp_count == 3) {
-                // RGB Formatted Data
-                for (uint32_t x = 0; x < width; x++) {
-                    px_long_buffer[px_buffer_offset + x] =
-                            0xFF000000
-                            | ((raw[x] & 0xFF) << 16)
-                            | ((raw[bounds_width + x] & 0xFF) << 8)
-                            | (raw[2 * bounds_width + x] & 0xFF);
-                }
-            }
-            else if (cmp_count == 4) {
-                // ARGB Formatted Data
-                for (uint32_t x = 0; x < width; x++) {
-                    px_long_buffer[px_buffer_offset + x] =
-                            ((raw[x] & 0xFF) << 24)
-                            | ((raw[bounds_width + x] & 0xFF) << 16)
-                            | ((raw[2 * bounds_width + x] & 0xFF) << 8)
-                            | (raw[3 * bounds_width + x] & 0xFF);
-                }
-            }
+        if (y >= copy_h) {
+            continue;
         }
 
-        px_buffer_offset += width;
-    }
-
-    if (pack_type == 3) {
-        for (auto v : px_short_buffer) {
-            graphite::qd::color color(static_cast<uint8_t>(((v & 0x7c00) >> 10) * 0xFF / 0x1F),
-                                      static_cast<uint8_t>(((v & 0x03e0) >> 5) * 0xFF / 0x1F),
-                                      static_cast<uint8_t>((v & 0x001f) * 0xFF / 0x1F));
-            m_surface->set(m_size++, color);
-        }
-    }
-    else {
-        for (auto v : px_long_buffer) {
-            graphite::qd::color color(static_cast<uint8_t>((v & 0xFF0000) >> 16),
-                                      static_cast<uint8_t>((v & 0xFF00) >> 8),
-                                      static_cast<uint8_t>(v & 0xFF),
-                                      static_cast<uint8_t>((v & 0xFF000000) >> 24));
-            m_surface->set(m_size++, color);
+        for (auto x = 0; x < copy_w; ++x) {
+            switch (pack_type) {
+                case none:
+                case rgb: {
+                    graphite::qd::color color(raw[3 * x],
+                                              raw[3 * x + 1],
+                                              raw[3 * x + 2]);
+                    m_surface->set(x + copy_x, y + copy_y, color);
+                    break;
+                }
+                case argb: {
+                    graphite::qd::color color(raw[4 * x + 1],
+                                              raw[4 * x + 2],
+                                              raw[4 * x + 3]);
+                    m_surface->set(x + copy_x, y + copy_y, color);
+                    break;
+                }
+                case packbits_word: {
+                    uint16_t v = (raw[2 * x] << 8) | (raw[2 * x + 1]);
+                    graphite::qd::color color(static_cast<uint8_t>(((v & 0x7c00) >> 10) * 0xFF / 0x1F),
+                                              static_cast<uint8_t>(((v & 0x03e0) >> 5) * 0xFF / 0x1F),
+                                              static_cast<uint8_t>((v & 0x001f) * 0xFF / 0x1F));
+                    m_surface->set(x + copy_x, y + copy_y, color);
+                    break;
+                }
+                case packbits_component: {
+                    if (cmp_count == 3) {
+                        graphite::qd::color color(raw[x],
+                                                  raw[width + x],
+                                                  raw[2 * width + x]);
+                        m_surface->set(x + copy_x, y + copy_y, color);
+                    } else if (cmp_count == 4) {
+                        graphite::qd::color color(raw[width + x],
+                                                  raw[2 * width + x],
+                                                  raw[3 * width + x]);
+                        m_surface->set(x + copy_x, y + copy_y, color);
+                    }
+                    break;
+                }
+            }
         }
     }
 }
@@ -396,7 +372,6 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
     // Begin parsing PICT opcodes.
     qd::rect clip_rect(0, 0, 0, 0);
 
-    m_size = 0;
     m_surface = std::make_shared<graphite::qd::surface>(m_frame.width(), m_frame.height());
     bool has_bits = false;
 
@@ -458,15 +433,33 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
                 read_long_comment(pict_reader);
                 break;
             }
+            case opcode::pen_mode:
+            case opcode::short_line_from:
             case opcode::short_comment: {
                 pict_reader.move(2);
                 break;
             }
+            case opcode::pen_size:
+            case opcode::line_from: {
+                pict_reader.move(4);
+                break;
+            }
+            case opcode::short_line:
             case opcode::rgb_fg_color:
             case opcode::rgb_bg_color:
             case opcode::hilite_color:
             case opcode::op_color: {
                 pict_reader.move(6);
+                break;
+            }
+            case opcode::pen_pattern:
+            case opcode::line:
+            case opcode::frame_rect:
+            case opcode::paint_rect:
+            case opcode::erase_rect:
+            case opcode::invert_rect:
+            case opcode::fill_rect: {
+                pict_reader.move(8);
                 break;
             }
             case opcode::frame_region:
@@ -495,7 +488,7 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
                 break;
             }
             default: {
-                throw std::runtime_error("Encountered an incompatible PICT: " + std::to_string(m_id) + ", " + m_name);
+                throw std::runtime_error("Encountered an unsupported opcode " + std::to_string(op) + " in PICT: " + std::to_string(m_id) + ", " + m_name);
             }
         }
     }
@@ -510,6 +503,8 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
 
 auto graphite::qd::pict::encode(graphite::data::writer& pict_encoder) -> void
 {
+    // Ensure origin is zero before starting
+    m_frame.set_origin(qd::point(0, 0));
     encode_header(pict_encoder);
     encode_def_hilite(pict_encoder);
     encode_clip_region(pict_encoder);
@@ -578,35 +573,37 @@ auto graphite::qd::pict::encode_direct_bits_rect(graphite::data::writer& pict_en
     pict_encoder.write_short(0); // Source Copy
 
     // Prepare to write out the actual image data.
-    std::vector<uint8_t> scanline_bytes(m_frame.width() * pm.cmp_count());
-    for (auto scanline = 0; scanline < m_frame.height(); ++scanline) {
-
-        if (pm.cmp_count() == 3) {
+    // Don't use packing if row bytes < 8
+    if (pm.row_bytes() < 8) {
+        for (auto scanline = 0; scanline < m_frame.height(); ++scanline) {
+            for (auto x = 0; x < m_frame.width(); ++x) {
+                auto pixel = m_surface->at(x, scanline);
+                pict_encoder.write_byte(0);
+                pict_encoder.write_byte(pixel.red_component());
+                pict_encoder.write_byte(pixel.green_component());
+                pict_encoder.write_byte(pixel.blue_component());
+            }
+        }
+    }
+    else {
+        std::vector<uint8_t> scanline_bytes(m_frame.width() * pm.cmp_count());
+        for (auto scanline = 0; scanline < m_frame.height(); ++scanline) {
             for (auto x = 0; x < m_frame.width(); ++x) {
                 auto pixel = m_surface->at(x, scanline);
                 scanline_bytes[x] = pixel.red_component();
                 scanline_bytes[x + m_frame.width()] = pixel.green_component();
                 scanline_bytes[x + m_frame.width() * 2] = pixel.blue_component();
             }
-        }
-        else if (pm.cmp_count() == 4) {
-            for (auto x = 0; x < m_frame.width(); ++x) {
-                auto pixel = m_surface->at(x, scanline);
-                scanline_bytes[x] = pixel.alpha_component();
-                scanline_bytes[x + m_frame.width()] = pixel.red_component();
-                scanline_bytes[x + m_frame.width() * 2] = pixel.green_component();
-                scanline_bytes[x + m_frame.width() * 3] = pixel.blue_component();
-            }
-        }
 
-        auto packed = packbits::encode(scanline_bytes);
-        if (pm.row_bytes() > 250) {
-            pict_encoder.write_short(packed.size());
+            auto packed = packbits::encode(scanline_bytes);
+            if (pm.row_bytes() > 250) {
+                pict_encoder.write_short(packed.size());
+            }
+            else {
+                pict_encoder.write_byte(packed.size());
+            }
+            pict_encoder.write_bytes(packed);
         }
-        else {
-            pict_encoder.write_byte(packed.size());
-        }
-        pict_encoder.write_bytes(packed);
     }
 }
 
