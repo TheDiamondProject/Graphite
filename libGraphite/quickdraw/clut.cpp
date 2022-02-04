@@ -26,13 +26,28 @@ graphite::qd::clut::clut(graphite::data::reader& reader)
 auto graphite::qd::clut::load_resource(int64_t id) -> std::shared_ptr<graphite::qd::clut>
 {
     if (id > 32 && id <= 40) {
-        // Standard grayscale color tables - subtract 32 from id to get bit-depth
+        // Standard grayscale tables - subtract 32 from id to get bit-depth
         auto clut = qd::clut();
         clut.m_id = id;
         clut.m_size = 1 << (id - 32);
         auto step = 255 / (clut.m_size - 1);
         for (auto v = 0; v < 256; v += step) {
             clut.m_entries.emplace_back(qd::color(v, v, v));
+        }
+        return std::make_shared<graphite::qd::clut>(clut);
+    }
+    if (id == 4 || id == 8) {
+        // Standard system color tables
+        auto clut = qd::clut();
+        clut.m_id = id;
+        if (id == 4) {
+            for (auto v : clut4) {
+                clut.m_entries.emplace_back(qd::color(v[0], v[1], v[2]));
+            }
+        } else {
+            for (auto v : clut8) {
+                clut.m_entries.emplace_back(qd::color(v[0], v[1], v[2]));
+            }
         }
         return std::make_shared<graphite::qd::clut>(clut);
     }
