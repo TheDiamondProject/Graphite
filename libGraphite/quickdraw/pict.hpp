@@ -65,6 +65,7 @@ namespace graphite::qd {
         std::string m_name;
         std::shared_ptr<graphite::qd::surface> m_surface;
         graphite::qd::rect m_frame;
+        uint32_t m_format {};
         double m_x_ratio {};
         double m_y_ratio {};
 
@@ -91,6 +92,7 @@ namespace graphite::qd {
         static auto from_surface(std::shared_ptr<graphite::qd::surface> surface) -> std::shared_ptr<pict>;
 
         [[nodiscard]] auto image_surface() const -> std::weak_ptr<graphite::qd::surface>;
+        [[nodiscard]] auto format() const -> uint32_t;
 
         auto data(bool rgb555 = false) -> std::shared_ptr<graphite::data::data>;
     };

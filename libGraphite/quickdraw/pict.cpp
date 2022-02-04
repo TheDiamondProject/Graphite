@@ -49,6 +49,11 @@ auto graphite::qd::pict::image_surface() const -> std::weak_ptr<graphite::qd::su
     return m_surface;
 }
 
+auto graphite::qd::pict::format() const -> uint32_t
+{
+    return m_format;
+}
+
 // MARK: - Helper Functions
 
 static inline auto read_bytes(graphite::data::reader& pict_reader, std::size_t size) -> std::vector<uint8_t>
@@ -99,6 +104,7 @@ auto graphite::qd::pict::read_indirect_bits_rect(graphite::data::reader& pict_re
     }
     else {
         // Old style bitmap
+        pm.set_pixel_size(1);
         pm.set_cmp_count(1);
         pm.set_cmp_size(1);
         pm.set_row_bytes(pict_reader.read_short());
@@ -107,6 +113,8 @@ auto graphite::qd::pict::read_indirect_bits_rect(graphite::data::reader& pict_re
         color_table.set(qd::color(255, 255, 255));
         color_table.set(qd::color(0, 0, 0));
     }
+
+    m_format = pm.pixel_size();
 
     // Read the source and destination bounds
     auto source_rect = qd::rect::read(pict_reader, qd::rect::qd);
@@ -150,6 +158,8 @@ auto graphite::qd::pict::read_indirect_bits_rect(graphite::data::reader& pict_re
 auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_reader, bool region) -> void
 {
     graphite::qd::pixmap pm = graphite::qd::pixmap(pict_reader.read_data(qd::pixmap::length));
+
+    m_format = pm.pixel_size() == 16 ? 16 : pm.cmp_size() * pm.cmp_count();
 
     // Read the source and destination bounds
     auto source_rect = qd::rect::read(pict_reader, qd::rect::qd);
@@ -370,7 +380,6 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
     qd::rect clip_rect(0, 0, 0, 0);
 
     m_surface = std::make_shared<graphite::qd::surface>(m_frame.width(), m_frame.height());
-    bool has_bits = false;
 
     opcode op;
     while (!pict_reader.eof()) {
@@ -398,32 +407,26 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
             }
             case opcode::bits_rect: {
                 read_indirect_bits_rect(pict_reader, false, false);
-                has_bits = true;
                 break;
             }
             case opcode::bits_region: {
                 read_indirect_bits_rect(pict_reader, false, true);
-                has_bits = true;
                 break;
             }
             case opcode::pack_bits_rect: {
                 read_indirect_bits_rect(pict_reader, true, false);
-                has_bits = true;
                 break;
             }
             case opcode::pack_bits_region: {
                 read_indirect_bits_rect(pict_reader, true, true);
-                has_bits = true;
                 break;
             }
             case opcode::direct_bits_rect: {
                 read_direct_bits_rect(pict_reader, false);
-                has_bits = true;
                 break;
             }
             case opcode::direct_bits_region: {
                 read_direct_bits_rect(pict_reader, true);
-                has_bits = true;
                 break;
             }
             case opcode::long_comment: {
@@ -490,8 +493,8 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
         }
     }
     
-    // This is a safety check for QuickTime rle which is skipped over. If no other image data was found, throw an error.
-    if (!has_bits) {
+    // Ensure we actually did decode some image data, seeing as we skip over many unsupported opcodes.
+    if (!m_format) {
         throw std::runtime_error("Encountered an incompatible PICT: " + std::to_string(m_id) + ", " + m_name);
     }
 }
