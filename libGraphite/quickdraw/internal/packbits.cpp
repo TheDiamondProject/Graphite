@@ -12,7 +12,8 @@ auto graphite::qd::packbits::decode(std::vector<uint8_t> &out_data, const std::v
 
     while (pos < pack_data.size()) {
         auto count = pack_data[pos++];
-        if (count >= 0 && count < 128) {
+        if (count < 128) {
+            // Literal run
             uint16_t run = (1 + count) * value_size;
             if ((pos + run) > pack_data.size()) {
                 throw std::runtime_error("Unable to decode packbits.");
@@ -20,7 +21,16 @@ auto graphite::qd::packbits::decode(std::vector<uint8_t> &out_data, const std::v
             out_data.insert(out_data.end(), std::make_move_iterator(pack_data.begin() + pos), std::make_move_iterator(pack_data.begin() + pos + run));
             pos += run;
         }
-        else if (count > 128) {
+        else if (count == 128) {
+            // No-op
+        }
+        else if (value_size == 1) {
+            // Run of single bytes (fast)
+            uint8_t run = 256 - count + 1;
+            out_data.resize(out_data.size() + run, pack_data[pos++]);
+        }
+        else {
+            // Run of multiple bytes
             uint8_t run = 256 - count + 1;
             for (uint8_t i = 0; i < run; ++i) {
                 for (uint8_t j = 0; j < value_size; ++j) {
@@ -28,9 +38,6 @@ auto graphite::qd::packbits::decode(std::vector<uint8_t> &out_data, const std::v
                 }
             }
             pos += value_size;
-        }
-        else {
-            // No-op
         }
     }
 
