@@ -251,9 +251,11 @@ auto graphite::qd::pixmap::build_pixel_data(const std::vector<uint16_t>& color_v
     return pmap_data.data();
 }
 
-auto graphite::qd::pixmap::write(graphite::data::writer& writer) -> void
+auto graphite::qd::pixmap::write(graphite::data::writer& writer, bool with_base_address) -> void
 {
-    writer.write_long(m_base_address);
+    if (with_base_address) {
+        writer.write_long(m_base_address);
+    }
     writer.write_short(0x8000 | m_row_bytes);
     m_bounds.write(writer, rect::qd);
     writer.write_signed_short(m_pm_version);

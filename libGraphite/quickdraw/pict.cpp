@@ -510,7 +510,7 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
 auto graphite::qd::pict::encode(graphite::data::writer& pict_encoder, bool rgb555) -> void
 {
     // Ensure origin is zero before starting
-    m_frame.set_origin(qd::point(0, 0));
+    m_frame.set_origin(qd::point::zero());
     encode_header(pict_encoder);
     encode_clip_region(pict_encoder);
     encode_direct_bits_rect(pict_encoder, rgb555);
@@ -573,13 +573,40 @@ auto graphite::qd::pict::encode_direct_bits_rect(graphite::data::writer& pict_en
     pict_encoder.write_short(0); // Source Copy
 
     // Prepare to write out the actual image data.
-    // Don't use packing if row bytes < 8
-    if (pm.row_bytes() < 8) {
+    auto row_bytes = pm.row_bytes();
+    if (rgb555) {
+        std::vector<uint16_t> scanline_bytes(m_frame.width());
+        for (auto scanline = 0; scanline < m_frame.height(); ++scanline) {
+            for (auto x = 0; x < m_frame.width(); ++x) {
+                auto pixel = m_surface->at(x, scanline).rgb555();
+                if (row_bytes >= 8) {
+                    scanline_bytes[x] = pixel;
+                } else {
+                    pict_encoder.write_short(pixel);
+                }
+            }
+
+            if (row_bytes >= 8) {
+                auto packed = packbits::encode(scanline_bytes);
+                if (row_bytes > 250) {
+                    pict_encoder.write_short(packed.size());
+                }
+                else {
+                    pict_encoder.write_byte(packed.size());
+                }
+                pict_encoder.write_bytes(packed);
+            }
+        }
+    }
+    else {
+        std::vector<uint8_t> scanline_bytes(m_frame.width() * pm.cmp_count());
         for (auto scanline = 0; scanline < m_frame.height(); ++scanline) {
             for (auto x = 0; x < m_frame.width(); ++x) {
                 auto pixel = m_surface->at(x, scanline);
-                if (rgb555) {
-                    pict_encoder.write_short(pixel.rgb555());
+                if (row_bytes >= 8) {
+                    scanline_bytes[x] = pixel.red_component();
+                    scanline_bytes[x + m_frame.width()] = pixel.green_component();
+                    scanline_bytes[x + m_frame.width() * 2] = pixel.blue_component();
                 } else {
                     pict_encoder.write_byte(0);
                     pict_encoder.write_byte(pixel.red_component());
@@ -587,18 +614,64 @@ auto graphite::qd::pict::encode_direct_bits_rect(graphite::data::writer& pict_en
                     pict_encoder.write_byte(pixel.blue_component());
                 }
             }
+
+            if (row_bytes >= 8) {
+                auto packed = packbits::encode(scanline_bytes);
+                if (row_bytes > 250) {
+                    pict_encoder.write_short(packed.size());
+                }
+                else {
+                    pict_encoder.write_byte(packed.size());
+                }
+                pict_encoder.write_bytes(packed);
+            }
         }
     }
-    else if (rgb555) {
-        std::vector<uint16_t> scanline_bytes(m_frame.width());
-        for (auto scanline = 0; scanline < m_frame.height(); ++scanline) {
-            for (auto x = 0; x < m_frame.width(); ++x) {
-                auto pixel = m_surface->at(x, scanline);
-                scanline_bytes[x] = pixel.rgb555();
-            }
 
-            auto packed = packbits::encode(scanline_bytes);
-            if (pm.row_bytes() > 250) {
+    m_format = rgb555 ? 16 : 24;
+}
+
+auto graphite::qd::pict::encode_indirect_bits_rect(graphite::data::writer& pict_encoder, bool rgb555) -> bool
+{
+    // Build color table and return false if we exceed the maximum size.
+    qd::clut clut;
+    std::vector<uint16_t> index_values;
+    for (auto scanline = 0; scanline < m_frame.height(); ++scanline) {
+        for (auto x = 0; x < m_frame.width(); ++x) {
+            auto pixel = m_surface->at(x, scanline);
+            if (rgb555) {
+                pixel = qd::color(pixel.rgb555());
+            }
+            index_values.emplace_back(clut.set(pixel));
+            if (clut.size() > 256) {
+                return false;
+            }
+        }
+    }
+
+    pict_encoder.write_short(static_cast<uint16_t>(opcode::pack_bits_rect));
+
+    qd::pixmap pm(m_frame);
+    pm.set_pack_type(none);
+    pm.set_pixel_type(indexed);
+    auto pmap_data = pm.build_pixel_data(index_values, clut.size());
+    pm.write(pict_encoder, false);
+    clut.write(pict_encoder);
+
+    // Source and destination frames - identical to the image frame.
+    m_frame.write(pict_encoder, rect::qd);
+    m_frame.write(pict_encoder, rect::qd);
+
+    // Specify the transfer mode.
+    pict_encoder.write_short(0); // Source Copy
+
+    auto row_bytes = pm.row_bytes();
+    if (row_bytes >= 8) {
+        auto bytes = pmap_data->get();
+        for (auto y = 0; y < m_frame.height(); ++y) {
+            auto raw = std::vector<uint8_t>(bytes->begin() + row_bytes * y, bytes->begin() + row_bytes * (y + 1));
+            auto packed = packbits::encode(raw);
+            if (row_bytes > 250) {
                 pict_encoder.write_short(packed.size());
             }
             else {
@@ -608,25 +681,11 @@ auto graphite::qd::pict::encode_direct_bits_rect(graphite::data::writer& pict_en
         }
     }
     else {
-        std::vector<uint8_t> scanline_bytes(m_frame.width() * pm.cmp_count());
-        for (auto scanline = 0; scanline < m_frame.height(); ++scanline) {
-            for (auto x = 0; x < m_frame.width(); ++x) {
-                auto pixel = m_surface->at(x, scanline);
-                scanline_bytes[x] = pixel.red_component();
-                scanline_bytes[x + m_frame.width()] = pixel.green_component();
-                scanline_bytes[x + m_frame.width() * 2] = pixel.blue_component();
-            }
-
-            auto packed = packbits::encode(scanline_bytes);
-            if (pm.row_bytes() > 250) {
-                pict_encoder.write_short(packed.size());
-            }
-            else {
-                pict_encoder.write_byte(packed.size());
-            }
-            pict_encoder.write_bytes(packed);
-        }
+        pict_encoder.write_data(pmap_data);
     }
+
+    m_format = pm.pixel_size();
+    return true;
 }
 
 auto graphite::qd::pict::data(bool rgb555) -> std::shared_ptr<graphite::data::data>

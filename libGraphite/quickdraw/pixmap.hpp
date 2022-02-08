@@ -82,7 +82,7 @@ namespace graphite::qd {
             qd::rect destination
         ) -> void;
         auto build_pixel_data(const std::vector<uint16_t>& color_values, uint16_t clut_size) -> std::shared_ptr<graphite::data::data>;
-        auto write(graphite::data::writer& writer) -> void;
+        auto write(graphite::data::writer& writer, bool with_base_address = true) -> void;
     };
 
 }

@@ -88,6 +88,7 @@ namespace graphite::qd {
         auto encode_header(graphite::data::writer& pict_encoder) -> void;
         auto encode_clip_region(graphite::data::writer& pict_encoder) -> void;
         auto encode_direct_bits_rect(graphite::data::writer& pict_encoder, bool rgb555) -> void;
+        auto encode_indirect_bits_rect(graphite::data::writer& pict_encoder, bool rgb555) -> bool;
 
     public:
         explicit pict(std::shared_ptr<graphite::data::data> data, int64_t id = 0, std::string name = "");
