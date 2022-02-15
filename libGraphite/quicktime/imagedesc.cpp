@@ -2,6 +2,7 @@
 // Created by Tom Hancocks on 26/03/2021.
 //
 
+#include "libGraphite/quickdraw/pict.hpp"
 #include "libGraphite/quicktime/imagedesc.hpp"
 #include "libGraphite/quicktime/animation.hpp"
 #include "libGraphite/quicktime/planar.hpp"
@@ -112,6 +113,11 @@ auto graphite::qt::imagedesc::read_image_data(data::reader &reader) -> void {
         }
         case 'raw ': {
             m_surface = std::make_shared<graphite::qd::surface>(qt::raw::decode(*this, reader));
+            break;
+        }
+        case 'qdrw': {
+            auto pict = qd::pict(reader.read_data(m_data_size));
+            m_surface = pict.image_surface().lock();
             break;
         }
         default: {
