@@ -512,7 +512,6 @@ auto graphite::qd::pict::encode(graphite::data::writer& pict_encoder, bool rgb55
     // Ensure origin is zero before starting
     m_frame.set_origin(qd::point(0, 0));
     encode_header(pict_encoder);
-    encode_def_hilite(pict_encoder);
     encode_clip_region(pict_encoder);
     encode_direct_bits_rect(pict_encoder, rgb555);
 
@@ -550,11 +549,6 @@ auto graphite::qd::pict::encode_header(graphite::data::writer& pict_encoder) -> 
     pict_encoder.write_long(0);
 
     // HEADER ENDS HERE
-}
-
-auto graphite::qd::pict::encode_def_hilite(graphite::data::writer& pict_encoder) -> void
-{
-    pict_encoder.write_short(static_cast<uint16_t>(opcode::def_hilite));
 }
 
 auto graphite::qd::pict::encode_clip_region(graphite::data::writer& pict_encoder) -> void

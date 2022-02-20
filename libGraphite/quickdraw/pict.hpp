@@ -86,7 +86,6 @@ namespace graphite::qd {
 
         auto encode(graphite::data::writer& pict_encoder, bool rgb555) -> void;
         auto encode_header(graphite::data::writer& pict_encoder) -> void;
-        auto encode_def_hilite(graphite::data::writer& pict_encoder) -> void;
         auto encode_clip_region(graphite::data::writer& pict_encoder) -> void;
         auto encode_direct_bits_rect(graphite::data::writer& pict_encoder, bool rgb555) -> void;
 
