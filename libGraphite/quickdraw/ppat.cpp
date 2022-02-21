@@ -111,22 +111,8 @@ auto graphite::qd::ppat::data() -> std::shared_ptr<graphite::data::data>
     m_pixmap = qd::pixmap();
     m_pixmap.set_bounds(qd::rect(point::zero(), m_surface->size()));
     std::shared_ptr<graphite::data::data> pmap_data;
-    
-    if (m_clut.size() > 256) {
-        throw std::runtime_error("Implementation does not currently handle more than 256 colors in a PPAT");
-    }
-    else if (m_clut.size() > 16) {
-        pmap_data = m_pixmap.build_pixel_data(color_values, 8);
-    }
-    else if (m_clut.size() > 4) {
-        pmap_data = m_pixmap.build_pixel_data(color_values, 4);
-    }
-    else if (m_clut.size() > 2) {
-        pmap_data = m_pixmap.build_pixel_data(color_values, 2);
-    }
-    else {
-        pmap_data = m_pixmap.build_pixel_data(color_values, 1);
-    }
+
+    pmap_data = m_pixmap.build_pixel_data(color_values, m_clut.size());
 
     // Calculate some offsets
     m_pat_type = 1;
