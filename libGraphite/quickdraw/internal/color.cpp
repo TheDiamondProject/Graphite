@@ -13,12 +13,15 @@ graphite::qd::color::color(uint8_t red, uint8_t green, uint8_t blue, uint8_t alp
 }
 
 graphite::qd::color::color(uint16_t rgb555)
-    : m_red(static_cast<uint8_t>(((rgb555 & 0x7c00) >> 10) * 0xFF / 0x1F)),
-      m_green(static_cast<uint8_t>(((rgb555 & 0x03e0) >> 5) * 0xFF / 0x1F)),
-      m_blue(static_cast<uint8_t>((rgb555 & 0x001f) * 0xFF / 0x1F)),
+    : m_red(static_cast<uint8_t>((rgb555 & 0x7c00) >> 7)),
+      m_green(static_cast<uint8_t>((rgb555 & 0x03e0) >> 2)),
+      m_blue(static_cast<uint8_t>((rgb555 & 0x001f) << 3)),
       m_alpha(255)
 {
-
+    // Copy the upper 3 bits to the empty lower 3 bits
+    m_red |= m_red >> 5;
+    m_green |= m_green >> 5;
+    m_blue |= m_blue >> 5;
 }
 
 // MARK: - Accessors
