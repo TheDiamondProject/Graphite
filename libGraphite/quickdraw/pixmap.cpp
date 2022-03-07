@@ -196,13 +196,29 @@ auto graphite::qd::pixmap::build_surface(
 
 // MARK: -
 
-auto graphite::qd::pixmap::build_pixel_data(const std::vector<uint16_t>& color_values, uint16_t pixel_size) -> std::shared_ptr<graphite::data::data>
+auto graphite::qd::pixmap::build_pixel_data(const std::vector<uint16_t>& color_values, uint16_t clut_size) -> std::shared_ptr<graphite::data::data>
 {
-    graphite::data::writer pmap_data(std::make_shared<graphite::data::data>());
-    m_pixel_size = m_cmp_size = pixel_size;
-    m_cmp_count = 1;
+    if (clut_size > 256) {
+        throw std::runtime_error("Implementation does not currently handle more than 256 colors in a pixmap.");
+    }
+    else if (clut_size > 16) {
+        m_pixel_size = 8;
+    }
+    else if (clut_size > 4) {
+        m_pixel_size = 4;
+    }
+    else if (clut_size > 2) {
+        m_pixel_size = 2;
+    }
+    else {
+        m_pixel_size = 1;
+    }
 
-    if (pixel_size == 8) {
+    graphite::data::writer pmap_data(std::make_shared<graphite::data::data>());
+    m_cmp_count = 1;
+    m_cmp_size = m_pixel_size;
+
+    if (m_pixel_size == 8) {
         m_row_bytes = m_bounds.width();
         for (auto color_value : color_values) {
             pmap_data.write_byte(static_cast<uint8_t>(color_value & 0xFF));
@@ -210,10 +226,10 @@ auto graphite::qd::pixmap::build_pixel_data(const std::vector<uint16_t>& color_v
     }
     else {
         auto width = m_bounds.width();
-        auto mod = 8 / pixel_size;
+        auto mod = 8 / m_pixel_size;
         m_row_bytes = (width - 1) / mod + 1;
-        auto mask = (1 << pixel_size) - 1;
-        auto diff = 8 - pixel_size;
+        auto mask = (1 << m_pixel_size) - 1;
+        auto diff = 8 - m_pixel_size;
 
         for (auto y = 0; y < m_bounds.height(); ++y) {
             uint8_t scratch = 0;
@@ -225,7 +241,7 @@ auto graphite::qd::pixmap::build_pixel_data(const std::vector<uint16_t>& color_v
                 }
                 auto n = y * width + x;
                 auto value = static_cast<uint8_t>(color_values[n] & mask);
-                value <<= (diff - (bit_offset * pixel_size));
+                value <<= (diff - (bit_offset * m_pixel_size));
                 scratch |= value;
             }
             pmap_data.write_byte(scratch);
@@ -235,9 +251,11 @@ auto graphite::qd::pixmap::build_pixel_data(const std::vector<uint16_t>& color_v
     return pmap_data.data();
 }
 
-auto graphite::qd::pixmap::write(graphite::data::writer& writer) -> void
+auto graphite::qd::pixmap::write(graphite::data::writer& writer, bool with_base_address) -> void
 {
-    writer.write_long(m_base_address);
+    if (with_base_address) {
+        writer.write_long(m_base_address);
+    }
     writer.write_short(0x8000 | m_row_bytes);
     m_bounds.write(writer, rect::qd);
     writer.write_signed_short(m_pm_version);

@@ -25,6 +25,7 @@ namespace graphite::qd {
             pen_size = 0x0007,
             pen_mode = 0x0008,
             pen_pattern = 0x0009,
+            fill_pattern = 0x000a,
             origin = 0x000c,
             rgb_fg_color = 0x001a,
             rgb_bg_color = 0x001b,
@@ -41,6 +42,11 @@ namespace graphite::qd {
             erase_rect = 0x0032,
             invert_rect = 0x0033,
             fill_rect = 0x0034,
+            frame_same_rect = 0x0038,
+            paint_same_rect = 0x0039,
+            erase_same_rect = 0x003a,
+            invert_same_rect = 0x003b,
+            fill_same_rect = 0x003c,
             bits_rect = 0x0090,
             bits_region = 0x0091,
             pack_bits_rect = 0x0098,
@@ -78,9 +84,9 @@ namespace graphite::qd {
 
         auto encode(graphite::data::writer& pict_encoder, bool rgb555) -> void;
         auto encode_header(graphite::data::writer& pict_encoder) -> void;
-        auto encode_def_hilite(graphite::data::writer& pict_encoder) -> void;
         auto encode_clip_region(graphite::data::writer& pict_encoder) -> void;
         auto encode_direct_bits_rect(graphite::data::writer& pict_encoder, bool rgb555) -> void;
+        auto encode_indirect_bits_rect(graphite::data::writer& pict_encoder, bool rgb555) -> bool;
 
     public:
         explicit pict(std::shared_ptr<graphite::data::data> data, int64_t id = 0, std::string name = "");

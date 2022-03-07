@@ -15,8 +15,8 @@ namespace graphite::qd {
     {
     public:
         static auto decode(std::vector<uint8_t> &out_data, const std::vector<uint8_t>& pack_data, std::size_t value_size) -> std::size_t;
-        static auto encode(const std::vector<uint8_t>& scanline_bytes) -> std::vector<uint8_t>;
-        static auto encode(const std::vector<uint16_t>& scanline_bytes) -> std::vector<uint8_t>;
+        template<typename T>
+        static auto encode(const std::vector<T>& scanline_bytes) -> std::vector<uint8_t>;
     };
 
 }
