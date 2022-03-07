@@ -25,6 +25,32 @@ graphite::qd::clut::clut(graphite::data::reader& reader)
 
 auto graphite::qd::clut::load_resource(int64_t id) -> std::shared_ptr<graphite::qd::clut>
 {
+    if (id > 32 && id <= 40) {
+        // Standard grayscale tables - subtract 32 from id to get bit-depth
+        auto clut = qd::clut();
+        clut.m_id = id;
+        clut.m_size = 1 << (id - 32);
+        auto step = 255 / (clut.m_size - 1);
+        for (auto v = 0; v < 256; v += step) {
+            clut.m_entries.emplace_back(qd::color(v, v, v));
+        }
+        return std::make_shared<graphite::qd::clut>(clut);
+    }
+    if (id == 4 || id == 8) {
+        // Standard system color tables
+        auto clut = qd::clut();
+        clut.m_id = id;
+        if (id == 4) {
+            for (auto v : clut4) {
+                clut.m_entries.emplace_back(qd::color(v[0], v[1], v[2]));
+            }
+        } else {
+            for (auto v : clut8) {
+                clut.m_entries.emplace_back(qd::color(v[0], v[1], v[2]));
+            }
+        }
+        return std::make_shared<graphite::qd::clut>(clut);
+    }
     if (auto res = graphite::rsrc::manager::shared_manager().find("clut", id).lock()) {
         return std::make_shared<graphite::qd::clut>(res->data(), id, res->name());
     }
@@ -40,28 +66,23 @@ auto graphite::qd::clut::size() const -> int
 
 auto graphite::qd::clut::at(int index) const -> graphite::qd::color
 {
-    return m_entries.at(index);
+    return m_entries[index];
 }
 
 auto graphite::qd::clut::get(int value) const -> graphite::qd::color
 {
-    return m_entries.at(value);
+    return m_entries[value];
 }
 
 auto graphite::qd::clut::set(const qd::color& color) -> uint16_t
 {
-    uint16_t value = 0;
-    for (auto entry : m_entries) {
-        if (std::get<1>(entry) == color) {
-            return std::get<0>(entry);
-        }
-        if (std::get<0>(entry) == value) {
-            ++value;
+    for (auto i = 0; i < m_size; ++i) {
+        if (m_entries[i] == color) {
+            return i;
         }
     }
-    m_entries.emplace(value, color);
-    m_size = m_entries.size();
-    return value;
+    m_entries.emplace_back(color);
+    return m_size++;
 }
 
 // MARK: - Parser
@@ -77,8 +98,16 @@ auto graphite::qd::clut::parse(graphite::data::reader& reader) -> void
         auto r = static_cast<uint8_t>((reader.read_short() / 65535.0) * 255);
         auto g = static_cast<uint8_t>((reader.read_short() / 65535.0) * 255);
         auto b = static_cast<uint8_t>((reader.read_short() / 65535.0) * 255);
-        int index = m_flags == device ? i : value;
-        m_entries.emplace(index, qd::color(r, g, b));
+        auto color = qd::color(r, g, b);
+        // Values are usually sequential but this is not guaranteed. E.g. black may be placed at 255 with a gap in between.
+        // In this case we just resize the entries and fill the gap with the same color.
+        if (m_flags == device || value == m_entries.size()) {
+            m_entries.emplace_back(color);
+        } else if (value < m_entries.size()) {
+            m_entries[value] = color;
+        } else {
+            m_entries.resize(value+1, color);
+        }
     }
 }
 
@@ -90,9 +119,8 @@ auto graphite::qd::clut::write(graphite::data::writer& writer) -> void
     writer.write_short(static_cast<uint16_t>(m_flags));
     writer.write_short(m_size - 1);
 
-    for (auto entry : m_entries) {
-        auto value = std::get<0>(entry);
-        auto color = std::get<1>(entry);
+    for (auto value = 0; value < m_size; ++value) {
+        auto color = m_entries[value];
         writer.write_short(value);
         writer.write_short(static_cast<uint16_t>((color.red_component() / 255.0) * 65535.0));
         writer.write_short(static_cast<uint16_t>((color.green_component() / 255.0) * 65535.0));

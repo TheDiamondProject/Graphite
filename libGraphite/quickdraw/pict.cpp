@@ -7,6 +7,7 @@
 #include "libGraphite/quickdraw/pict.hpp"
 #include "libGraphite/quickdraw/internal/packbits.hpp"
 #include "libGraphite/quickdraw/clut.hpp"
+#include "libGraphite/quicktime/imagedesc.hpp"
 
 // MARK: - Constants
 
@@ -47,6 +48,11 @@ auto graphite::qd::pict::from_surface(std::shared_ptr<graphite::qd::surface> sur
 auto graphite::qd::pict::image_surface() const -> std::weak_ptr<graphite::qd::surface>
 {
     return m_surface;
+}
+
+auto graphite::qd::pict::format() const -> uint32_t
+{
+    return m_format;
 }
 
 // MARK: - Helper Functions
@@ -99,6 +105,7 @@ auto graphite::qd::pict::read_indirect_bits_rect(graphite::data::reader& pict_re
     }
     else {
         // Old style bitmap
+        pm.set_pixel_size(1);
         pm.set_cmp_count(1);
         pm.set_cmp_size(1);
         pm.set_row_bytes(pict_reader.read_short());
@@ -107,6 +114,8 @@ auto graphite::qd::pict::read_indirect_bits_rect(graphite::data::reader& pict_re
         color_table.set(qd::color(255, 255, 255));
         color_table.set(qd::color(0, 0, 0));
     }
+
+    m_format = pm.pixel_size();
 
     // Read the source and destination bounds
     auto source_rect = qd::rect::read(pict_reader, qd::rect::qd);
@@ -150,6 +159,8 @@ auto graphite::qd::pict::read_indirect_bits_rect(graphite::data::reader& pict_re
 auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_reader, bool region) -> void
 {
     graphite::qd::pixmap pm = graphite::qd::pixmap(pict_reader.read_data(qd::pixmap::length));
+
+    m_format = pm.pixel_size() == 16 ? 16 : pm.cmp_size() * pm.cmp_count();
 
     // Read the source and destination bounds
     auto source_rect = qd::rect::read(pict_reader, qd::rect::qd);
@@ -250,6 +261,7 @@ auto graphite::qd::pict::read_direct_bits_rect(graphite::data::reader &pict_read
 
 auto graphite::qd::pict::read_compressed_quicktime(graphite::data::reader &pict_reader) -> void
 {
+    // http://mirror.informatimago.com/next/developer.apple.com/documentation/QuickTime/INMAC/QT/iqImageCompMgr.a.htm
     auto length = pict_reader.read_long();
     pict_reader.move(38);
     auto matte_size = pict_reader.read_long();
@@ -260,63 +272,16 @@ auto graphite::qd::pict::read_compressed_quicktime(graphite::data::reader &pict_
     auto mask_size = pict_reader.read_long();
     
     if (matte_size > 0) {
-        read_image_description(pict_reader);
+        auto matte = qt::imagedesc(pict_reader);
     }
     
     if (mask_size > 0) {
         pict_reader.move(mask_size);
     }
     
-    read_image_description(pict_reader);
-}
-
-auto graphite::qd::pict::read_uncompressed_quicktime(graphite::data::reader &pict_reader) -> void
-{
-    auto length = pict_reader.read_long();
-    pict_reader.move(38);
-    auto matte_size = pict_reader.read_long();
-    auto matte_rect = qd::rect::read(pict_reader, qd::rect::qd);
-    
-    if (matte_size > 0) {
-        read_image_description(pict_reader);
-    }
-}
-
-auto graphite::qd::pict::read_image_description(graphite::data::reader &pict_reader) -> void
-{
-    auto length = pict_reader.read_long();
-    if (length != 86) {
-        throw std::runtime_error("Invalid QuickTime image description in PICT: " + std::to_string(m_id) + ", " + m_name);
-    }
-    auto compressor = pict_reader.read_long();
-    pict_reader.move(24);
-    auto width = pict_reader.read_short();
-    auto height = pict_reader.read_short();
-    pict_reader.move(8);
-    auto data_size = pict_reader.read_long();
-    pict_reader.move(34);
-    auto depth = pict_reader.read_short();
-    if (depth > 32) {
-        depth -= 32; // grayscale
-    }
-    auto clut = pict_reader.read_signed_short();
-    
-    if (compressor == 'rle ') {
-        // rle is often garbage or redundant, skip over it and hope we find other image data later.
-        pict_reader.move(data_size);
-        return;
-    }
-    
-    switch (compressor) {
-        default:
-            std::string comp;
-            comp.push_back(compressor >> 24);
-            comp.push_back(compressor >> 16);
-            comp.push_back(compressor >> 8);
-            comp.push_back(compressor);
-            throw std::runtime_error("Unsupported QuickTime compressor '" + comp + "' at offset " + std::to_string(pict_reader.position())
-                                     + " in PICT: " + std::to_string(m_id) + ", " + m_name);
-    }
+    auto imagedesc = qt::imagedesc(pict_reader);
+    m_surface = imagedesc.surface();
+    m_format = imagedesc.compressor();
 }
 
 auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
@@ -370,7 +335,6 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
     qd::rect clip_rect(0, 0, 0, 0);
 
     m_surface = std::make_shared<graphite::qd::surface>(m_frame.width(), m_frame.height());
-    bool has_bits = false;
 
     opcode op;
     while (!pict_reader.eof()) {
@@ -398,32 +362,26 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
             }
             case opcode::bits_rect: {
                 read_indirect_bits_rect(pict_reader, false, false);
-                has_bits = true;
                 break;
             }
             case opcode::bits_region: {
                 read_indirect_bits_rect(pict_reader, false, true);
-                has_bits = true;
                 break;
             }
             case opcode::pack_bits_rect: {
                 read_indirect_bits_rect(pict_reader, true, false);
-                has_bits = true;
                 break;
             }
             case opcode::pack_bits_region: {
                 read_indirect_bits_rect(pict_reader, true, true);
-                has_bits = true;
                 break;
             }
             case opcode::direct_bits_rect: {
                 read_direct_bits_rect(pict_reader, false);
-                has_bits = true;
                 break;
             }
             case opcode::direct_bits_region: {
                 read_direct_bits_rect(pict_reader, true);
-                has_bits = true;
                 break;
             }
             case opcode::long_comment: {
@@ -481,7 +439,9 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
                 return;
             }
             case opcode::uncompressed_quicktime: {
-                read_uncompressed_quicktime(pict_reader);
+                // Uncompressed QuickTime contains a matte which we can skip over. Actual image data should follow.
+                auto length = pict_reader.read_long();
+                pict_reader.move(length);
                 break;
             }
             default: {
@@ -490,8 +450,8 @@ auto graphite::qd::pict::parse(graphite::data::reader& pict_reader) -> void
         }
     }
     
-    // This is a safety check for QuickTime rle which is skipped over. If no other image data was found, throw an error.
-    if (!has_bits) {
+    // Ensure we actually did decode some image data, seeing as we skip over many unsupported opcodes.
+    if (!m_format) {
         throw std::runtime_error("Encountered an incompatible PICT: " + std::to_string(m_id) + ", " + m_name);
     }
 }

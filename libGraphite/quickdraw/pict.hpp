@@ -65,6 +65,7 @@ namespace graphite::qd {
         std::string m_name;
         std::shared_ptr<graphite::qd::surface> m_surface;
         graphite::qd::rect m_frame;
+        uint32_t m_format {};
         double m_x_ratio {};
         double m_y_ratio {};
 
@@ -74,8 +75,6 @@ namespace graphite::qd {
         auto read_direct_bits_rect(graphite::data::reader& pict_reader, bool region) -> void;
         auto read_indirect_bits_rect(graphite::data::reader& pict_reader, bool packed, bool region) -> void;
         auto read_compressed_quicktime(graphite::data::reader & pict_reader) -> void;
-        auto read_uncompressed_quicktime(graphite::data::reader & pict_reader) -> void;
-        auto read_image_description(graphite::data::reader & pict_reader) -> void;
 
         auto encode(graphite::data::writer& pict_encoder, bool rgb555) -> void;
         auto encode_header(graphite::data::writer& pict_encoder) -> void;
@@ -91,6 +90,7 @@ namespace graphite::qd {
         static auto from_surface(std::shared_ptr<graphite::qd::surface> surface) -> std::shared_ptr<pict>;
 
         [[nodiscard]] auto image_surface() const -> std::weak_ptr<graphite::qd::surface>;
+        [[nodiscard]] auto format() const -> uint32_t;
 
         auto data(bool rgb555 = false) -> std::shared_ptr<graphite::data::data>;
     };
