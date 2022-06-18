@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Tom Hancocks
+// Copyright (c) 2022 Tom Hancocks
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,75 +18,58 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#pragma once
+
 #include <string>
-#include <vector>
-#include <memory>
-#include <map>
+#include <type_traits>
+#include <unordered_map>
+#include "libGraphite/rsrc/attribute.hpp"
 #include "libGraphite/rsrc/resource.hpp"
 
-#if !defined(GRAPHITE_RSRC_TYPE)
-#define GRAPHITE_RSRC_TYPE
-
-namespace graphite::rsrc {
-
-    /**
-     *
-     */
-    class type
+namespace graphite::rsrc
+{
+    struct type
     {
-    private:
-        std::string m_code;
-        std::vector<std::shared_ptr<resource>> m_resources;
-        std::map<std::string, std::string> m_attributes;
+    public:
+        typedef std::uint64_t hash;
 
     public:
-    	/**
-    	 * Construct a new a resource type container with the specified
-    	 * type code.
-    	 */
-    	explicit type(std::string code, std::map<std::string, std::string> attributes = {});
+        explicit type(const std::string& code);
 
-    	/**
-    	 * Returns the type code of the receiver.
-    	 */
-    	[[nodiscard]] auto code() const -> std::string;
+        static auto hash_for_type_code(const std::string& code) -> hash;
 
-    	/**
-    	 * Returns the attribute map of the receiver.
-    	 */
-    	 [[nodiscard]] auto attributes() const -> std::map<std::string, std::string>;
+        [[nodiscard]] auto hash_value() const -> hash;
+        [[nodiscard]] auto code() const -> const std::string&;
+        [[nodiscard]] auto attributes() const -> const std::unordered_map<attribute::hash, attribute>&;
+        [[nodiscard]] auto count() const -> std::size_t;
+        [[nodiscard]] auto attribute_descriptor_string() const -> std::string;
 
-    	/**
-    	 * Returns the attribute map of the receiver as a string.
-    	 */
-    	 [[nodiscard]] auto attributes_string() const -> std::string;
+        auto add_attribute(const std::string& name, const std::string& value) -> void;
 
-    	/**
-    	 * Returns a count of the number of resources associated to this type.
-    	 */
-    	[[nodiscard]] auto count() const -> std::size_t;
+        template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
+        auto add_attribute(const std::string& name, T value) -> void;
 
-    	/**
-    	 * Add a new resource to the receiver.
-    	 */
-    	auto add_resource(const std::shared_ptr<resource>& resource) -> void;
+        [[nodiscard]] auto has_resource(resource::identifier id) const -> bool;
+        [[nodiscard]] auto has_resource(const std::string& name) const -> bool;
 
-    	/**
-    	 * Returns an vector containing all of the resources
-    	 */
-    	[[nodiscard]] auto resources() const -> std::vector<std::shared_ptr<resource>>;
+        auto add_resource(const resource& resource) -> void;
+        auto remove_resource(resource::identifier id) -> void;
 
-    	/**
-    	 * Returns the resource with the specified ID.
-    	 */
-    	[[nodiscard]] auto get(int16_t id) const -> std::weak_ptr<resource>;
+        [[nodiscard]] auto resource_with_id(resource::identifier id) const -> resource *;
+        [[nodiscard]] auto resource_with_name(const std::string& name) const -> resource *;
 
-    	/**
-    	 * Returns a set of resources whose name begins with the specified text, or matches wholly.
-    	 */
-    	[[nodiscard]] auto get(const std::string& name_prefix) const -> std::vector<std::shared_ptr<resource>>;
+        auto begin() -> std::vector<resource>::iterator;
+        auto end() -> std::vector<resource>::iterator;
+        auto at(int64_t idx) -> resource *;
+
+        auto sync_resource_type_references() -> void;
+
+    private:
+        std::string m_code;
+        std::vector<resource> m_resources;
+        std::unordered_map<resource::identifier_hash, resource *> m_resource_id_map {};
+        std::unordered_map<resource::name_hash, resource *> m_resource_name_map {};
+        std::unordered_map<attribute::hash , attribute> m_attributes {};
+
     };
-
 }
-
-#endif

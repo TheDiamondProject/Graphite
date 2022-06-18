@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Tom Hancocks
+// Copyright (c) 2022 Tom Hancocks
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,78 +18,85 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <string>
-#include <vector>
-#include <memory>
-#include <map>
+#pragma once
+
+#include <stdexcept>
+#include <unordered_map>
 #include "libGraphite/rsrc/file.hpp"
+#include "libGraphite/rsrc/type.hpp"
+#include "libGraphite/rsrc/resource.hpp"
+#include "libGraphite/rsrc/attribute.hpp"
+#include "libGraphite/rsrc/result.hpp"
+#include "libGraphite/util/concepts.hpp"
 
-#if !defined(GRAPHITE_RSRC_MANAGER)
-#define GRAPHITE_RSRC_MANAGER
-
-namespace graphite::rsrc {
-
-    /**
-     * The Manager is a shared object within an application that is keeps track of
-     * all loaded resources.
-     *
-     * Resources are loaded in through a resource file and then placed into the
-     * resource manager to be "managed" if a newly imported resource conflicts with
-     * an existing resource, the existing resource will be replaced by the newer
-     */
+namespace graphite::rsrc
+{
     class manager
     {
-    private:
-        std::vector<std::shared_ptr<file>> m_files;
-        manager() = default;
-
     public:
-    	manager(const manager&) = delete;
-        manager& operator=(const manager &) = delete;
-        manager(manager &&) = delete;
-        manager & operator=(manager &&) = delete;
+        manager(const manager&) = delete;
+        manager(manager&&) = delete;
+        auto operator=(const manager&) -> manager& = delete;
+        auto operator=(manager&&) -> manager& = delete;
 
-        /**
-         * The Resource Manager is a singleton due to the "resource space"
-         * of a process being shared. All resource files loaded into a process
-         * occupy the same space and are able to override each other, depending
-         * on load order.
-         */
         static auto shared_manager() -> manager&;
 
-        /**
-         * Import the specified file into the Manager. This will trigger a parsing
-         * of the file if it hasn't already occurred.
-         */
-        auto import_file(const std::shared_ptr<file>& file) -> void;
+        auto import_file(file file) -> class file *;
+        auto import_file(const std::string& path) -> class file *;
 
-        /**
-         * Unload the specified file from the Manager.
-         */
+        auto unload_file(class file *file) -> void;
+        auto unload_file(file::hash file) -> void;
         auto unload_file(const std::string& path) -> void;
 
-        /**
-         *
-         */
-        [[nodiscard]] auto files() const -> std::vector<std::shared_ptr<file>>;
+        auto file(file::hash file) -> class file *;
+        auto file(const std::string& path) -> class file *;
 
-        /**
-         * Attempt to get the resource of the specified type and id.
-         */
-        [[nodiscard]] auto find(const std::string& type, const int64_t& id, const std::map<std::string, std::string>& attributes = {}) const -> std::weak_ptr<resource>;
+        [[nodiscard]] auto files() const -> std::vector<file::hash>;
+        [[nodiscard]] auto file_references() const -> std::vector<class file *>;
 
-        /**
-         * Returns a list of type containers for the specified type code.
-         */
-        [[nodiscard]] auto get_type(const std::string& type, const std::map<std::string, std::string>& attributes = {}) const -> std::vector<std::weak_ptr<rsrc::type>>;
+        [[nodiscard]] auto find(const std::string& type_code, const std::vector<attribute>& attributes = {}) const -> resource_result;
+        [[nodiscard]] auto find(const std::string& type_code, resource::identifier id, const std::vector<attribute>& attributes = {}) const -> struct resource *;
+        [[nodiscard]] auto find(const std::string& type_code, const std::string& name_prefix, const std::vector<attribute>& attributes = {}) const -> resource_result;
 
-        /**
-         * Retrieve a set of resources from the manager, whose name begin with the specified prefix (or match exactly)
-         * for the specified type and attributes.
-         */
-        [[nodiscard]] auto find(const std::string& type, const std::string& name_prefix, const std::map<std::string, std::string>& attributes) -> std::vector<std::shared_ptr<resource>>;
+        template<resource_type T>
+        [[nodiscard]] auto find(const std::vector<attribute>& attributes = {}) const -> resource_result
+        {
+            return find(T::type_code(), attributes);
+        }
+
+        template<resource_type T>
+        [[nodiscard]] auto find(resource::identifier id, const std::vector<attribute>& attributes = {}) const -> struct resource *
+        {
+            return find(T::type_code(), id, attributes);
+        }
+
+        template<resource_type T>
+        [[nodiscard]] auto find(const std::string& name_prefix, const std::vector<attribute>& attributes = {}) const -> resource_result
+        {
+            return find(T::type_code(), name_prefix, attributes);
+        }
+
+        [[nodiscard]] auto all_types(const std::string& type_code, const std::vector<attribute>& attributes = {}) const -> std::vector<struct type *>;
+
+        template<resource_type T>
+        [[nodiscard]] auto all_types(const std::vector<attribute>& attributes = {}) const -> std::vector<struct vector *>
+        {
+            return all_types(T::type_code(), attributes);
+        }
+
+        template<resource_type T>
+        [[nodiscard]] auto load(resource::identifier id, const std::vector<attribute>& attributes = {}) const -> T
+        {
+            if (const auto resource = find<T>(id, attributes)) {
+                return std::move(T(resource->data(), resource->id(), resource->name()));
+            }
+            throw std::runtime_error("Resource not found: " + T::type_code() + ".#" + std::to_string(id));
+        };
+
+    private:
+        std::unordered_map<file::hash, class file> m_files;
+
+        manager() = default;
     };
-
 }
 
-#endif

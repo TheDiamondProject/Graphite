@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Tom Hancocks
+// Copyright (c) 2022 Tom Hancocks
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,225 +18,234 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "libGraphite/data/writer.hpp"
-#include "libGraphite/data/data.hpp"
-#include "libGraphite/encoding/macroman/macroman.hpp"
-#include <stdexcept>
-#include <iostream>
 #include <fstream>
+#include <iostream>
+#include <stdexcept>
+#include "libGraphite/data/writer.hpp"
+#include "libGraphite/encoding/macroman/macroman.hpp"
 
-// MARK: - Constructors
+// MARK: - Construction
 
-graphite::data::writer::writer()
-    : m_data(std::make_shared<graphite::data::data>())
+graphite::data::writer::writer(enum byte_order order)
+    : m_owns_data(true),
+      m_data(new class block(0, order))
 {
-    
+
 }
 
-graphite::data::writer::writer(std::shared_ptr<graphite::data::data> data)
-    : m_data(std::move(data))
+graphite::data::writer::writer(const class block *data)
+    : m_owns_data(false),
+      m_data(data)
 {
-    
+
 }
 
-// MARK: - Byte Order
+// MARK: - Destruction
+
+graphite::data::writer::~writer()
+{
+    if (m_owns_data) {
+        delete m_data;
+    }
+}
+
+// MARK: - Storage Management
+
+auto graphite::data::writer::expand_storage(std::size_t amount) -> void
+{
+    // NOTE: We only allow resizing of data objects that we own.
+    assert(m_owns_data);
+
+    // Construct a new data object with the appropriate new size, and copy in the old data.
+    auto required_size = size() + amount;
+    auto new_data = new class block(required_size, m_data->byte_order());
+    new_data->set(static_cast<uint32_t>(0), required_size);
+    new_data->copy_from(*m_data);
+
+    // Replace the old data with the new object.
+    delete m_data;
+    m_data = new_data;
+}
+
+auto graphite::data::writer::ensure_required_space(block::position position, std::size_t amount) -> void
+{
+    auto remaining = static_cast<block::position>(this->size()) - position;
+    auto delta = amount;
+    if (amount > remaining) {
+        delta -= remaining;
+    }
+    expand_storage(delta);
+}
+
+// MARK: - Position Management
+
+auto graphite::data::writer::set_position(block::position pos) -> void
+{
+    if (pos < 0 || pos > size()) {
+        throw std::runtime_error("Attempted to set position of data reader out of bounds.");
+    }
+    m_position = pos;
+}
+
+auto graphite::data::writer::move(block::position delta) -> void
+{
+    set_position(m_position + delta);
+}
+
+// MARK: - Write Operations
 
 template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type*>
-auto graphite::data::writer::swap(
-    T value,
-    enum graphite::data::byte_order value_bo,
-    enum graphite::data::byte_order result_bo
-) -> T {
-    // Return the value immediately if the value byte order matches the result byte order.
-    if (value_bo == result_bo) {
-        return value;
-    }
-    
-    T v = 0;
-    unsigned int size = sizeof(T);
-    
-    for (unsigned int i = 0; i < size; ++i) {
-        auto b = (size - i - 1) << 3U;
-        v |= ((value >> b) & 0xFF) << (i << 3U);
-    }
-    
-    return v;
-}
-
-// MARK: - Data
-
-auto graphite::data::writer::data() -> std::shared_ptr<graphite::data::data>
+auto graphite::data::writer::write_integer(T value, std::size_t count, std::size_t size) -> void
 {
-    return m_data;
-}
+    auto swapped = swap(value, native_byte_order(), m_data->byte_order());
 
-// MARK: - Size
+    ensure_required_space(position(), size * count);
+    auto ptr = m_data->template get<uint8_t *>(position());
 
-auto graphite::data::writer::size() const -> std::size_t
-{
-    return m_data->size();
-}
-
-// MARK: - Position
-
-auto graphite::data::writer::position() const -> uint64_t
-{
-    return m_pos;
-}
-
-auto graphite::data::writer::set_position(uint64_t pos) -> void
-{
-    m_pos = pos;
-}
-
-auto graphite::data::writer::move(int64_t delta) -> void
-{
-    // TODO: Bounds checking
-    m_pos += delta;
-}
-
-// MARK: - Template Write
-
-template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type*>
-auto graphite::data::writer::write_integer(T value) -> void
-{
-    unsigned int size = sizeof(T);
-    auto swapped = swap(value, m_native_bo, m_data->current_byte_order());
-    auto data = m_data->get();
-    
-    for (unsigned int i = 0; i < size; ++i) {
-        auto b = i << 3U;
-        
-        // Two modes for writing. If we're at the very end of data then we need to insert.
-        // If we're not at the end of the data then we can either overwrite the current byte
-        // or insert a new byte.
-        if (m_pos >= data->size()) {
-            data->push_back((swapped >> b) & 0xFF);
-            m_pos++;
-        }
-        else {
-            (*data)[m_pos++] = (swapped >> b) & 0xFF;
+    for (auto n = 0; n < count; ++n) {
+        for (auto i = 0; i < size; ++i) {
+            auto b = i << 3ULL;
+            *ptr++ = (swapped >> b) & 0xFF;
+            move();
         }
     }
-
-    m_data->resync_size();
 }
 
+template<typename E, typename std::enable_if<std::is_enum<E>::value>::type*>
+auto graphite::data::writer::write_enum(E value, std::size_t count, std::size_t size) -> E
+{
+    return write_integer<E>(value, count, size);
+}
 
-// MARK: - Write Integer Functions
 
 auto graphite::data::writer::write_byte(uint8_t value, std::size_t count) -> void
 {
-    for (auto i = 0; i < count; ++i) {
-        write_integer<uint8_t>(value);
-    }
+    write_integer(value, count);
 }
 
-auto graphite::data::writer::write_signed_byte(int8_t value) -> void
+auto graphite::data::writer::write_signed_byte(int8_t value, std::size_t count) -> void
 {
-    write_byte(static_cast<uint8_t>(value));
+    write_integer(static_cast<uint8_t>(value), count);
 }
 
-auto graphite::data::writer::write_short(uint16_t value) -> void
+auto graphite::data::writer::write_short(uint16_t value, std::size_t count) -> void
 {
-    write_integer<uint16_t>(value);
+    write_integer(value, count);
 }
 
-auto graphite::data::writer::write_signed_short(int16_t value) -> void
+auto graphite::data::writer::write_signed_short(int16_t value, std::size_t count) -> void
 {
-    write_short(static_cast<uint16_t>(value));
+    write_integer(static_cast<uint16_t>(value), count);
+};
+
+auto graphite::data::writer::write_fixed_point(double value, std::size_t count) -> void
+{
+    auto integral_value = static_cast<int32_t>(value * (1 << 16));
+    write_integer(integral_value, count);
 }
 
-auto graphite::data::writer::write_long(uint32_t value) -> void
+auto graphite::data::writer::write_triple(uint32_t value, std::size_t count) -> void
 {
-    write_integer<uint32_t>(value);
+    write_integer(value, count, 3);
+};
+
+auto graphite::data::writer::write_long(uint32_t value, std::size_t count) -> void
+{
+    write_integer(value, count);
+};
+
+auto graphite::data::writer::write_signed_long(int32_t value, std::size_t count) -> void
+{
+    write_integer(static_cast<uint32_t>(value), count);
+};
+
+auto graphite::data::writer::write_quad(uint64_t value, std::size_t count) -> void
+{
+    write_integer(value, count);
+};
+
+auto graphite::data::writer::write_signed_quad(int64_t value, std::size_t count) -> void
+{
+    write_integer(static_cast<uint64_t>(value), count);
 }
 
-auto graphite::data::writer::write_signed_long(int32_t value) -> void
+auto graphite::data::writer::write_pstr(const std::string &str) -> std::size_t
 {
-    write_long(static_cast<uint32_t>(value));
-}
+    auto bytes = encoding::mac_roman::from_utf8(str);
 
-auto graphite::data::writer::write_quad(uint64_t value) -> void
-{
-    write_integer<uint64_t>(value);
-}
-
-auto graphite::data::writer::write_signed_quad(int64_t value) -> void
-{
-    write_quad(static_cast<uint64_t>(value));
-}
-
-// MARK: - Write Strings
-
-auto graphite::data::writer::write_cstr(const std::string& str, std::size_t size) -> void
-{
-    std::vector<uint8_t> bytes;
-    
-    if (size == 0) {
-        // NUL Terminated C-String.
-        bytes = graphite::encoding::mac_roman::from_utf8(str);
-        bytes.push_back(0);
-    }
-    else {
-        // Fixed length C-String
-        bytes = graphite::encoding::mac_roman::from_utf8(str);
-        bytes.resize(size, 0x00);
-    }
-    
-    write_bytes(bytes);
-}
-
-auto graphite::data::writer::write_pstr(const std::string& str) -> void
-{
-    auto bytes = graphite::encoding::mac_roman::from_utf8(str);
-    
     if (bytes.size() > 0xFF) {
         bytes.resize(0xFF);
     }
-    auto size = static_cast<uint8_t>(bytes.size());
-    write_byte(static_cast<uint8_t>(size));
+
+    write_byte(static_cast<uint8_t>(bytes.size()));
     write_bytes(bytes);
+    return bytes.size();
 }
 
-// MARK: - Write Bytes
-
- auto graphite::data::writer::write_bytes(const std::vector<uint8_t>& bytes) -> void
+auto graphite::data::writer::write_cstr(const std::string &str, std::size_t size) -> std::size_t
 {
-    std::vector<char> converted_bytes(bytes.begin(), bytes.end());
-    write_bytes(converted_bytes);
+    std::vector<uint8_t> bytes { encoding::mac_roman::from_utf8(str) };
+
+    if (size == 0) {
+        // NULL terminated C-String
+        bytes.push_back( '\0' );
+    }
+    else {
+        // Fixed length C-String
+        bytes.resize(size, '\0');
+    }
+
+    write_bytes(bytes);
+    return bytes.size();
 }
 
- auto graphite::data::writer::write_bytes(const std::vector<char>& bytes) -> void
+auto graphite::data::writer::write_bytes(const std::vector<uint8_t> &bytes) -> void
 {
-    auto vec = m_data->get();
-    vec->insert(vec->end(), bytes.begin(), bytes.end());
-    m_pos += bytes.size();
-    m_data->resync_size();
-}
+    ensure_required_space(position(), bytes.size());
+    auto ptr = m_data->template get<uint8_t *>(position());
 
-auto graphite::data::writer::write_data(const std::shared_ptr<graphite::data::data>& data) -> void
-{
-    auto bytes = data->get();
-    auto vec = m_data->get();
-    vec->insert(vec->end(), bytes->begin() + data->start(), bytes->begin() + data->start() + data->size());
-    m_pos += data->size();
-    m_data->resync_size();
-}
-
-auto graphite::data::writer::pad_to_size(std::size_t size) -> void
-{
-    while (m_data->size() < size) {
-        write_byte(0);
+    for (auto v : bytes) {
+        *ptr++ = v;
+        move();
     }
 }
 
-// MARK: - Saving
-
-auto graphite::data::writer::save(const std::string& path) const -> void
+auto graphite::data::writer::write_bytes(const std::vector<char> &bytes) -> void
 {
-    std::ofstream f(path, std::ios::out | std::ios::binary);
-    auto data = m_data->get()->data();
-    f.write(data, m_data->size());
-    f.close();
+    write_bytes(std::move(std::vector<uint8_t>(bytes.begin(), bytes.end())));
+}
+
+auto graphite::data::writer::write_data(const class block *data) -> void
+{
+    assert(data != m_data);
+
+    ensure_required_space(position(), data->size());
+    auto ptr = m_data->template get<uint8_t *>(position());
+
+    for (auto i = 0; i < data->size(); ++i) {
+        ptr[i] = *data->get<uint8_t *>(i);
+        move();
+    }
+}
+
+// MARK: - Padding
+
+auto graphite::data::writer::pad_to_size(std::size_t size) -> void
+{
+    if (this->size() >= size) {
+        return;
+    }
+
+    auto required = size - this->size();
+    set_position(this->size());
+    write_byte(0, required);
+}
+
+// MARK: - Saving / File Access
+
+auto graphite::data::writer::save(const std::string &path, std::size_t size) const -> void
+{
+    std::ofstream file { path, std::ios::out | std::ios::binary };
+    file.write(m_data->get<char *>(), size == 0 ? m_data->size() : size);
+    file.close();
 }

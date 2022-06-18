@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Tom Hancocks
+// Copyright (c) 2022 Tom Hancocks
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,188 +18,165 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <stdexcept>
 #include "libGraphite/rsrc/file.hpp"
+#include "libGraphite/rsrc/type.hpp"
+#include "libGraphite/rsrc/resource.hpp"
 #include "libGraphite/data/reader.hpp"
-#include "libGraphite/rsrc/classic.hpp"
-#include "libGraphite/rsrc/extended.hpp"
-#include "libGraphite/rsrc/rez.hpp"
 
-// MARK: - Construct
+#include "libGraphite/rsrc/classic/classic.hpp"
+#include "libGraphite/rsrc/extended/extended.hpp"
+#include "libGraphite/rsrc/rez/rez.hpp"
 
-graphite::rsrc::file::file(std::string path)
-    : m_path(std::move(path))
+#include "libGraphite/util/hashing.hpp"
+
+// MARK: - Construction
+
+graphite::rsrc::file::file(const std::string &path)
 {
-	read(m_path);
+    read(path);
+}
+
+// MARK: - Hashing
+
+auto graphite::rsrc::file::hash_for_path(const std::string &path) -> hash
+{
+    return hashing::xxh64(path.c_str(), path.size());
 }
 
 // MARK: - Accessors
 
-auto graphite::rsrc::file::type_count() const -> std::size_t
-{
-	return m_types.size();
-}
-
-auto graphite::rsrc::file::types() const -> std::vector<std::shared_ptr<type>>
-{
-    return m_types;
-}
-
-auto graphite::rsrc::file::current_format() const -> graphite::rsrc::file::format
-{
-	return m_format;
-}
-
 auto graphite::rsrc::file::name() const -> std::string
 {
-    std::string out;
-    auto path = m_path;
-
-    while (!m_path.empty()) {
-        if (path.back() == '.') {
-            out.clear();
-            path.pop_back();
-        }
-        else if (path.back() == '/') {
-            return out;
-        }
-        else {
-            out.insert(out.begin(), path.back());
-            path.pop_back();
-        }
-    }
-
-    return out;
+    auto pos = m_path.find_last_of('/');
+    return m_path.substr(pos + 1);
 }
 
-auto graphite::rsrc::file::path() const -> std::string
+auto graphite::rsrc::file::path() const -> const std::string&
 {
     return m_path;
 }
 
-
-// MARK: - File Reading
-
-auto graphite::rsrc::file::read(const std::string& path) -> void
+auto graphite::rsrc::file::type_count() const -> std::size_t
 {
-	// Load the file data and prepare to parse the contents of the resource
-	// file. We also need to keep hold of the actual internal data.
-	auto reader = std::make_shared<graphite::data::reader>(path);
-	m_data = reader->get();
+    return m_types.size();
+}
 
-	// 1. Determine the file format and validity.
-    if (reader->read_quad(0, graphite::data::reader::mode::peek) == 1) {
-		m_format = graphite::rsrc::file::format::extended;
-	}
-    else if (reader->read_long(0, graphite::data::reader::mode::peek) == 'BRGR') {
-        m_format = graphite::rsrc::file::format::rez;
+auto graphite::rsrc::file::types() const -> std::vector<type::hash>
+{
+    std::vector<type::hash> types;
+    for (const auto& type : m_types) {
+        types.emplace_back(type.first);
+    }
+    return std::move(types);
+}
+
+auto graphite::rsrc::file::type_codes() const -> std::vector<std::string>
+{
+    std::vector<std::string> types;
+    for (const auto& type : m_types) {
+        types.emplace_back(type.second.code());
+    }
+    return std::move(types);
+}
+
+auto graphite::rsrc::file::format() const -> enum format
+{
+    return m_format;
+}
+
+auto graphite::rsrc::file::hash_value() const -> hash
+{
+    return hash_for_path(m_path);
+}
+
+
+// MARK: - Type Management
+
+auto graphite::rsrc::file::add_type(const struct type &type) -> void
+{
+    m_types.emplace(std::pair(type.hash_value(), std::move(type)));
+}
+
+auto graphite::rsrc::file::add_types(const std::vector<struct type> &types) -> void
+{
+    for (const auto& type : types) {
+        m_types.emplace(std::pair(type.hash_value(), std::move(type)));
+
+        // We need to resync all of the type references inside the resources for the type.
+        m_types.at(type.hash_value()).sync_resource_type_references();
+    }
+}
+
+auto graphite::rsrc::file::type(const std::string &code) const -> const struct type *
+{
+    auto it = m_types.find(type::hash_for_type_code(code));
+    return (it == m_types.end()) ? nullptr : &it->second;
+}
+
+auto graphite::rsrc::file::type(type::hash hash) const -> const struct type *
+{
+    auto it = m_types.find(hash);
+    return (it == m_types.end()) ? nullptr : &it->second;
+}
+
+auto graphite::rsrc::file::find(const std::string &type_code, resource::identifier id) const -> const struct resource *
+{
+    if (auto type = this->type(type_code)) {
+        return type->resource_with_id(id);
+    }
+    return nullptr;
+}
+
+// MARK: - File Access
+
+auto graphite::rsrc::file::read(const std::string &path) -> void
+{
+    m_path = path;
+    m_data = new graphite::data::block(m_path);
+    graphite::data::reader reader { m_data };
+
+    if (rsrc::format::extended::parse(reader, *this)) {
+        m_format = format::extended;
+    }
+    else if (rsrc::format::rez::parse(reader, *this)) {
+        m_format = format::rez;
+    }
+    else if (rsrc::format::classic::parse(reader, *this)) {
+        m_format = format::classic;
     }
     else {
-		m_format = graphite::rsrc::file::format::classic;
-	}
-
-	// 2. Launch the appropriate parser for the current format of the file.
-	switch (m_format) {
-		case graphite::rsrc::file::format::classic: {
-			m_types = graphite::rsrc::classic::parse(reader);
-			break;
-		}
-		case graphite::rsrc::file::format::extended: {
-			m_types = graphite::rsrc::extended::parse(reader);
-			break;
-		}
-		case graphite::rsrc::file::format::rez: {
-			m_types = graphite::rsrc::rez::parse(reader);
-			break;
-		}
-
-		default:
-			throw std::runtime_error("Resource File format not currently handled.");
-			break;
-	}
-}
-
-// MARK: - File Writing
-
-auto graphite::rsrc::file::write(const std::string& path, enum graphite::rsrc::file::format fmt) -> void
-{
-	// Determine the correct location to save to, or throw an error.
-	auto write_path = path;
-	if (path.empty()) {
-		if (m_path.empty()) {
-			throw std::runtime_error("Unable to write resource file to disk. No save location provided.");
-		}
-		write_path = m_path;
-	}
-
-	// Update the file path accordingly.
-    m_path = write_path;
-
-	// Perform the write operation...
-	switch (fmt) {
-		case graphite::rsrc::file::format::classic: {
-			graphite::rsrc::classic::write(write_path, m_types);
-			break;
-		}
-		case graphite::rsrc::file::format::extended: {
-			graphite::rsrc::extended::write(write_path, m_types);
-			break;
-		}
-		case graphite::rsrc::file::format::rez: {
-			graphite::rsrc::rez::write(write_path, m_types);
-			break;
-		}
-	}
-	
-}
-
-// MARK: - Resource Managemnet
-
-auto graphite::rsrc::file::add_resource(const std::string &code, const int64_t &id, const std::string &name,
-                                        const std::shared_ptr<graphite::data::data> &data,
-                                        const std::map<std::string, std::string> &attributes) -> void
-{
-    // Get the container
-    if (auto type = type_container(code, attributes).lock()) {
-        // Add the resource...
-        auto resource = std::make_shared<graphite::rsrc::resource>(id, type, name, data);
-        type->add_resource(resource);
-        return;
+        throw std::runtime_error("Failed to read resource file. Format not recognised: " + m_path);
     }
-
-    throw std::runtime_error("Failed to find or create resource type container for " + code);
 }
 
-auto graphite::rsrc::file::type_container(const std::string &code,
-                                          const std::map<std::string, std::string> &attributes) -> std::weak_ptr<graphite::rsrc::type>
+auto graphite::rsrc::file::write() -> bool
 {
-    for (const auto& type : m_types) {
-        if (type->code() == code && type->attributes() == attributes) {
-            // Note: Not sure if this is the correct solution here (if not the solution will need some further though)t
-            // This currently assumes that the attributes are part of the type definition, and that
-            // `alph` != `alph:lang=en` != `alph:lang=en:bar=2`
-            return type;
-        }
-    }
-
-    auto type = std::make_shared<graphite::rsrc::type>(code, attributes);
-    m_types.push_back(type);
-    return type;
+    return write(m_path, m_format);
 }
 
-auto graphite::rsrc::file::find(const std::string& type, const int64_t& id, const std::map<std::string, std::string> &attributes) -> std::weak_ptr<graphite::rsrc::resource>
+auto graphite::rsrc::file::write(const std::string &path) -> bool
 {
-    if (auto container = type_container(type, attributes).lock()) {
-        return container->get(id);
-    }
-    return {};
+    return write(path, m_format);
 }
 
-auto graphite::rsrc::file::find(const std::string &type, const std::string &name_prefix,
-                                const std::map<std::string, std::string> &attributes) -> std::vector<std::shared_ptr<resource>>
+auto graphite::rsrc::file::write(const std::string &path, enum format format) -> bool
 {
-    if (auto container = type_container(type, attributes).lock()) {
-        return container->get(name_prefix);
+    if (m_path != path) {
+        m_path = path;
     }
-    return {};
+    m_format = format;
+
+    switch (m_format) {
+        case format::extended:
+            return rsrc::format::extended::write(*this, m_path);
+
+        case format::rez:
+            return rsrc::format::rez::write(*this, m_path);
+
+        case format::classic:
+            return rsrc::format::classic::write(*this, m_path);
+
+        default:
+            return false;
+    }
 }

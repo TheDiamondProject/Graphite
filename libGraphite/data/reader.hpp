@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Tom Hancocks
+// Copyright (c) 2022 Tom Hancocks
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,180 +18,134 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#if !defined(GRAPHITE_DATA_READER)
-#define GRAPHITE_DATA_READER
+#pragma once
 
-#include <memory>
+#include <vector>
+#include <type_traits>
 #include "libGraphite/data/data.hpp"
+#include "libGraphite/util/concepts.hpp"
+#include "libGraphite/data/encoding.hpp"
 
-namespace graphite::data {
+namespace graphite::data
+{
+    class reader;
 
-/**
- * The `graphite::data::reader` class is used to read values from a
- * `graphite::data::data` object.
- */
+    template<class T>
+    concept readable_resource_type = resource_type<T> && decodable<T>;
+
     class reader
     {
     public:
-        /**
-         * The reading mode of the receiver.
-         *
-         * ::peek - peek at a value at the specified offset from the current
-         *          position, without affecting the current position.
-         * ::advance - advance the current position after reading the value at
-         *          the specified offset from the current position.
-         */
-        enum mode { advance, peek };
-
-    private:
-        graphite::data::byte_order m_native_bo { lsb };
-        std::shared_ptr<data> m_data { nullptr };
-        std::vector<uint64_t> m_pos_stack;
-        uint64_t m_pos { 0 };
-
-        template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-        auto read_integer(int64_t offset, reader::mode mode = advance, uint64_t size = -1) -> T;
-
-        /**
-         * Swap the bytes of an integer value from the source byte order to the specified
-         * destination byte order.
-         */
-        template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-        auto swap(
-            T value,
-            enum graphite::data::byte_order value_bo,
-            enum graphite::data::byte_order result_bo,
-            uint64_t size = -1
-        ) -> T;
+        enum class mode { advance, peek };
 
     public:
+        explicit reader(const class block *data, block::position pos = 0, bool owns = false);
+        ~reader();
 
-        /**
-         * Construct a new `graphite::data::reader` object using the data in
-         * the specified file.
-         */
-        explicit reader(const std::string& path);
+        static auto file(const std::string& path, block::position pos = 0) -> reader;
 
-        /**
-         * Construct a new `graphite::data::reader` object using the
-         * specified `graphite::data::data` object, constraining the available
-         * read region of the data.
-         */
-        explicit reader(std::shared_ptr<data> data, uint64_t pos = 0);
+        [[nodiscard]] inline auto data() const -> const class block * { return m_data; }
+        [[nodiscard]] inline auto owns_data() const -> bool { return m_owns_data; }
 
-        /**
-         * Returns a shared copy of the raw data being used by the data slice.
-         */
-        auto get() -> std::shared_ptr<data>;
+        [[nodiscard]] inline auto position() const -> block::position { return m_position; }
+        [[nodiscard]] inline auto size() const -> std::size_t { return m_data->size(); }
+        [[nodiscard]] inline auto eof() const -> bool { return position() >= size(); }
+        [[nodiscard]] inline auto byte_order() const -> byte_order { return m_data->byte_order(); }
 
-        /**
-         * Returns the current size of the underlying `graphite::data::data` object
-         * being referenced by the reader.
-         *
-         * Note: This size will be the _constrained_ size, if the reader was
-         * constrained.
-         */
-        [[nodiscard]] auto size() const -> std::size_t;
+        auto change_byte_order(enum byte_order order) -> void { const_cast<class block *>(m_data)->change_byte_order(order); }
 
-        /**
-         * Reports if the position of the receiver is at or past the end of the
-         * the underlying data.
-         */
-        [[nodiscard]] auto eof() const -> bool;
+        auto set_position(block::position pos) -> void;
+        auto move(block::position delta = 1) -> void;
 
-        /**
-         * Reports the current position of the receiver relative to its own
-         * constraints.
-         */
-        [[nodiscard]] auto position() const -> uint64_t;
-
-        /**
-         * Set the position of the receiver, relative to its own constraints.
-         */
-        auto set_position(uint64_t pos) -> void;
-
-        /**
-         * Move the current position of the receiver by the specified amount.
-         */
-        auto move(int64_t delta = 1) -> void;
-
-        /**
-         * Read a single unsigned byte from data.
-         */
-        auto read_byte(int64_t offset = 0, reader::mode mode = advance) -> uint8_t;
-
-        /**
-         * Read a single signed byte from data.
-         */
-        auto read_signed_byte(int64_t offset = 0, reader::mode mode = advance) -> int8_t;
-
-        /**
-         * Read a single unsigned short from data.
-         */
-        auto read_short(int64_t offset = 0, reader::mode mode = advance) -> uint16_t;
-
-        /**
-         * Read a single signed short from data.
-         */
-        auto read_signed_short(int64_t offset = 0, reader::mode mode = advance) -> int16_t;
-
-        /**
-         * Read a single unsigned triple from data. (3 bytes)
-         */
-        auto read_triple(int64_t offset = 0, reader::mode mode = advance) -> uint32_t;
-
-        /**
-         * Read a single unsigned long from data.
-         */
-        auto read_long(int64_t offset = 0, reader::mode mode = advance) -> uint32_t;
-
-        /**
-         * Read a single signed long from data.
-         */
-        auto read_signed_long(int64_t offset = 0, reader::mode mode = advance) -> int32_t;
-
-        /**
-         * Read a single unsigned quad from data.
-         */
-        auto read_quad(int64_t offset = 0, reader::mode mode = advance) -> uint64_t;
-
-        /**
-         * Read a single signed quad from data.
-         */
-        auto read_signed_quad(int64_t offset = 0, reader::mode mode = advance) -> int64_t;
-
-        /**
-         * Read a C-String from data.
-         */
-        auto read_cstr(int64_t size = -1, int64_t offset = 0, reader::mode mode = advance) -> std::string;
-
-        /**
-         * Read a Pascal String from data.
-         */
-        auto read_pstr(int64_t offset = 0, reader::mode mode = advance) -> std::string;
-
-        /**
-         * Read a chunk of data from the source data.
-         */
-        auto read_data(int64_t size, int64_t offset = 0, reader::mode mode = advance) -> std::shared_ptr<data>;
-
-        /**
-         * Read a series of bytes from the source data.
-         */
-        auto read_bytes(int64_t size, int64_t offset = 0, reader::mode mode = advance) -> std::vector<char>;
-
-        /**
-         * Save the current position of the reader.
-         */
         auto save_position() -> void;
-
-        /**
-         * Restore a previous position of the reader.
-         */
         auto restore_position() -> void;
 
+        template<typename T, typename std::enable_if<std::is_integral<T>::value && std::is_signed<T>::value>>
+        auto read_integer(block::position offset = 0, mode mode = mode::advance) -> T { return 0; }
+
+        template<std::int8_t>
+        auto read_integer(block::position offset = 0, mode mode = mode::advance) -> std::int8_t { return read_signed_byte(offset, mode); }
+
+        template<std::int16_t>
+        auto read_integer(block::position offset = 0, mode mode = mode::advance) -> std::int16_t { return read_signed_short(offset, mode); }
+
+        template<std::int32_t>
+        auto read_integer(block::position offset = 0, mode mode = mode::advance) -> std::int32_t { return read_signed_long(offset, mode); }
+
+        template<std::int64_t>
+        auto read_integer(block::position offset = 0, mode mode = mode::advance) -> std::int64_t { return read_signed_quad(offset, mode); }
+
+        template<typename T, typename std::enable_if<std::is_integral<T>::value>>
+        auto read_integer(block::position offset = 0, mode mode = mode::advance) -> T { return 0; }
+
+        template<std::uint8_t>
+        auto read_integer(block::position offset = 0, mode mode = mode::advance) -> std::uint8_t { return read_byte(offset, mode); }
+
+        template<std::uint16_t>
+        auto read_integer(block::position offset = 0, mode mode = mode::advance) -> std::uint16_t { return read_short(offset, mode); }
+
+        template<std::uint32_t>
+        auto read_integer(block::position offset = 0, mode mode = mode::advance) -> std::uint32_t { return read_long(offset, mode); }
+
+        template<std::uint64_t>
+        auto read_integer(block::position offset = 0, mode mode = mode::advance) -> std::uint64_t { return read_quad(offset, mode); }
+
+        auto read_byte(block::position offset = 0, mode mode = mode::advance) -> uint8_t;
+        auto read_signed_byte(block::position offset = 0, mode mode = mode::advance) -> int8_t;
+
+        auto read_short(block::position offset = 0, mode mode = mode::advance) -> uint16_t;
+        auto read_signed_short(block::position offset = 0, mode mode = mode::advance) -> int16_t;
+
+        auto read_fixed_point(block::position offset = 0, mode mode = mode::advance) -> double;
+
+        auto read_triple(block::position offset = 0, mode mode = mode::advance) -> uint32_t;
+
+        auto read_long(block::position offset = 0, mode mode = mode::advance) -> uint32_t;
+        auto read_signed_long(block::position offset = 0, mode mode = mode::advance) -> int32_t;
+
+        auto read_quad(block::position offset = 0, mode mode = mode::advance) -> uint64_t;
+        auto read_signed_quad(block::position offset = 0, mode mode = mode::advance) -> int64_t;
+
+        auto read_cstr(std::size_t length = 0, block::position offset = 0, mode mode = mode::advance) -> std::string;
+        auto read_pstr(block::position offset = 0, mode mode = mode::advance) -> std::string;
+
+        auto read_data(std::size_t length, block::position offset = 0, mode mode = mode::advance) -> class block;
+        auto read_bytes(std::size_t length, block::position offset = 0, mode mode = mode::advance) -> std::vector<char>;
+
+        template<decodable T>
+        auto read(block::position offset = 0, mode mode = mode::advance) -> T
+        {
+            if (mode == mode::peek) {
+                save_position();
+            }
+
+            move(offset);
+            auto object = T(*this);
+
+            if (mode == mode::peek) {
+                restore_position();
+            }
+
+            return std::move(object);
+        }
+
+        template<decompressible_block T>
+        auto read_compressed_data(std::size_t length, block::position offset = 0, mode mode = mode::advance) -> class block
+        {
+            return T::decompress(std::move(read_data(length, offset, mode)));
+        }
+
+        template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
+        auto read_integer(block::position offset = 0, mode mode = mode::advance, std::size_t size = sizeof(T)) -> T;
+
+        template<typename E, typename std::enable_if<std::is_enum<E>::value>::type* = nullptr>
+        auto read_enum(block::position offset = 0, mode mode = mode::advance, std::size_t size = sizeof(E)) -> E;
+
+    private:
+        bool m_owns_data { false };
+        const class block *m_data { nullptr };
+        std::vector<block::position> m_position_stack;
+        block::position m_position;
     };
 
 }
-
-#endif

@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Tom Hancocks
+// Copyright (c) 2022 Tom Hancocks
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,97 +18,104 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#if !defined(GRAPHITE_DATA)
-#define GRAPHITE_DATA
+#pragma once
 
+#include <cstdint>
 #include <memory>
 #include <vector>
-#include <string>
 #include <type_traits>
-#include <stdexcept>
+#include <concepts>
+#include "libGraphite/data/endianess.hpp"
 
 namespace graphite::data
 {
+    struct block;
 
-    /**
-     * The byte order represents the endianness of a data value.
-     */
-    enum byte_order : int { msb = 0, lsb = 1 };
-
-    /**
-     * The `graphite::data::data` class is used to store binary data in memory,
-     * and can be written to and read from disk.
-     */
-    class data: public std::enable_shared_from_this<data>
-    {
-    private:
-        enum graphite::data::byte_order m_bo { msb };
-        std::shared_ptr<std::vector<char>> m_data { nullptr };
-        std::size_t m_start { 0 };
-        std::size_t m_size { 0 };
-
-    public:
-        /**
-         * Construct a new empty `graphite::data::data` object.
-         */
-        explicit data(enum graphite::data::byte_order bo = msb);
-
-        /**
-         * Construct a new `graphite::data::data` object with the specified capacity.
-         */
-        explicit data(std::size_t capacity, enum graphite::data::byte_order bo = msb);
-
-        /**
-         * Construct a new `graphite::data::data` object with the provided data.
-         */
-        data(std::shared_ptr<std::vector<char>> bytes, std::size_t size, std::size_t start = 0, enum graphite::data::byte_order bo = msb);
-
-        /**
-         * Calculate an offset within the receiver's data.
-         */
-        auto relative_offset(int64_t offset) const -> int64_t;
-
-        /**
-         * Returns the current size of the receiver.
-         */
-        auto size() const -> std::size_t;
-
-        /**
-         * Returns the start location of the receiver.
-         */
-        auto start() const -> std::size_t;
-
-        /**
-         * Returns the intended byte order of the receiver.
-         */
-        auto current_byte_order() const -> enum graphite::data::byte_order;
-
-        /**
-         * Set a new byte order for the receiver.
-         *
-         * Warning: This can cause corruption of values being read or written if the
-         * byte order is set incorrectly.
-         */
-        auto set_byte_order(enum graphite::data::byte_order bo) -> void;
-
-        /**
-         * Returns a pointer to the internal data vector of the receiver.
-         */
-        auto get() -> std::shared_ptr<std::vector<char>>;
-
-        /**
-         * Returns the element at the specified index.
-         */
-        auto at(std::size_t offset) const -> char;
-
-        /**
-         * Resync the size of the data from the internal data vector. This is required
-         * when attempting to read back data from a resource that has just been written to.
-         */
-         auto resync_size() -> void;
-
+    template<class T>
+    concept compressible_block = requires(const T& block, const data::block& uncompressed) {
+        { T::compress(uncompressed) } -> std::same_as<data::block>;
     };
 
+    template<class T>
+    concept decompressible_block = requires(const T& block, const data::block& compressed) {
+        { T::decompress(compressed) } -> std::same_as<data::block>;
+    };
+
+    struct block
+    {
+    public:
+        typedef std::int64_t position;
+
+#if __x86_64__
+        static constexpr std::size_t minimum_chunk_size = sizeof(unsigned __int128);
+#elif __arm64__
+        static constexpr std::size_t minimum_chunk_size = sizeof(uint64_t);
+#else
+        static constexpr std::size_t minimum_chunk_size = sizeof(uint32_t);
+#endif
+
+    public:
+        block() = default;
+        explicit block(std::size_t capacity, enum byte_order order = byte_order::msb);
+        explicit block(const std::string& path, enum byte_order order = byte_order::msb);
+        block(const block& source, bool copy = true);
+        block(const block& source, block::position pos, std::size_t count, bool copy = true);
+
+        block(const block& data);
+        block(block&& data);
+
+        auto operator=(const block& data) -> struct block&;
+        auto operator=(block&& data) noexcept -> struct block&;
+
+        ~block();
+
+        template<typename T, typename std::enable_if<std::is_pointer<T>::value>::type* = nullptr>
+        [[nodiscard]] inline auto get(block::position offset = 0) const -> T { return reinterpret_cast<T>(get_offset_data(offset)); }
+
+        template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
+        [[nodiscard]] inline auto get(block::position offset = 0) const -> T { return swap(*get<T *>(offset), m_byte_order); }
+
+        template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
+        [[nodiscard]] inline auto operator[] (block::position offset) const -> T
+        {
+            return get<T>(offset);
+        }
+
+        [[nodiscard]] inline auto raw_size() const -> std::size_t { return m_raw_size; }
+        [[nodiscard]] inline auto size() const -> std::size_t { return m_count > 0 ? m_count : m_data_size; }
+        [[nodiscard]] inline auto start() const -> block::position { return m_start_position; }
+        [[nodiscard]] inline auto byte_order() const -> byte_order { return m_byte_order; }
+
+        auto change_byte_order(enum byte_order order) -> void { m_byte_order = order; }
+
+        auto clear() -> void;
+
+        auto set(uint8_t value, std::size_t bytes = 0, block::position start = 0) -> void;
+        auto set(uint16_t value, std::size_t bytes = 0, block::position start = 0) -> void;
+        auto set(uint32_t value, std::size_t bytes = 0, block::position start = 0) -> void;
+
+        auto copy_from(const block& source) const -> void;
+
+        [[nodiscard]] auto slice(block::position pos, std::size_t size, bool copy = false) const -> block;
+
+    private:
+        enum byte_order m_byte_order { byte_order::msb };
+        std::size_t m_raw_size { 0 };
+        std::size_t m_data_size { 0 };
+        block::position m_start_position { 0 };
+        std::size_t m_count { 0 };
+        void *m_raw { nullptr };
+        void *m_data { nullptr };
+
+        const block *m_allocation_owner { nullptr };
+        std::uint32_t m_users { 0 };
+
+        [[nodiscard]] inline auto get_offset_data(block::position offset) const -> void *
+        {
+            return reinterpret_cast<void *>(reinterpret_cast<block::position>(m_data) + m_start_position + offset);
+        }
+
+        auto clone_from(const graphite::data::block& source) -> void;
+    };
 }
 
-#endif

@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Tom Hancocks
+// Copyright (c) 2022 Tom Hancocks
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,91 +20,111 @@
 
 #include "libGraphite/rsrc/resource.hpp"
 #include "libGraphite/rsrc/type.hpp"
+#include "libGraphite/util/hashing.hpp"
 
-// MARK: - Constructor
 
-graphite::rsrc::resource::resource(int64_t id, std::string name)
-	: m_id(id), m_name(std::move(name))
+// MARK: - Construction
+
+graphite::rsrc::resource::resource(resource::identifier id, const std::string &name)
+    : m_id(id), m_name(name)
 {
-	
 }
 
-graphite::rsrc::resource::resource(
-	int64_t id, 
-	std::weak_ptr<graphite::rsrc::type> type, 
-	std::string name,
-	std::shared_ptr<graphite::data::data> data
-)
-	: m_id(id), m_name(std::move(name)), m_type(std::move(type)), m_data(std::move(data))
+graphite::rsrc::resource::resource(struct type *type, resource::identifier id, const std::string &name, data::block data)
+    : m_type(type), m_id(id), m_name(name), m_data(std::move(data))
 {
-	
 }
 
-// MARK: - Resource Metadata Accessors
-
-auto graphite::rsrc::resource::id() const -> int64_t
+graphite::rsrc::resource::resource(const resource &resource)
+    : m_type(resource.m_type),
+      m_id(resource.m_id),
+      m_name(resource.m_name),
+      m_data(fast_data::data(resource.m_data, true))
 {
-	return m_id;
 }
 
-auto graphite::rsrc::resource::set_id(int64_t id) -> void
+graphite::rsrc::resource::resource(resource &&resource) noexcept
+    : m_type(resource.m_type),
+      m_id(resource.m_id),
+      m_name(resource.m_name),
+      m_data(std::move(resource.m_data))
 {
-	m_id = id;
+    resource.m_type = nullptr;
 }
 
-auto graphite::rsrc::resource::name() const -> std::string
+// MARK: - Destruction
+
+graphite::rsrc::resource::~resource()
 {
-	return m_name;
 }
 
-auto graphite::rsrc::resource::set_name(const std::string& name) -> void
+// MARK: - Accessors
+
+auto graphite::rsrc::resource::id() const -> resource::identifier
 {
-	m_name = name;
+    return m_id;
 }
 
-// MARK: - Resource Type
-
-auto graphite::rsrc::resource::type() const -> std::weak_ptr<graphite::rsrc::type>
+auto graphite::rsrc::resource::type() const -> struct type *
 {
-	return m_type;
+    return m_type;
 }
 
-auto graphite::rsrc::resource::set_type(const std::weak_ptr<graphite::rsrc::type>& type) -> void
+auto graphite::rsrc::resource::name() const -> const std::string&
 {
-	m_type = type;
+    return m_name;
 }
 
 auto graphite::rsrc::resource::type_code() const -> std::string
 {
-	if (auto type = m_type.lock()) {
-		return type->code();
-	}
-	else {
-		return "????";
-	}
+    if (m_type) {
+        return m_type->code();
+    }
+    else {
+        return "????";
+    }
 }
 
-
-// MARK: - Data
-
-auto graphite::rsrc::resource::data() -> std::shared_ptr<graphite::data::data>
+auto graphite::rsrc::resource::data() const -> const data::block&
 {
-	return m_data;
+    return m_data;
 }
 
-auto graphite::rsrc::resource::set_data(const std::shared_ptr<graphite::data::data>& data) -> void
+auto graphite::rsrc::resource::set_id(resource::identifier id) -> void
 {
-	m_data = data;
+    m_id = id;
 }
 
-// MARK: - 
-
-auto graphite::rsrc::resource::set_data_offset(const std::size_t& offset) -> void
+auto graphite::rsrc::resource::set_name(const std::string &name) -> void
 {
-	m_data_offset = offset;
+    m_name = name;
+}
+
+auto graphite::rsrc::resource::set_type(struct type *type) -> void
+{
+    m_type = type;
+}
+
+// MARK: - Hashing
+
+auto graphite::rsrc::resource::hash(identifier id) -> identifier_hash
+{
+    return hashing::xxh64(&id, sizeof(id));
+}
+
+auto graphite::rsrc::resource::hash(const std::string &name) -> name_hash
+{
+    return hashing::xxh64(name.c_str(), name.size());
+}
+
+// MARK: - Data Offsets
+
+auto graphite::rsrc::resource::set_data_offset(std::size_t offset) -> void
+{
+    m_data_offset = offset;
 }
 
 auto graphite::rsrc::resource::data_offset() const -> std::size_t
 {
-	return m_data_offset;
+    return m_data_offset;
 }

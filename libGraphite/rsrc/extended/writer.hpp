@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Tom Hancocks
+// Copyright (c) 2022 Tom Hancocks
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,30 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <string>
-#include <vector>
-#include <memory>
+#pragma once
+
 #include "libGraphite/rsrc/file.hpp"
-#include "libGraphite/data/reader.hpp"
 #include "libGraphite/data/writer.hpp"
 
-#if !defined(GRAPHITE_RSRC_CLASSIC)
-#define GRAPHITE_RSRC_CLASSIC
-
-namespace graphite::rsrc::classic {
-
-    /**
-     * Parse the specified/provided data object that represents a resource file
-     * into a list of resource types.
-     */
-    auto parse(const std::shared_ptr<graphite::data::reader>& reader) -> std::vector<std::shared_ptr<graphite::rsrc::type>>;
-
-    /**
-     * Build a data object that represents a resource file from the provided list
-     * of resource types.
-     */
-    auto write(const std::string& path, const std::vector<std::shared_ptr<graphite::rsrc::type>>& types) -> void;
-
+namespace graphite::rsrc::format::extended
+{
+    auto write(file& file) -> bool;
+    auto write(file& file, const std::string& path) -> bool;
 }
-
-#endif

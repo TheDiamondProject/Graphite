@@ -24,7 +24,7 @@ project(Graphite CXX)
 
 set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/bin)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 if (APPLE)
 	set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64")
 endif()
@@ -38,7 +38,12 @@ add_library(Graphite ${graphite_sources})
 
 file(GLOB_RECURSE graphite_test_sources
 	GraphiteTest/*.cpp
-) 
+		libGraphite/fast_data/*.cpp
+		libGraphite/encoding/*.cpp
+		libGraphite/new_rsrc/*.cpp
+		libGraphite/util/*.cpp
+)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
 add_executable(GraphiteTest ${graphite_test_sources})
-target_link_libraries(GraphiteTest Graphite)
+#target_link_libraries(GraphiteTest Graphite)
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Tom Hancocks
+// Copyright (c) 2022 Tom Hancocks
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,128 +18,68 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#pragma once
+
 #include <string>
-#include <vector>
-#include <memory>
-#include <map>
+#include <unordered_map>
+#include <stdexcept>
 #include "libGraphite/data/data.hpp"
 #include "libGraphite/rsrc/type.hpp"
+#include "libGraphite/util/concepts.hpp"
 
-#if !defined(GRAPHITE_RSRC_FILE)
-#define GRAPHITE_RSRC_FILE
-
-namespace graphite::rsrc {
-
-    /**
-     * The `graphite::rsrc::file` represents a ResourceFork file.
-     */
+namespace graphite::rsrc
+{
     class file
     {
     public:
+        typedef std::uint64_t hash;
+        enum class format { classic, extended, rez };
 
-        enum flags : uint8_t { };
+    public:
+        file() = default;
+        explicit file(const std::string& path);
 
-        /**
-         * Denotes the format of a resource file being represented.
-         *
-         *  + classic
-         *      The classic resource file format is that found in the original Macintosh
-         *      operating systems. This is the only format used by the Diamond Project.
-         *
-         *  + extended
-         *      The extended resource file format is extremely similar to the classic
-         *      format, but has a number of extensions for modern use. This is primarily
-         *      used by Kestrel.
-         *
-         *  + rez
-         *      The rez resource file format was a format that was created for use within
-         *      EV Nova for Windows. This is used as a compatibility option for Kestrel.
-         */
-        enum format { classic, extended, rez };
+        static auto hash_for_path(const std::string& path) -> hash;
+
+        auto read(const std::string& path) -> void;
+        auto write() -> bool;
+        auto write(const std::string& path) -> bool;
+        auto write(const std::string& path, enum format format) -> bool;
+
+        [[nodiscard]] auto name() const -> std::string;
+        [[nodiscard]] auto path() const -> const std::string&;
+        [[nodiscard]] auto type_count() const -> std::size_t;
+        [[nodiscard]] auto types() const -> std::vector<type::hash>;
+        [[nodiscard]] auto type_codes() const -> std::vector<std::string>;
+        [[nodiscard]] auto format() const -> enum format;
+        [[nodiscard]] auto hash_value() const -> hash;
+
+        auto add_type(const struct type &type) -> void;
+        auto add_types(const std::vector<struct type>& types) -> void;
+        [[nodiscard]] auto type(const std::string& code) const -> const struct type *;
+        [[nodiscard]] auto type(type::hash hash) const -> const struct type *;
+
+        template<resource_type T>
+        [[nodiscard]] auto find(resource::identifier id) const -> const struct resource *
+        {
+            return find(T::type_code(), id);
+        }
+
+        [[nodiscard]] auto find(const std::string& type_code, resource::identifier id) const -> const struct resource *;
+
+        template <resource_type T>
+        [[nodiscard]] auto load(resource::identifier id) const -> T
+        {
+            if (const auto resource = find<T>(id)) {
+                return std::move(T(resource->data(), resource->id(), resource->name()));
+            }
+            throw std::runtime_error("Resource not found: " + T::type_code() + ".#" + std::to_string(id));
+        }
 
     private:
         std::string m_path;
-        std::vector<std::shared_ptr<type>> m_types;
-        std::shared_ptr<graphite::data::data> m_data { nullptr };
-        format m_format { classic };
-
-    public:
-        /**
-         * Construct a new blank `graphite::rsrc::file`.
-         */
-        file() = default;
-
-        /**
-         * Construct a new `graphite::rsrc::file` by loading the contents of the specified
-         * file.
-         */
-        explicit file(std::string path);
-
-        /**
-         * Read and parse the contents of the resource file at the specified location.
-         * Warning: This will destroy all existing information in the resource file.
-         */
-        auto read(const std::string& path) -> void;
-
-        /**
-         * Write the contents of the the resource file to disk. If no location is specified,
-         * then it will use the original read path (if it exists).
-         */
-        auto write(const std::string& path = "", enum format fmt = classic) -> void;
-
-        /**
-         * Returns the name of the file.
-         */
-        [[nodiscard]] auto name() const -> std::string;
-
-        /**
-         * Returns the path of the file.
-         */
-        [[nodiscard]] auto path() const -> std::string;
-
-        /**
-         * Returns the number of types contained in the resource file.
-         */
-        [[nodiscard]] auto type_count() const -> std::size_t;
-        
-        /**
-         * Returns the list of all types contained in the resource file.
-         */
-        [[nodiscard]] auto types() const -> std::vector<std::shared_ptr<type>>;
-
-        /**
-         * Reports the current format of the resource file.
-         */
-        [[nodiscard]] auto current_format() const -> format;
-
-        /**
-         * Add a resource into the receiver.
-         */
-        auto add_resource(const std::string& type,
-                          const int64_t& id,
-                          const std::string& name,
-                          const std::shared_ptr<graphite::data::data>& data,
-                          const std::map<std::string, std::string>& attributes = {}) -> void;
-
-        /**
-         * Retrieve a type container for the specified type code. If a container
-         * does not exist then create one.
-         */
-        auto type_container(const std::string& code,
-                            const std::map<std::string, std::string>& attributes = {}) -> std::weak_ptr<graphite::rsrc::type>;
-
-        /**
-         * Attempt to get the resource of the specified type, id and attributes
-         */
-        auto find(const std::string& type, const int64_t& id, const std::map<std::string, std::string> &attributes) -> std::weak_ptr<resource>;
-
-        /**
-         * Retrieve a set of resources from the file, whose name begin with the specified prefix (or match exactly)
-         * for the specified type and attributes.
-         */
-        auto find(const std::string& type, const std::string& name_prefix, const std::map<std::string, std::string>& attributes) -> std::vector<std::shared_ptr<resource>>;
+        std::unordered_map<type::hash, struct type> m_types;
+        data::block *m_data { nullptr };
+        enum format m_format { format::classic };
     };
-
 }
-
-#endif

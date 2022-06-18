@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Tom Hancocks
+// Copyright (c) 2022 Tom Hancocks
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,153 +18,119 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <memory>
+#pragma once
+
+#include <vector>
+#include <type_traits>
 #include "libGraphite/data/data.hpp"
+#include "libGraphite/util/concepts.hpp"
+#include "libGraphite/data/encoding.hpp"
 
-#if !defined(GRAPHITE_DATA_WRITER)
-#define GRAPHITE_DATA_WRITER
-
-namespace graphite::data {
-
-/**
- * The `graphite::data::writer` class is used to write values into a
- * `graphite::data::data` object.
- */
+namespace graphite::data
+{
     class writer
     {
-    private:
-        graphite::data::byte_order m_native_bo { lsb };
-        std::shared_ptr<graphite::data::data> m_data { nullptr };
-        uint64_t m_pos { 0 };
-
-        template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-        auto write_integer(T value) -> void;
-
-        /**
-         * Swap the bytes of an integer value from the source byte order to the specified
-         * destination byte order.
-         */
-        template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-        auto swap(
-                T value,
-                enum graphite::data::byte_order value_bo,
-                enum graphite::data::byte_order result_bo
-        ) -> T;
-
     public:
-        /**
-         * Construct a new `graphite::data::writer` object and the underlying
-         * `graphite::data::data` object.
-         */
-        writer();
+        explicit writer(enum byte_order order = native_byte_order());
+        explicit writer(const class block *data);
 
-        /**
-         * Construct a new `graphite::data::writer` object using the specified
-         * `graphite::data::data` object.
-         */
-        explicit writer(std::shared_ptr<graphite::data::data> data);
+        ~writer();
 
-        /**
-         * Returns the internal data object.
-         */
-        auto data() -> std::shared_ptr<graphite::data::data>;
+        [[nodiscard]] inline auto data() const -> const class data * { return m_data; };
+        [[nodiscard]] inline auto owns_data() const -> bool { return m_owns_data; }
 
-        /**
-         * Returns the current size of the underlying `graphite::data::data:: object.
-         */
-        [[nodiscard]] auto size() const -> std::size_t;
+        [[nodiscard]] inline auto position() const -> block::position { return m_position; }
+        [[nodiscard]] inline auto size() const -> std::size_t { return m_data->size(); }
 
-        /**
-         * Returns the current insertion position of the receiver within the underlying
-         * `graphite::data::data` object.
-         */
-        [[nodiscard]] auto position() const -> uint64_t;
+        auto change_byte_order(enum byte_order order) -> void { const_cast<class block *>(m_data)->change_byte_order(order); }
 
-        /**
-         * Set the insertion position of the receiver within the underlying
-         * `graphite::data::data` object.
-         */
-        auto set_position(uint64_t pos) -> void;
+        auto expand_storage(std::size_t amount) -> void;
+        auto ensure_required_space(block::position position, std::size_t amount) -> void;
 
-        /**
-         * Move the current insertion position of the receiver by the specified amount.
-         */
-        auto move(int64_t delta = 1) -> void;
+        auto set_position(block::position pos) -> void;
+        auto move(block::position delta = 1) -> void;
 
-        /**
-         * Write a single unsigned byte into the data.
-         */
-        auto write_byte(uint8_t value, std::size_t count = 1) -> void;
+        template<typename T, typename std::enable_if<std::is_integral<T>::value && std::is_signed<T>::value>>
+        auto write_integer(T value, std::size_t count = 1) -> void { }
 
-        /**
-         * Write a singled signed byte into the data.
-         */
-        auto write_signed_byte(int8_t value) -> void;
+        template<std::int8_t>
+        auto write_integer(std::int8_t value, std::size_t count = 1) -> void { write_signed_byte(value, count); }
 
-        /**
-         * Write a single unsigned short into the data.
-         */
-        auto write_short(uint16_t value) -> void;
+        template<std::int16_t>
+        auto write_integer(std::int16_t value, std::size_t count = 1) -> void { write_signed_short(value, count); }
 
-        /**
-         * Write a singled signed short into the data.
-         */
-        auto write_signed_short(int16_t value) -> void;
+        template<std::int32_t>
+        auto write_integer(std::int32_t value, std::size_t count = 1) -> void { write_signed_long(value, count); }
 
-        /**
-         * Write a single unsigned long into the data.
-         */
-        auto write_long(uint32_t value) -> void;
+        template<std::int64_t>
+        auto write_integer(std::int64_t value, std::size_t count = 1) -> void { write_signed_quad(value, count); }
 
-        /**
-         * Write a singled signed long into the data.
-         */
-        auto write_signed_long(int32_t value) -> void;
+        template<typename T, typename std::enable_if<std::is_integral<T>::value>>
 
-        /**
-         * Write a single unsigned quad into the data.
-         */
-        auto write_quad(uint64_t value) -> void;
+        auto write_integer(T value, std::size_t count = 1) -> void { }
 
-        /**
-         * Write a singled signed quad into the data.
-         */
-        auto write_signed_quad(int64_t value) -> void;
+        template<std::uint8_t>
+        auto write_integer(std::uint8_t value, std::size_t count = 1) -> void { write_byte(value, count); }
 
-        /**
-         * Write a C-String into the data.
-         */
-        auto write_cstr(const std::string& str, std::size_t size = 0) -> void;
+        template<std::uint16_t>
+        auto write_integer(std::uint16_t value, std::size_t count = 1) -> void { write_short(value, count); }
 
-        /**
-         * Write a Pascal String into the data.
-         */
-        auto write_pstr(const std::string& str) -> void;
+        template<std::uint32_t>
+        auto write_integer(std::uint32_t value, std::size_t count = 1) -> void { write_long(value, count); }
 
-        /**
-         * Write a series of bytes into the data.
-         */
+        template<std::uint64_t>
+        auto write_integer(std::uint64_t value, std::size_t count = 1) -> void { write_quad(value, count); }
+
+        auto write_byte(std::uint8_t value, std::size_t count = 1) -> void;
+        auto write_signed_byte(std::int8_t value, std::size_t count = 1) -> void;
+
+        auto write_short(std::uint16_t value, std::size_t count = 1) -> void;
+        auto write_signed_short(std::int16_t value, std::size_t count = 1) -> void;
+
+        auto write_fixed_point(double value, std::size_t count = 1) -> void;
+
+        auto write_triple(std::uint32_t value, std::size_t count = 1) -> void;
+
+        auto write_long(std::uint32_t value, std::size_t count = 1) -> void;
+        auto write_signed_long(std::int32_t value, std::size_t count = 1) -> void;
+
+        auto write_quad(std::uint64_t value, std::size_t count = 1) -> void;
+        auto write_signed_quad(std::int64_t value, std::size_t count = 1) -> void;
+
+        auto write_pstr(const std::string& str) -> std::size_t;
+        auto write_cstr(const std::string& str, std::size_t size = 0) -> std::size_t;
+
         auto write_bytes(const std::vector<uint8_t>& bytes) -> void;
         auto write_bytes(const std::vector<char>& bytes) -> void;
 
-        /**
-         * Write the specified `graphite::data::data` object into the output
-         * data stream.
-         */
-        auto write_data(const std::shared_ptr<graphite::data::data>& data) -> void;
+        auto write_data(const class block *data) -> void;
 
-        /**
-         * Pad the contents of the underlying data object to the specified number of bytes.
-         */
+        template<compressible_block T>
+        auto write_compressed_data(const class block *data) -> class block
+        {
+            return T::compress(data);
+        }
+
+        template<encodable T>
+        auto write(T& value) -> void
+        {
+            value.encode(*this);
+        }
+
         auto pad_to_size(std::size_t size) -> void;
 
-        /**
-         * Write the contents of the data to the specified file.
-         */
-        auto save(const std::string& path) const -> void;
+        auto save(const std::string& path, std::size_t size = 0) const -> void;
 
+        template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
+        auto write_integer(T value, std::size_t count = 1, std::size_t size = sizeof(T)) -> void;
+
+        template<typename E, typename std::enable_if<std::is_enum<E>::value>::type* = nullptr>
+        auto write_enum(E value, std::size_t count = 1, std::size_t size = sizeof(E)) -> E;
+
+    private:
+        bool m_owns_data { false };
+        const class block *m_data { nullptr };
+        block::position m_position { 0 };
     };
-
 }
 
-#endif

@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Tom Hancocks
+// Copyright (c) 2022 Tom Hancocks
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,99 +18,54 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#pragma once
+
 #include <string>
-#include <vector>
-#include <memory>
+#include <cstdint>
 #include "libGraphite/data/data.hpp"
 
-#if !defined(GRAPHITE_RSRC_RESOURCE)
-#define GRAPHITE_RSRC_RESOURCE
+namespace graphite::rsrc
+{
+    struct type;
 
-namespace graphite::rsrc {
-
-    class type;
-
-    /**
-     * The `graphite::rsrc::resource` class represents a single resource within
-     * a resource file.
-     */
-    class resource
+    struct resource
     {
-    private:
-        int64_t m_id {};
-        std::weak_ptr<graphite::rsrc::type> m_type;
-        std::string m_name;
-        std::shared_ptr<graphite::data::data> m_data;
-        std::size_t m_data_offset { 0 };
+    public:
+        typedef std::int64_t identifier;
+        typedef std::uint64_t identifier_hash;
+        typedef std::uint64_t name_hash;
+
+        static constexpr resource::identifier default_resource_id { 128 };
 
     public:
-    	/**
-    	 * Construct a new resource instance, without an explicit type or
-    	 * data.
-    	 */
-    	resource(int64_t id, std::string name);
+        resource(resource::identifier id = default_resource_id, const std::string& name = "");
+        resource(struct type *type, resource::identifier id = default_resource_id, const std::string& name = "", data::block data = {});
+        explicit resource(const resource& resource);
+        resource(resource&& resource) noexcept;
 
-    	/**
-    	 * Construct a new resource instance with the specified type, and data.
-    	 */
-    	resource(int64_t id, std::weak_ptr<graphite::rsrc::type> type, std::string name, std::shared_ptr<graphite::data::data> data);
+        ~resource();
 
-    	/**
-    	 * Returns the ID of the resource.
-    	 */
-    	[[nodiscard]] auto id() const -> int64_t;
+        [[nodiscard]] auto id() const -> resource::identifier;
+        [[nodiscard]] auto type() const -> struct type *;
+        [[nodiscard]] auto name() const -> const std::string&;
+        [[nodiscard]] auto type_code() const -> std::string;
+        [[nodiscard]] auto data() const -> const data::block&;
 
-    	/**
-    	 * Set the ID of the resource.
-    	 */
-    	auto set_id(int64_t id) -> void;
+        auto set_id(resource::identifier id) -> void;
+        auto set_name(const std::string& name) -> void;
+        auto set_type(struct type *type) -> void;
 
-    	/**
-    	 * Returns the name of the resource.
-    	 */
-    	[[nodiscard]] auto name() const -> std::string;
+        static auto hash(identifier id) -> identifier_hash;
+        static auto hash(const std::string& name) -> name_hash;
 
-    	/**
-    	 * Set the name of the resource.
-    	 */
-    	auto set_name(const std::string& name) -> void;
+        auto set_data_offset(std::size_t offset) -> void;
+        [[nodiscard]] auto data_offset() const -> std::size_t;
 
-    	/**
-    	 * Returns the type container of the resource.
-    	 */
-    	[[nodiscard]] auto type() const -> std::weak_ptr<graphite::rsrc::type>;
-
-    	/**
-    	 * Set the type container of the resource.
-    	 */
-    	auto set_type(const std::weak_ptr<graphite::rsrc::type>& type) -> void;
-
-    	/**
-    	 * Returns the type code of the resource.
-    	 */
-    	[[nodiscard]] auto type_code() const -> std::string;
-
-    	/**
-    	 * Returns a shared pointer to the contained data.
-    	 */
-    	auto data() -> std::shared_ptr<graphite::data::data>;
-        
-    	/**
-    	 * Set the name of the resource.
-    	 */
-    	auto set_data(const std::shared_ptr<graphite::data::data>& data) -> void;
-
-    	/**
-    	 * Store the location of the data within the resource file.
-    	 */
-    	auto set_data_offset(const std::size_t& offset) -> void;
-
-    	/**
-    	 * The location of the data within the resource file.
-    	 */
-    	[[nodiscard]] auto data_offset() const -> std::size_t;
+    private:
+        resource::identifier m_id { default_resource_id };
+        struct type *m_type { nullptr };
+        std::string m_name;
+        data::block m_data;
+        std::size_t m_data_offset { 0 };
     };
-
 }
-
-#endif

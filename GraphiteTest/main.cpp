@@ -18,33 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "libGraphite/rsrc/file.hpp"
-#include "libGraphite/data/writer.hpp"
 #include <iostream>
+#include "libGraphite/rsrc/manager.hpp"
 
 int main(int argc, char const *argv[])
 {
-    auto rf = std::make_shared<graphite::rsrc::file>();
-    
-    auto english = std::make_shared<graphite::data::writer>();
-    english->write_cstr("Hello, World!");
-    rf->add_resource("test", 128, "test resource", english->data(), {
-        std::make_pair("lang", "en")
-    });
+    auto file = graphite::rsrc::manager::shared_manager().import_file("/Applications/EV Nova.app/Contents/Resources/Nova Files/Nova Data 1.ndat");
 
-    auto french = std::make_shared<graphite::data::writer>();
-    french->write_cstr("Bonjour, Monde!");
-    rf->add_resource("test", 128, "test resource", french->data(), {
-        std::make_pair("lang", "fr")
-    });
-
-    // The resource file should be assembled at this point and just needs writing to disk.
-    rf->write("test.cdat", graphite::rsrc::file::format::extended);
-
-
-    auto in_rf = std::make_shared<graphite::rsrc::file>("test.cdat");
-    for (const auto& type : in_rf->types()) {
-        std::cout << "reading type: " << type->code() << type->attributes_string() << std::endl;
-    }
-	return 0;
+    return 0;
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Tom Hancocks
+// Copyright (c) 2022 Tom Hancocks
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,30 +18,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <string>
-#include <vector>
-#include <memory>
-#include "libGraphite/rsrc/file.hpp"
-#include "libGraphite/data/reader.hpp"
-#include "libGraphite/data/writer.hpp"
+#pragma once
 
-#if !defined(GRAPHITE_RSRC_EXTENDED)
-#define GRAPHITE_RSRC_EXTENDED
+#include <cstdint>
+#include <cstdlib>
 
-namespace graphite::rsrc::extended {
+namespace graphite::quickdraw
+{
+    typedef std::uint8_t color_component;
 
-    /**
-     * Parse the specified/provided data object that represents a resource file
-     * into a list of resource types.
-     */
-    auto parse(const std::shared_ptr<graphite::data::reader>& reader) -> std::vector<std::shared_ptr<graphite::rsrc::type>>;
+    union color
+    {
+        std::uint32_t value;
+        struct {
+            color_component red;
+            color_component green;
+            color_component blue;
+            color_component alpha;
+        } components;
+    };
 
-    /**
-     * Build a data object that represents a resource file from the provided list
-     * of resource types.
-     */
-    auto write(const std::string& path, const std::vector<std::shared_ptr<graphite::rsrc::type>>& types) -> void;
+    auto operator==(const union color& lhs, const union color& rhs) -> bool { return lhs.value == rhs.value; }
+    auto operator!=(const union color& lhs, const union color& rhs) -> bool { return lhs.value != rhs.value; }
 
+    [[nodiscard]] auto rgb(color_component r, color_component g, color_component b, color_component a = 255) -> union color;
+
+    namespace constants
+    {
+        constexpr std::size_t color_width = sizeof(union color);
+    }
+
+    namespace colors
+    {
+        [[nodiscard]] auto black() -> union color;
+        [[nodiscard]] auto white() -> union color;
+        [[nodiscard]] auto clear() -> union color;
+    }
 }
-
-#endif
