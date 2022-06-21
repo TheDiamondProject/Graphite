@@ -58,11 +58,11 @@ namespace graphite::data
         block() = default;
         explicit block(std::size_t capacity, enum byte_order order = byte_order::msb);
         explicit block(const std::string& path, enum byte_order order = byte_order::msb);
-        block(const block& source, bool copy = true);
+        block(const block& source);
+        block(const block& source, bool copy);
         block(const block& source, block::position pos, std::size_t count, bool copy = true);
 
-        block(const block& data);
-        block(block&& data);
+        block(block&& data) noexcept;
 
         auto operator=(const block& data) -> struct block&;
         auto operator=(block&& data) noexcept -> struct block&;

@@ -27,8 +27,8 @@ auto graphite::quickdraw::rgb(color_component r, color_component g, color_compon
     return {
         .components = {
             .red = r, .green = g, .blue = b, .alpha = a
-        };
-    }
+        }
+    };
 }
 
 // MARK: - Pre-defined Colors

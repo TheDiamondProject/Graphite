@@ -50,6 +50,16 @@ graphite::quickdraw::surface::surface(std::int16_t width, std::int16_t height, u
     m_data.set(color.value);
 }
 
+graphite::quickdraw::surface::surface(const surface &surface)
+{
+
+}
+
+graphite::quickdraw::surface::surface(surface &&surface) noexcept
+{
+
+}
+
 // MARK: - Accessors
 
 auto graphite::quickdraw::surface::raw() const -> const data::block&

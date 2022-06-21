@@ -36,7 +36,7 @@ namespace graphite::data
 
         ~writer();
 
-        [[nodiscard]] inline auto data() const -> const class data * { return m_data; };
+        [[nodiscard]] inline auto data() const -> const class data * { return reinterpret_cast<const class data *>(m_data); };
         [[nodiscard]] inline auto owns_data() const -> bool { return m_owns_data; }
 
         [[nodiscard]] inline auto position() const -> block::position { return m_position; }

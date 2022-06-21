@@ -24,6 +24,8 @@
 #include <type_traits>
 #include "libGraphite/data/encoding.hpp"
 #include "libGraphite/quickdraw/type/coding_type.hpp"
+#include "libGraphite/data/reader.hpp"
+#include "libGraphite/data/writer.hpp"
 
 namespace graphite::quickdraw
 {

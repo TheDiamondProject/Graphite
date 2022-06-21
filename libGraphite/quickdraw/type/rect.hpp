@@ -75,7 +75,7 @@ namespace graphite::quickdraw
         auto operator/(U v) const -> rect { return { origin / static_cast<T>(v), size / static_cast<T>(v) }; }
 
         template<typename U, typename std::enable_if<std::is_convertible<T, U>::value>>
-        auto cast() const -> rect<U> { return { origin.cast<U>(), size.cast<U>() }; }
+        auto cast() const -> rect<U> { return { origin.template cast<U>(), size.template cast<U>() }; }
     };
 
 }

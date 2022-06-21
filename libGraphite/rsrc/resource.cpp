@@ -22,7 +22,6 @@
 #include "libGraphite/rsrc/type.hpp"
 #include "libGraphite/util/hashing.hpp"
 
-
 // MARK: - Construction
 
 graphite::rsrc::resource::resource(resource::identifier id, const std::string &name)
@@ -39,7 +38,7 @@ graphite::rsrc::resource::resource(const resource &resource)
     : m_type(resource.m_type),
       m_id(resource.m_id),
       m_name(resource.m_name),
-      m_data(fast_data::data(resource.m_data, true))
+      m_data(data::block(resource.m_data, true))
 {
 }
 

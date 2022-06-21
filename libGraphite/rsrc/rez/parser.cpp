@@ -118,14 +118,14 @@ auto graphite::rsrc::format::rez::parse(data::reader &reader, file &file) -> boo
             reader.set_position(next_offset);
 
             // 7. Construct a new resource instance and add it to the type.
-            struct resource resource { &type, id, name, slice };
-            type.add_resource(std::move(resource));
+            struct resource resource { &type, id, name, std::move(slice) };
+            type.add_resource(resource);
         }
 
         reader.restore_position();
         types.emplace_back(std::move(type));
     }
 
-    file.add_types(std::move(types));
+    file.add_types(types);
     return true;
 }

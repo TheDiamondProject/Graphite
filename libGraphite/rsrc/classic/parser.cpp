@@ -127,11 +127,11 @@ auto graphite::rsrc::format::classic::parse(data::reader &reader, file& file) ->
             // 6. Create a data slice for the resources data.
             reader.set_position(data_offset + resource_data_offset);
             auto data_size = reader.read_long();
-            auto slice = reader.read_data(data_size);
+            auto slice = std::move(reader.read_data(data_size));
             reader.restore_position();
 
             // 7. Construct a new resource instance and add it to the type.
-            struct resource resource { &type, id, name, slice };
+            struct resource resource { &type, id, name, std::move(slice) };
             type.add_resource(std::move(resource));
         }
 

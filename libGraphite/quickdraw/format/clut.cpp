@@ -46,8 +46,12 @@ auto graphite::quickdraw::clut::size() const -> size_type
 
 auto graphite::quickdraw::clut::at(index_type index) const -> union color
 {
-    const auto& it = m_entries.find(index);
-    return (it != m_entries.end()) ? it->second : colors::black();
+    for (const auto& entry : m_entries) {
+        if (entry.first == index) {
+            return entry.second;
+        }
+    }
+    return colors::black();
 }
 
 auto graphite::quickdraw::clut::set(union color color) -> index_type

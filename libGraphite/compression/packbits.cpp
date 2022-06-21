@@ -35,10 +35,11 @@ auto graphite::compression::packbits::decompress(const data::block &compressed, 
         auto count = reader.read_byte();
         if (count >= 0 && count < 128) {
             std::uint16_t run = (1 + count) * value_size;
-            if ((pos + run) > reader.size()) {
+            if ((reader.position() + run) > reader.size()) {
                 throw std::runtime_error("Unable to decode packbits");
             }
-            writer.write_data(std::move(reader.read_data(run)));
+            auto data = std::move(reader.read_data(run));
+            writer.write_data(&data);
         }
         else if (count >= 128) {
             std::uint8_t run = 256 - count + 1;
@@ -97,8 +98,9 @@ auto graphite::compression::packbits::compress(const data::block &uncompressed) 
         }
 
         if (run > 0) {
+            auto sliced = std::move(buffer.slice(0, run));
             writer.write_byte(run - 1);
-            writer.write_data(buffer.slice(0, run));
+            writer.write_data(&sliced);
             buffer.clear();
         }
 

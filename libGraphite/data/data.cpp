@@ -167,7 +167,7 @@ graphite::data::block::block(const block &data)
     copy_from(data);
 }
 
-graphite::data::block::block(block &&data)
+graphite::data::block::block(block &&data) noexcept
     : m_raw_size(data.m_raw_size),
       m_data_size(data.m_data_size),
       m_raw(data.m_raw),
@@ -203,6 +203,8 @@ auto graphite::data::block::operator=(const block &data) -> struct block &
     m_raw = malloc(m_raw_size);
     m_data = simd_align(m_raw);
     copy_from(data);
+
+    return *this;
 }
 
 auto graphite::data::block::operator=(block &&data) noexcept -> struct block &
@@ -335,7 +337,7 @@ auto graphite::data::block::set(uint16_t value, std::size_t bytes, block::positi
 
 auto graphite::data::block::set(uint32_t value, std::size_t bytes, block::position start) -> void
 {
-    union simd_value v;
+    union simd_value v { 0 };
     for (auto n = 0; n < simd_fields; ++n) {
         v.fields[n] = value;
     }
@@ -346,5 +348,5 @@ auto graphite::data::block::set(uint32_t value, std::size_t bytes, block::positi
 
 auto graphite::data::block::slice(block::position pos, std::size_t size, bool copy) const -> block
 {
-    return std::move(data(*this, pos, size, copy));
+    return std::move(block(*this, pos, size, copy));
 }

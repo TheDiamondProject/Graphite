@@ -113,7 +113,7 @@ auto graphite::rsrc::resource_result::resource(const std::string &type_code, res
     return m_resources.at(resource_result::sort_key(type_code, id));
 }
 
-auto graphite::rsrc::resource_result::filter(const std::function<auto(struct resource *)->bool>& fn) const -> :resource_result
+auto graphite::rsrc::resource_result::filter(const std::function<auto(struct resource *)->bool>& fn) const -> resource_result
 {
     resource_result result;
 

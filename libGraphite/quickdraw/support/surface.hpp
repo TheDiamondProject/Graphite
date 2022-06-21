@@ -35,8 +35,8 @@ namespace graphite::quickdraw
         surface(std::int16_t width, std::int16_t height);
         surface(const size<std::int16_t>& size, union color color);
         surface(std::int16_t width, std::int16_t height, union color color);
-        surface(const surface& surface) = default;
-        surface(surface&& surface) noexcept = default;
+        surface(const surface& surface);
+        surface(surface&& surface) noexcept;
 
         auto operator=(const surface&) -> surface& = default;
         auto operator=(surface&&) -> surface& = default;
