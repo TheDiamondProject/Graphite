@@ -118,6 +118,22 @@ graphite::data::block::block(const std::string &path, enum byte_order order)
     file.close();
 }
 
+graphite::data::block::block(const std::vector<char>& bytes, enum byte_order order)
+    : m_byte_order(order),
+      m_allocation_owner(nullptr)
+{
+    m_data_size = bytes.size();
+    m_raw_size = simd_expand_capacity(m_data_size);
+    m_raw = malloc(m_raw_size);
+    m_data = simd_align(m_raw);
+
+    // TODO: This is slow, and should be speeded up in the future.
+    auto ptr = static_cast<char *>(m_data);
+    for (const auto& byte : bytes) {
+        *ptr++ = byte;
+    }
+}
+
 graphite::data::block::block(const block &source, bool copy)
     : m_raw_size(source.m_raw_size),
       m_data_size(source.m_data_size),
