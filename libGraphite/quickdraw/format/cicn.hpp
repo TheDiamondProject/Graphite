@@ -37,6 +37,7 @@ namespace graphite::quickdraw
         cicn() = default;
         explicit cicn(const data::block& data, rsrc::resource::identifier id = 0, const std::string& name = "");
         explicit cicn(data::reader& reader);
+        explicit cicn(quickdraw::surface& surface);
 
         [[nodiscard]] auto surface() const -> const surface&;
 

@@ -39,6 +39,11 @@ graphite::quickdraw::cicn::cicn(data::reader &reader)
     decode(reader);
 }
 
+graphite::quickdraw::cicn::cicn(quickdraw::surface& surface)
+    : m_surface(std::move(surface))
+{
+}
+
 // MARK: - Accessors
 
 auto graphite::quickdraw::cicn::surface() const -> const quickdraw::surface&

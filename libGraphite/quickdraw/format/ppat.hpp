@@ -37,6 +37,7 @@ namespace graphite::quickdraw
         ppat() = default;
         explicit ppat(const data::block& data, rsrc::resource::identifier id = 0, const std::string& name = "");
         explicit ppat(data::reader& reader);
+        explicit ppat(graphite::quickdraw::surface& surface);
 
         [[nodiscard]] auto surface() const -> const quickdraw::surface&;
 

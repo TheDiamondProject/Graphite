@@ -36,6 +36,11 @@ graphite::quickdraw::ppat::ppat(data::reader &reader)
     decode(reader);
 }
 
+graphite::quickdraw::ppat::ppat(graphite::quickdraw::surface& surface)
+    : m_surface(surface)
+{
+}
+
 // MARK: - Accessors
 
 auto graphite::quickdraw::ppat::surface() const -> const struct surface &
