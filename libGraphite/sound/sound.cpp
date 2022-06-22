@@ -211,6 +211,36 @@ graphite::sound_manager::sound::sound(const data::block &data, rsrc::resource::i
     decode(reader);
 }
 
+graphite::sound_manager::sound::sound(std::uint32_t sample_rate, std::uint8_t sample_bits, const std::vector<std::vector<std::uint32_t>> &sample_data)
+{
+    m_descriptor.sample_rate = sample_rate;
+    m_descriptor.bit_width = sample_bits;
+
+    graphite::data::writer writer(&m_samples);
+    if (sample_bits == 8) {
+        for (auto& channel : sample_data) {
+            for (auto& frame : channel) {
+                writer.write_byte(static_cast<std::uint8_t>(frame));
+            }
+        }
+    }
+    else {
+        for (auto& channel : sample_data) {
+            for (auto& frame : channel) {
+                writer.write_short(static_cast<std::uint16_t>(frame));
+            }
+        }
+    }
+
+}
+
+graphite::sound_manager::sound::sound(std::uint32_t sample_rate, std::uint8_t sample_bits, const graphite::data::block& sample_data)
+{
+    m_descriptor.sample_rate = sample_rate;
+    m_descriptor.bit_width = sample_bits;
+    m_samples = sample_data;
+}
+
 // MARK: - Decoding
 
 auto graphite::sound_manager::sound::decode(data::reader &reader) -> void

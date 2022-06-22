@@ -36,6 +36,8 @@ namespace graphite::sound_manager
 
     public:
         explicit sound(const data::block& data, rsrc::resource::identifier id = 0, const std::string& name = "");
+        explicit sound(std::uint32_t sample_rate, std::uint8_t sample_bits, const graphite::data::block& sample_data);
+        explicit sound(std::uint32_t sample_rate, std::uint8_t sample_bits, const std::vector<std::vector<std::uint32_t>>& sample_data);
 
         [[nodiscard]] auto samples() const -> const data::block&;
         [[nodiscard]] auto codec_descriptor() const -> const codec::descriptor&;
