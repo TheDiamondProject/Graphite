@@ -92,6 +92,33 @@ auto graphite::rsrc::file::hash_value() const -> hash
 
 // MARK: - Type Management
 
+auto graphite::rsrc::file::add_resource(const std::string &type_code,
+                                        rsrc::resource::identifier id,
+                                        const std::string &name,
+                                        const data::block &data,
+                                        const std::unordered_map<std::string, std::string> &attributes) -> void
+{
+    struct resource resource(nullptr, id, name, data);
+
+    auto type_hash = rsrc::type::hash_for_type_code(type_code);
+    auto it = m_types.find(type_hash);
+    if (it == m_types.end()) {
+        // The type doesn't exist, so we need to create it.
+        struct type type(type_code);
+        m_types.emplace(std::pair(type_hash, std::move(type)));
+
+        struct type *type_ptr = &m_types.find(type_hash)->second;
+        resource.set_type(type_ptr);
+
+        type.add_resource(std::move(resource));
+    }
+    else {
+        // Found the type, add the resource to it.
+        resource.set_type(&it->second);
+        it->second.add_resource(std::move(resource));
+    }
+}
+
 auto graphite::rsrc::file::add_type(const struct type &type) -> void
 {
     m_types.emplace(std::pair(type.hash_value(), std::move(type)));

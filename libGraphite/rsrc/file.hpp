@@ -59,6 +59,12 @@ namespace graphite::rsrc
         [[nodiscard]] auto type(const std::string& code) const -> const struct type *;
         [[nodiscard]] auto type(type::hash hash) const -> const struct type *;
 
+        auto add_resource(const std::string& type_code,
+                          rsrc::resource::identifier id,
+                          const std::string& name,
+                          const data::block& data,
+                          const std::unordered_map<std::string, std::string>& attributes = {}) -> void;
+
         template<resource_type T>
         [[nodiscard]] auto find(resource::identifier id) const -> const struct resource *
         {
