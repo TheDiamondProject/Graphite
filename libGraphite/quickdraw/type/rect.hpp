@@ -39,6 +39,7 @@ namespace graphite::quickdraw
 
         rect() = default;
         explicit rect(T v) : origin(v), size(v) {}
+        rect(T x, T y, T width, T height) : origin(x, y), size(width, height) {}
         rect(struct point<T> origin, struct quickdraw::size<T> size) : origin(origin), size(size) {}
         rect(const rect&) = default;
         rect(rect&&) noexcept = default;
