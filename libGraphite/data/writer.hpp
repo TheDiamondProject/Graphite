@@ -36,7 +36,7 @@ namespace graphite::data
 
         ~writer();
 
-        [[nodiscard]] inline auto data() const -> const class data * { return reinterpret_cast<const class data *>(m_data); };
+        [[nodiscard]] inline auto data() const -> const class block * { return reinterpret_cast<const class block *>(m_data); };
         [[nodiscard]] inline auto owns_data() const -> bool { return m_owns_data; }
 
         [[nodiscard]] inline auto position() const -> block::position { return m_position; }
@@ -51,7 +51,7 @@ namespace graphite::data
         auto move(block::position delta = 1) -> void;
 
         template<typename T, typename std::enable_if<std::is_integral<T>::value && std::is_signed<T>::value>>
-        auto write_integer(T value, std::size_t count = 1) -> void { }
+        auto write_integer(T value, std::size_t count = 1) -> void {}
 
         template<std::int8_t>
         auto write_integer(std::int8_t value, std::size_t count = 1) -> void { write_signed_byte(value, count); }
@@ -66,8 +66,7 @@ namespace graphite::data
         auto write_integer(std::int64_t value, std::size_t count = 1) -> void { write_signed_quad(value, count); }
 
         template<typename T, typename std::enable_if<std::is_integral<T>::value>>
-
-        auto write_integer(T value, std::size_t count = 1) -> void { }
+        auto write_integer(T value, std::size_t count = 1) -> void {}
 
         template<std::uint8_t>
         auto write_integer(std::uint8_t value, std::size_t count = 1) -> void { write_byte(value, count); }
@@ -122,10 +121,38 @@ namespace graphite::data
         auto save(const std::string& path, std::size_t size = 0) const -> void;
 
         template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-        auto write_integer(T value, std::size_t count = 1, std::size_t size = sizeof(T)) -> void;
+        auto write_integer(T value, std::size_t count = 1, std::size_t size = sizeof(T)) -> void
+        {
+            auto swapped = swap(value, native_byte_order(), m_data->byte_order());
+
+            ensure_required_space(position(), size * count);
+            auto ptr = m_data->template get<uint8_t *>(position());
+
+            for (auto n = 0; n < count; ++n) {
+                for (auto i = 0; i < size; ++i) {
+                    auto b = i << 3ULL;
+                    *ptr++ = (swapped >> b) & 0xFF;
+                    move();
+                }
+            }
+        }
 
         template<typename E, typename std::enable_if<std::is_enum<E>::value>::type* = nullptr>
-        auto write_enum(E value, std::size_t count = 1, std::size_t size = sizeof(E)) -> E;
+        auto write_enum(E value, std::size_t count = 1, std::size_t size = sizeof(E)) -> void
+        {
+            if (sizeof(E) == sizeof(std::uint8_t)) {
+                write_byte(static_cast<std::uint8_t>(value), count);
+            }
+            else if (sizeof(E) == sizeof(std::uint16_t)) {
+                write_short(static_cast<std::uint16_t>(value), count);
+            }
+            else if (sizeof(E) == sizeof(std::uint32_t)) {
+                write_long(static_cast<std::uint32_t>(value), count);
+            }
+            else if (sizeof(E) == sizeof(std::uint64_t)) {
+                write_quad(static_cast<std::uint64_t>(value), count);
+            }
+        }
 
     private:
         bool m_owns_data { false };

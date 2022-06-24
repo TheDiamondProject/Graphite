@@ -110,7 +110,7 @@ auto graphite::rsrc::file::add_resource(const std::string &type_code,
         struct type *type_ptr = &m_types.find(type_hash)->second;
         resource.set_type(type_ptr);
 
-        type.add_resource(std::move(resource));
+        type_ptr->add_resource(std::move(resource));
     }
     else {
         // Found the type, add the resource to it.

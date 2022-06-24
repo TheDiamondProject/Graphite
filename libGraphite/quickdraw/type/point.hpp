@@ -106,20 +106,20 @@ namespace graphite::quickdraw
         auto cast() const -> point<U> { return { static_cast<U>(x), static_cast<U>(y) }; }
 
     private:
-        auto read_component(data::reader& reader) -> T { return reader.read_integer<T>(); }
-        auto write_component(T value, data::writer& writer) -> void { writer.write_integer<T>(value); }
+        static auto read_component(data::reader& reader) -> T { return reader.read_integer<T>(); }
+        static auto write_component(T value, data::writer& writer) -> void { writer.write_integer<T>(value); }
     };
 
-    template<>
-    auto point<double>::read_component(data::reader &reader) -> double { return reader.read_fixed_point(); }
-
-    template<>
-    auto point<float>::read_component(data::reader &reader) -> float { return static_cast<float>(reader.read_fixed_point()); }
-
-    template<>
-    auto point<double>::write_component(double value, data::writer &writer) -> void { writer.write_fixed_point(value); }
-
-    template<>
-    auto point<float>::write_component(float value, data::writer &writer) -> void { writer.write_fixed_point(static_cast<double>(value)); }
-
 }
+
+template<>
+inline auto graphite::quickdraw::point<double>::read_component(data::reader &reader) -> double { return reader.read_fixed_point(); }
+
+template<>
+inline auto graphite::quickdraw::point<float>::read_component(data::reader &reader) -> float { return static_cast<float>(reader.read_fixed_point()); }
+
+template<>
+inline auto graphite::quickdraw::point<double>::write_component(double value, data::writer &writer) -> void { writer.write_fixed_point(value); }
+
+template<>
+inline auto graphite::quickdraw::point<float>::write_component(float value, data::writer &writer) -> void { writer.write_fixed_point(static_cast<double>(value)); }

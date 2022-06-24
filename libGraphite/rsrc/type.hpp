@@ -52,7 +52,7 @@ namespace graphite::rsrc
         [[nodiscard]] auto has_resource(resource::identifier id) const -> bool;
         [[nodiscard]] auto has_resource(const std::string& name) const -> bool;
 
-        auto add_resource(const resource& resource) -> void;
+        auto add_resource(resource resource) -> void;
         auto remove_resource(resource::identifier id) -> void;
 
         [[nodiscard]] auto resource_with_id(resource::identifier id) const -> resource *;

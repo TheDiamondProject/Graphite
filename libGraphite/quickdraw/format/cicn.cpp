@@ -53,10 +53,9 @@ auto graphite::quickdraw::cicn::surface() const -> const quickdraw::surface&
 
 auto graphite::quickdraw::cicn::data() -> data::block
 {
-    data::block data;
-    data::writer writer(&data);
+    data::writer writer;
     encode(writer);
-    return std::move(data);
+    return std::move(*const_cast<data::block *>(writer.data()));
 }
 
 // MARK: - Coding

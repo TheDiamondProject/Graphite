@@ -136,10 +136,45 @@ namespace graphite::data
         }
 
         template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-        auto read_integer(block::position offset = 0, mode mode = mode::advance, std::size_t size = sizeof(T)) -> T;
+        auto read_integer(block::position offset = 0, mode mode = mode::advance, std::size_t size = sizeof(T)) -> T
+        {
+            T v = 0;
+            if (size <= 0 || size > sizeof(T)) {
+                throw std::runtime_error("Invalid integer size specified in data reader.");
+            }
+
+            for (block::position i = 0; i < size; ++i) {
+                auto b = m_data->template operator[]<uint8_t>(m_position + offset + i);
+                v |= static_cast<T>(b) << (i << 3ULL);
+            }
+
+            if (size > 1) {
+                v = swap(v, m_data->byte_order(), native_byte_order(), size);
+            }
+
+            if (mode == mode::advance) {
+                move(offset + size);
+            }
+
+            return v;
+        }
 
         template<typename E, typename std::enable_if<std::is_enum<E>::value>::type* = nullptr>
-        auto read_enum(block::position offset = 0, mode mode = mode::advance, std::size_t size = sizeof(E)) -> E;
+        auto read_enum(block::position offset = 0, mode mode = mode::advance, std::size_t size = sizeof(E)) -> E
+        {
+            if (sizeof(E) == sizeof(std::uint8_t)) {
+                return static_cast<E>(read_byte(offset, mode));
+            }
+            else if (sizeof(E) == sizeof(std::uint16_t)) {
+                return static_cast<E>(read_short(offset, mode));
+            }
+            else if (sizeof(E) == sizeof(std::uint32_t)) {
+                return static_cast<E>(read_long(offset, mode));
+            }
+            else if (sizeof(E) == sizeof(std::uint64_t)) {
+                return static_cast<E>(read_quad(offset, mode));
+            }
+        }
 
     private:
         bool m_owns_data { false };

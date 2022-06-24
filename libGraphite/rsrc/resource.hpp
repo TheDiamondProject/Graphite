@@ -38,12 +38,15 @@ namespace graphite::rsrc
         static constexpr resource::identifier default_resource_id { 128 };
 
     public:
-        resource(resource::identifier id = default_resource_id, const std::string& name = "");
-        resource(struct type *type, resource::identifier id = default_resource_id, const std::string& name = "", data::block data = {});
-        explicit resource(const resource& resource);
+        explicit resource(resource::identifier id = default_resource_id, const std::string& name = "");
+        explicit resource(struct type *type, resource::identifier id = default_resource_id, const std::string& name = "", data::block data = {});
+        resource(const resource& resource);
         resource(resource&& resource) noexcept;
 
         ~resource();
+
+        auto operator=(const resource& resource) -> struct resource&;
+        auto operator=(resource&& resource) noexcept -> struct resource&;
 
         [[nodiscard]] auto id() const -> resource::identifier;
         [[nodiscard]] auto type() const -> struct type *;

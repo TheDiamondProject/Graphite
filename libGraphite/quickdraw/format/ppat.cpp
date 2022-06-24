@@ -50,10 +50,9 @@ auto graphite::quickdraw::ppat::surface() const -> const struct surface &
 
 auto graphite::quickdraw::ppat::data() -> data::block
 {
-    data::block data;
-    data::writer writer(&data);
+    data::writer writer;
     encode(writer);
-    return std::move(data);
+    return std::move(*const_cast<data::block *>(writer.data()));
 }
 
 // MARK: - Coding

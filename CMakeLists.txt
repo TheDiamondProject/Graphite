@@ -45,5 +45,5 @@ file(GLOB_RECURSE graphite_test_sources
 )
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
 add_executable(GraphiteTest ${graphite_test_sources})
-#target_link_libraries(GraphiteTest Graphite)
+target_link_libraries(GraphiteTest Graphite)
 

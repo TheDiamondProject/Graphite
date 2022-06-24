@@ -45,7 +45,7 @@ graphite::rsrc::resource::resource(const resource &resource)
 graphite::rsrc::resource::resource(resource &&resource) noexcept
     : m_type(resource.m_type),
       m_id(resource.m_id),
-      m_name(resource.m_name),
+      m_name(std::move(resource.m_name)),
       m_data(std::move(resource.m_data))
 {
     resource.m_type = nullptr;
@@ -55,6 +55,35 @@ graphite::rsrc::resource::resource(resource &&resource) noexcept
 
 graphite::rsrc::resource::~resource()
 {
+}
+
+// MARK: - Operators
+
+auto graphite::rsrc::resource::operator=(const resource &resource) -> struct resource &
+{
+    if (this == const_cast<struct resource *>(&resource)) {
+        return *this;
+    }
+
+    m_id = resource.m_id;
+    m_type = resource.m_type;
+    m_name = resource.m_name;
+    m_data = resource.m_data;
+    m_data_offset = resource.m_data_offset;
+
+    return *this;
+}
+
+auto graphite::rsrc::resource::operator=(resource &&resource) noexcept -> struct resource &
+{
+    if (this != &resource) {
+        m_id = resource.m_id;
+        m_type = resource.m_type;
+        m_name = std::move(resource.m_name);
+        m_data = std::move(resource.m_data);
+        m_data_offset = resource.m_data_offset;
+    }
+    return *this;
 }
 
 // MARK: - Accessors

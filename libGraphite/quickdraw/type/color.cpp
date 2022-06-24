@@ -31,6 +31,24 @@ auto graphite::quickdraw::rgb(color_component r, color_component g, color_compon
     };
 }
 
+auto graphite::quickdraw::rgb(std::uint16_t rgb555) -> union color
+{
+    union color c = {
+        .components = {
+            .red = static_cast<uint8_t>((rgb555 & 0x7c00) >> 7),
+            .green = static_cast<uint8_t>((rgb555 & 0x03e0) >> 2),
+            .blue = static_cast<uint8_t>((rgb555 & 0x001f) << 3),
+            .alpha = 255
+        }
+    };
+
+    c.components.red |= c.components.red >> 5;
+    c.components.green |= c.components.green >> 5;
+    c.components.blue |= c.components.blue >> 5;
+
+    return c;
+}
+
 // MARK: - Pre-defined Colors
 
 auto graphite::quickdraw::colors::white() -> union color

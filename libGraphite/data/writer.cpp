@@ -94,30 +94,6 @@ auto graphite::data::writer::move(block::position delta) -> void
 
 // MARK: - Write Operations
 
-template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type*>
-auto graphite::data::writer::write_integer(T value, std::size_t count, std::size_t size) -> void
-{
-    auto swapped = swap(value, native_byte_order(), m_data->byte_order());
-
-    ensure_required_space(position(), size * count);
-    auto ptr = m_data->template get<uint8_t *>(position());
-
-    for (auto n = 0; n < count; ++n) {
-        for (auto i = 0; i < size; ++i) {
-            auto b = i << 3ULL;
-            *ptr++ = (swapped >> b) & 0xFF;
-            move();
-        }
-    }
-}
-
-template<typename E, typename std::enable_if<std::is_enum<E>::value>::type*>
-auto graphite::data::writer::write_enum(E value, std::size_t count, std::size_t size) -> E
-{
-    return write_integer<E>(value, count, size);
-}
-
-
 auto graphite::data::writer::write_byte(uint8_t value, std::size_t count) -> void
 {
     write_integer(value, count);

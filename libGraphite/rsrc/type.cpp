@@ -98,16 +98,16 @@ auto graphite::rsrc::type::has_resource(const std::string &name) const -> bool
     return (m_resource_name_map.find(hash) != m_resource_name_map.end());
 }
 
-auto graphite::rsrc::type::add_resource(const resource &resource) -> void
+auto graphite::rsrc::type::add_resource(resource resource) -> void
 {
     m_resources.emplace_back(std::move(resource));
 
-    auto& ref = m_resources.back();
-    auto id_hash = resource::hash(ref.id());
-    auto name_hash = resource::hash(ref.name());
+    auto ref = &m_resources.back();
+    auto id_hash = resource::hash(ref->id());
+    auto name_hash = resource::hash(ref->name());
 
-    m_resource_id_map[id_hash] = &ref;
-    m_resource_name_map[name_hash] = &ref;
+    m_resource_id_map.emplace(std::pair(id_hash, ref));
+    m_resource_name_map.emplace(std::pair(name_hash, ref));
 }
 
 auto graphite::rsrc::type::remove_resource(resource::identifier id) -> void
@@ -117,18 +117,22 @@ auto graphite::rsrc::type::remove_resource(resource::identifier id) -> void
 
 auto graphite::rsrc::type::resource_with_id(resource::identifier id) const -> resource *
 {
-    auto it = m_resource_id_map.find(hashing::xxh64(&id, sizeof(id)));
-    if (it != m_resource_id_map.end()) {
-        return it->second;
+    for (const auto& it : m_resources) {
+        if (it.id() == id) {
+            auto ptr = const_cast<resource *>(&it);
+            return ptr;
+        }
     }
     return nullptr;
 }
 
 auto graphite::rsrc::type::resource_with_name(const std::string &name) const -> resource *
 {
-    auto it = m_resource_name_map.find(hashing::xxh64(name.c_str(), name.size()));
-    if (it != m_resource_id_map.end()) {
-        return it->second;
+    for (const auto& it : m_resources) {
+        if (it.name() == name) {
+            auto ptr = const_cast<resource *>(&it);
+            return ptr;
+        }
     }
     return nullptr;
 }

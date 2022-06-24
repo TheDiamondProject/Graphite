@@ -82,36 +82,6 @@ auto graphite::data::reader::restore_position() -> void
 
 // MARK: - Read Operations
 
-template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type*>
-auto graphite::data::reader::read_integer(block::position offset, mode mode, std::size_t size) -> T
-{
-    T v = 0;
-    if (size <= 0 || size > sizeof(T)) {
-        throw std::runtime_error("Invalid integer size specified in data reader.");
-    }
-
-    for (block::position i = 0; i < size; ++i) {
-        auto b = m_data->template operator[]<uint8_t>(m_position + offset + i);
-        v |= static_cast<T>(b) << (i << 3ULL);
-    }
-
-    if (size > 1) {
-        v = swap(v, m_data->byte_order(), native_byte_order(), size);
-    }
-
-    if (mode == mode::advance) {
-        move(offset + size);
-    }
-
-    return v;
-}
-
-template<typename E, typename std::enable_if<std::is_enum<E>::value>::type*>
-auto graphite::data::reader::read_enum(block::position offset, mode mode, std::size_t size) -> E
-{
-    return read_integer<E>(offset, mode, size);
-}
-
 auto graphite::data::reader::read_byte(block::position offset, mode mode) -> uint8_t
 {
     return read_integer<uint8_t>(offset, mode);

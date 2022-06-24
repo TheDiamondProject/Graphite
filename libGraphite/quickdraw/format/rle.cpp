@@ -74,10 +74,9 @@ auto graphite::quickdraw::rle::frame_count() const -> std::size_t
 
 auto graphite::quickdraw::rle::data() -> data::block
 {
-    data::block data;
-    data::writer writer(&data);
+    data::writer writer;
     encode(writer);
-    return std::move(data);
+    return std::move(*const_cast<data::block *>(writer.data()));
 }
 
 // MARK: - Operations
@@ -124,6 +123,30 @@ auto graphite::quickdraw::rle::write_frame(std::uint32_t frame, const quickdraw:
             m_surface.set(x + dst_rect.origin.x, y + dst_rect.origin.y, surface.at(x, y));
         }
     }
+}
+
+auto graphite::quickdraw::rle::write_pixel(std::uint16_t pixel, std::uint8_t mask, std::uint64_t offset) -> void
+{
+    m_surface.set(offset, rgb(pixel));
+}
+
+auto graphite::quickdraw::rle::write_pixel(std::uint32_t pixel, std::uint8_t mask, std::uint64_t offset, enum pixel_type type) -> void
+{
+    switch (type) {
+        case pixel_type::type1: {
+            m_surface.set(offset, rgb(pixel >> 16));
+        }
+        case pixel_type::type2: {
+            m_surface.set(offset, rgb(pixel & 0xFFFF));
+        }
+    }
+}
+
+auto graphite::quickdraw::rle::surface_offset(std::uint32_t frame, std::uint64_t offset) -> std::uint64_t
+{
+    quickdraw::point<std::int16_t> fo(frame % constants::rle_grid_width, frame / constants::rle_grid_width);
+    quickdraw::point<std::int16_t> p(fo.x * m_frame_size.width, (fo.y * m_frame_size.height) + offset);
+    return static_cast<uint64_t>(p.y * m_surface.size().width + p.x);
 }
 
 // MARK: - Decoding

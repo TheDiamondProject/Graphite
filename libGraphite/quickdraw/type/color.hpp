@@ -38,10 +38,11 @@ namespace graphite::quickdraw
         } components;
     };
 
-    auto operator==(const union color& lhs, const union color& rhs) -> bool { return lhs.value == rhs.value; }
-    auto operator!=(const union color& lhs, const union color& rhs) -> bool { return lhs.value != rhs.value; }
+    static auto operator==(const union color& lhs, const union color& rhs) -> bool { return lhs.value == rhs.value; }
+    static auto operator!=(const union color& lhs, const union color& rhs) -> bool { return lhs.value != rhs.value; }
 
     [[nodiscard]] auto rgb(color_component r, color_component g, color_component b, color_component a = 255) -> union color;
+    [[nodiscard]] auto rgb(std::uint16_t rgb555) -> union color;
 
     namespace constants
     {

@@ -57,6 +57,13 @@ auto graphite::quickdraw::pict::surface() const -> const quickdraw::surface &
     return m_surface;
 }
 
+auto graphite::quickdraw::pict::data() -> data::block
+{
+    data::writer writer;
+    encode(writer);
+    return std::move(*const_cast<data::block *>(writer.data()));
+}
+
 // MARK: - Decoding
 
 auto graphite::quickdraw::pict::decode(data::reader &reader) -> void
