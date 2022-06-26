@@ -88,7 +88,7 @@ auto graphite::rsrc::format::rez::write(file &file, const std::string &path) -> 
 
         for (const auto& resource : *type) {
             // Get the data for the resource and determine its size.
-            auto size = resource.data().size();
+            auto size = resource->data().size();
             writer.write_long(resource_offset);
             writer.write_long(static_cast<uint32_t>(size));
             writer.write_long(0);
@@ -112,7 +112,7 @@ auto graphite::rsrc::format::rez::write(file &file, const std::string &path) -> 
     for (const auto type_hash : file.types()) {
         auto type = const_cast<struct type *>(file.type(type_hash));
         for (const auto& resource : *type) {
-            writer.write_data(&resource.data());
+            writer.write_data(&resource->data());
         }
     }
 
@@ -135,8 +135,8 @@ auto graphite::rsrc::format::rez::write(file &file, const std::string &path) -> 
         for (const auto& resource : *type) {
             writer.write_long(index++);
             writer.write_cstr(type->code(), 4);
-            writer.write_signed_short(static_cast<int16_t>(resource.id()));
-            writer.write_cstr(resource.name(), 256);
+            writer.write_signed_short(static_cast<int16_t>(resource->id()));
+            writer.write_cstr(resource->name(), 256);
         }
     }
 

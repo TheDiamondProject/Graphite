@@ -95,7 +95,8 @@ auto graphite::rsrc::resource_result::end() -> iterator
 
 auto graphite::rsrc::resource_result::at(std::uint64_t idx) const -> struct resource *
 {
-    return m_resources.at(m_sorted_keys.at(idx));
+    auto it = m_resources.find(m_sorted_keys.at(idx));
+    return (it != m_resources.end()) ? it->second : nullptr;
 }
 
 auto graphite::rsrc::resource_result::id(resource::identifier id) const -> struct resource *
@@ -110,7 +111,9 @@ auto graphite::rsrc::resource_result::id(resource::identifier id) const -> struc
 
 auto graphite::rsrc::resource_result::resource(const std::string &type_code, resource::identifier id) const -> struct resource *
 {
-    return m_resources.at(resource_result::sort_key(type_code, id));
+    auto key = resource_result::sort_key(type_code, id);
+    auto it = m_resources.find(key);
+    return (it != m_resources.end()) ? it->second : nullptr;
 }
 
 auto graphite::rsrc::resource_result::filter(const std::function<auto(struct resource *)->bool>& fn) const -> resource_result

@@ -81,9 +81,9 @@ auto graphite::rsrc::format::extended::write(file &file, const std::string &path
         resource_count += type->count();
 
         for (auto& resource : *type) {
-            auto data = resource.data();
+            auto data = resource->data();
             auto size = data.size();
-            resource.set_data_offset(writer.size() - data_offset);
+            resource->set_data_offset(writer.size() - data_offset);
             writer.write_quad(size);
             writer.write_data(&data);
         }
@@ -147,16 +147,16 @@ auto graphite::rsrc::format::extended::write(file &file, const std::string &path
     uint64_t name_offset = 0;
     for (const auto type : types) {
         for (const auto& resource : *type) {
-            writer.write_signed_quad(resource.id());
+            writer.write_signed_quad(resource->id());
 
             // The name is actually stored in the name list, and the resource stores an offset to that name.
             // If no name is assigned to the resource then the offset is encoded as 0xFFFFFFFFFFFFFFFF.
-            if (resource.name().empty()) {
+            if (resource->name().empty()) {
                 writer.write_quad(std::numeric_limits<uint64_t>::max());
             }
             else {
                 // Convert the name to MacRoman so that we can get the length of it when encoded.
-                auto mac_roman = encoding::mac_roman::from_utf8(resource.name());
+                auto mac_roman = encoding::mac_roman::from_utf8(resource->name());
                 auto len = mac_roman.size();
 
                 writer.write_quad(name_offset);
@@ -164,7 +164,7 @@ auto graphite::rsrc::format::extended::write(file &file, const std::string &path
             }
 
             writer.write_byte(0);
-            writer.write_quad(resource.data_offset());
+            writer.write_quad(resource->data_offset());
             writer.write_long(0);
         }
     }
@@ -173,11 +173,11 @@ auto graphite::rsrc::format::extended::write(file &file, const std::string &path
     name_offset = 0;
     for (const auto type : types) {
         for (const auto& resource : *type) {
-            if (resource.name().empty()) {
+            if (resource->name().empty()) {
                 continue;
             }
 
-            auto mac_roman = encoding::mac_roman::from_utf8(resource.name());
+            auto mac_roman = encoding::mac_roman::from_utf8(resource->name());
             if (mac_roman.size() >= 0x100) {
                 mac_roman.resize(0xFF);
             }

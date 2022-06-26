@@ -84,9 +84,9 @@ auto graphite::rsrc::format::classic::write(file &file, const std::string &path)
         }
 
         for (auto& resource : *type) {
-            auto data = resource.data();
+            auto data = resource->data();
             auto size = data.size();
-            resource.set_data_offset(writer.size() - data_offset);
+            resource->set_data_offset(writer.size() - data_offset);
             writer.write_long(static_cast<uint32_t>(size));
             writer.write_data(&data);
         }
@@ -138,7 +138,7 @@ auto graphite::rsrc::format::classic::write(file &file, const std::string &path)
     uint16_t name_len = 0;
     for (const auto type : types) {
         for (const auto& resource : *type) {
-            auto id = resource.id();
+            auto id = resource->id();
 
             if (id < std::numeric_limits<int16_t>::min() || id > std::numeric_limits<int16_t>::max()) {
                 return false;
@@ -147,7 +147,7 @@ auto graphite::rsrc::format::classic::write(file &file, const std::string &path)
 
             // The name is actually stored in the name list, and the resource stores and offset to that name.
             // If no name is assigned to the resource then the offset is encoded as 0xFFFF
-            if (resource.name().empty()) {
+            if (resource->name().empty()) {
                 writer.write_short(0xFFFF);
             }
             else {
@@ -158,7 +158,7 @@ auto graphite::rsrc::format::classic::write(file &file, const std::string &path)
                 writer.write_short(name_offset);
 
                 // Convert the name to MacRoman so that we can get the length of it when encoded.
-                auto mac_roman = encoding::mac_roman::from_utf8(resource.name());
+                auto mac_roman = encoding::mac_roman::from_utf8(resource->name());
                 name_len = mac_roman.size() + 1;
                 if (name_len > 0x100) {
                     name_len = 0x100;
@@ -170,7 +170,7 @@ auto graphite::rsrc::format::classic::write(file &file, const std::string &path)
 
             // The data offset is a 3 byte (24-bit) value. This means the hi-byte needs discarding and then a swap
             // performing.
-            auto offset = static_cast<uint32_t>(resource.data_offset());
+            auto offset = static_cast<uint32_t>(resource->data_offset());
             if (offset > 0xFFFFFF) {
                 return false;
             }
@@ -185,15 +185,15 @@ auto graphite::rsrc::format::classic::write(file &file, const std::string &path)
     name_offset = 0;
     for (const auto type : types) {
         for (const auto& resource : *type) {
-            if (resource.name().empty()) {
+            if (resource->name().empty()) {
                 continue;
             }
 
-            auto mac_roman = encoding::mac_roman::from_utf8(resource.name());
+            auto mac_roman = encoding::mac_roman::from_utf8(resource->name());
             if (mac_roman.size() >= 0x100) {
                 mac_roman.resize(0xFF);
             }
-            name_offset += writer.write_pstr(resource.name()) + 1;
+            name_offset += writer.write_pstr(resource->name()) + 1;
         }
     }
 

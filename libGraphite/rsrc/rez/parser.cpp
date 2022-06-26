@@ -44,7 +44,7 @@ namespace graphite::rsrc::format::rez::constants
 
 auto graphite::rsrc::format::rez::parse(data::reader &reader, file &file) -> bool
 {
-    std::vector<struct type> types;
+    std::vector<struct type *> types;
 
     // 1. Read the preamble
     if (reader.read_long() != constants::signature) {
@@ -94,17 +94,17 @@ auto graphite::rsrc::format::rez::parse(data::reader &reader, file &file) -> boo
     // 5. Read the resource types.
     for (auto type_idx = 0; type_idx < type_count; ++type_idx) {
         auto code = reader.read_cstr(4);
-        auto type_offset = static_cast<uint64_t>(reader.read_long());
+        auto type_offset = static_cast<int64_t>(reader.read_long());
         auto count = reader.read_long();
 
-        struct type type { code };
+        auto type = new struct type(code);
         reader.save_position();
         reader.set_position(map_offset + type_offset);
 
         // 6. Read the resource info.
         for (auto res_idx = 0; res_idx < count; ++res_idx) {
             auto index = reader.read_long();
-            if (code != reader.read_cstr()) {
+            if (code != reader.read_cstr(4)) {
                 reader.set_position(0);
                 return false;
             }
@@ -118,12 +118,12 @@ auto graphite::rsrc::format::rez::parse(data::reader &reader, file &file) -> boo
             reader.set_position(next_offset);
 
             // 7. Construct a new resource instance and add it to the type.
-            struct resource resource { &type, id, name, std::move(slice) };
-            type.add_resource(resource);
+            auto resource = new struct resource(type, id, name, std::move(slice));
+            type->add_resource(resource);
         }
 
         reader.restore_position();
-        types.emplace_back(std::move(type));
+        types.emplace_back(type);
     }
 
     file.add_types(types);

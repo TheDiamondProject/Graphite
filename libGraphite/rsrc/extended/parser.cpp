@@ -31,7 +31,7 @@
 
 auto graphite::rsrc::format::extended::parse(data::reader &reader, file &file) -> bool
 {
-    std::vector<struct type> types;
+    std::vector<struct type *> types;
 
     // 1. Resource Preamble
     if (reader.read_quad(0, data::reader::mode::peek) != 1) {
@@ -108,7 +108,7 @@ auto graphite::rsrc::format::extended::parse(data::reader &reader, file &file) -
         auto attribute_count = reader.read_quad();
         auto attribute_offset = reader.read_quad();
 
-        struct type type { code };
+        auto type = new struct type(code);
 
         // 4. Extract the list of attributes before we create the type, as they are needed for actually building the
         // type.
@@ -116,7 +116,7 @@ auto graphite::rsrc::format::extended::parse(data::reader &reader, file &file) -
         if (attribute_count > 0) {
             reader.set_position(attribute_list_offset + attribute_offset);
             for (auto i = 0; i < attribute_count; ++i) {
-                type.add_attribute(reader.read_cstr(), reader.read_cstr());
+                type->add_attribute(reader.read_cstr(), reader.read_cstr());
             }
         }
 
@@ -145,14 +145,14 @@ auto graphite::rsrc::format::extended::parse(data::reader &reader, file &file) -
             reader.restore_position();
 
             // 7. Construct a new resource instance and add it to the type.
-            struct resource resource { &type, id, name, std::move(slice) };
-            type.add_resource(std::move(resource));
+            auto resource = new struct resource(type, id, name, std::move(slice));
+            type->add_resource(resource);
         }
 
         reader.restore_position();
-        types.emplace_back(std::move(type));
+        types.emplace_back(type);
     }
 
-    file.add_types(std::move(types));
+    file.add_types(types);
     return true;
 }

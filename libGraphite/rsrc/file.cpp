@@ -74,7 +74,7 @@ auto graphite::rsrc::file::type_codes() const -> std::vector<std::string>
 {
     std::vector<std::string> types;
     for (const auto& type : m_types) {
-        types.emplace_back(type.second.code());
+        types.emplace_back(type.second->code());
     }
     return std::move(types);
 }
@@ -98,39 +98,31 @@ auto graphite::rsrc::file::add_resource(const std::string &type_code,
                                         const data::block &data,
                                         const std::unordered_map<std::string, std::string> &attributes) -> void
 {
-    struct resource resource(nullptr, id, name, data);
+    auto resource = new struct resource(nullptr, id, name, data);
 
     auto type_hash = rsrc::type::hash_for_type_code(type_code);
     auto it = m_types.find(type_hash);
     if (it == m_types.end()) {
         // The type doesn't exist, so we need to create it.
-        struct type type(type_code);
-        m_types.emplace(std::pair(type_hash, std::move(type)));
-
-        struct type *type_ptr = &m_types.find(type_hash)->second;
-        resource.set_type(type_ptr);
-
-        type_ptr->add_resource(std::move(resource));
+        auto type = new struct type(type_code);
+        m_types.emplace(std::pair(type_hash, type));
+        type->add_resource(resource);
     }
     else {
         // Found the type, add the resource to it.
-        resource.set_type(&it->second);
-        it->second.add_resource(std::move(resource));
+        it->second->add_resource(resource);
     }
 }
 
-auto graphite::rsrc::file::add_type(const struct type &type) -> void
+auto graphite::rsrc::file::add_type(struct type *type) -> void
 {
-    m_types.emplace(std::pair(type.hash_value(), std::move(type)));
+    m_types.emplace(std::pair(type->hash_value(), type));
 }
 
-auto graphite::rsrc::file::add_types(const std::vector<struct type> &types) -> void
+auto graphite::rsrc::file::add_types(const std::vector<struct type *> &types) -> void
 {
-    for (const auto& type : types) {
-        m_types.emplace(std::pair(type.hash_value(), std::move(type)));
-
-        // We need to resync all of the type references inside the resources for the type.
-        m_types.at(type.hash_value()).sync_resource_type_references();
+    for (const auto type : types) {
+        m_types.emplace(std::pair(type->hash_value(), type));
     }
 }
 
@@ -144,7 +136,7 @@ auto graphite::rsrc::file::type(const std::string &code, const std::unordered_ma
     }
 
     auto it = m_types.find(type::hash_for_type_code(code, attributes_map));
-    return (it == m_types.end()) ? nullptr : &it->second;
+    return (it == m_types.end()) ? nullptr : it->second;
 }
 
 auto graphite::rsrc::file::type(const std::string& code, const std::vector<attribute>& attributes) const -> const struct type *
@@ -155,25 +147,25 @@ auto graphite::rsrc::file::type(const std::string& code, const std::vector<attri
     }
 
     auto it = m_types.find(type::hash_for_type_code(code, attributes_map));
-    return (it == m_types.end()) ? nullptr : &it->second;
+    return (it == m_types.end()) ? nullptr : it->second;
 }
 
 auto graphite::rsrc::file::type(const std::string& code) const -> const struct type *
 {
     auto it = m_types.find(type::hash_for_type_code(code));
-    return (it == m_types.end()) ? nullptr : &it->second;
+    return (it == m_types.end()) ? nullptr : it->second;
 }
 
 
 auto graphite::rsrc::file::type(type::hash hash) const -> const struct type *
 {
     auto it = m_types.find(hash);
-    return (it == m_types.end()) ? nullptr : &it->second;
+    return (it == m_types.end()) ? nullptr : it->second;
 }
 
 auto graphite::rsrc::file::find(const std::string &type_code, resource::identifier id, const std::unordered_map<std::string, std::string>& attributes) const -> const struct resource *
 {
-    if (auto type = this->type(type_code, attributes)) {
+    if (auto type = const_cast<rsrc::type *>(this->type(type_code, attributes))) {
         return type->resource_with_id(id);
     }
     return nullptr;

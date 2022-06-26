@@ -35,6 +35,7 @@ namespace graphite::rsrc
 
     public:
         explicit type(const std::string& code);
+        ~type();
 
         static auto attribute_string(const std::unordered_map<attribute::hash, attribute>& attributes) -> std::string;
         static auto hash_for_type_code(const std::string& code) -> hash;
@@ -54,21 +55,21 @@ namespace graphite::rsrc
         [[nodiscard]] auto has_resource(resource::identifier id) const -> bool;
         [[nodiscard]] auto has_resource(const std::string& name) const -> bool;
 
-        auto add_resource(resource resource) -> void;
+        auto add_resource(resource *resource) -> void;
         auto remove_resource(resource::identifier id) -> void;
 
         [[nodiscard]] auto resource_with_id(resource::identifier id) const -> resource *;
         [[nodiscard]] auto resource_with_name(const std::string& name) const -> resource *;
 
-        auto begin() -> std::vector<resource>::iterator;
-        auto end() -> std::vector<resource>::iterator;
+        auto begin() -> std::vector<resource *>::iterator;
+        auto end() -> std::vector<resource *>::iterator;
+        [[nodiscard]] auto begin() const -> std::vector<resource *>::const_iterator;
+        [[nodiscard]] auto end() const-> std::vector<resource *>::const_iterator;
         auto at(int64_t idx) -> resource *;
-
-        auto sync_resource_type_references() -> void;
 
     private:
         std::string m_code;
-        std::vector<resource> m_resources;
+        std::vector<resource *> m_resources;
         std::unordered_map<resource::identifier_hash, resource *> m_resource_id_map {};
         std::unordered_map<resource::name_hash, resource *> m_resource_name_map {};
         std::unordered_map<attribute::hash , attribute> m_attributes {};

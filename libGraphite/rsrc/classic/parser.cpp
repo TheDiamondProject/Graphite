@@ -31,7 +31,7 @@
 
 auto graphite::rsrc::format::classic::parse(data::reader &reader, file& file) -> bool
 {
-    std::vector<struct type> types;
+    std::vector<struct type *> types;
 
     // 1. Resource Preamble
     auto data_offset = reader.read_long();
@@ -103,7 +103,7 @@ auto graphite::rsrc::format::classic::parse(data::reader &reader, file& file) ->
         auto count = reader.read_short() + 1;
         auto first_resource_offset = static_cast<uint64_t>(reader.read_short());
 
-        struct type type { code };
+        auto type = new struct type(code);
 
         // 4. Parse the list of resources for the current resource type.
         reader.save_position();
@@ -131,15 +131,15 @@ auto graphite::rsrc::format::classic::parse(data::reader &reader, file& file) ->
             reader.restore_position();
 
             // 7. Construct a new resource instance and add it to the type.
-            struct resource resource { &type, id, name, std::move(slice) };
-            type.add_resource(std::move(resource));
+            auto resource = new struct resource(type, id, name, std::move(slice));
+            type->add_resource(resource);
         }
 
         reader.restore_position();
-        types.emplace_back(std::move(type));
+        types.emplace_back(type);
     }
 
-    file.add_types(std::move(types));
+    file.add_types(types);
     return true;
 }
 

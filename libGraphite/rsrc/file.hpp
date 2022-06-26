@@ -54,8 +54,8 @@ namespace graphite::rsrc
         [[nodiscard]] auto format() const -> enum format;
         [[nodiscard]] auto hash_value() const -> hash;
 
-        auto add_type(const struct type &type) -> void;
-        auto add_types(const std::vector<struct type>& types) -> void;
+        auto add_type(struct type *type) -> void;
+        auto add_types(const std::vector<struct type *>& types) -> void;
         [[nodiscard]] auto type(const std::string& code, const std::unordered_map<std::string, std::string>& attributes) const -> const struct type *;
         [[nodiscard]] auto type(const std::string& code, const std::vector<attribute>& attributes) const -> const struct type *;
         [[nodiscard]] auto type(const std::string& code) const -> const struct type *;
@@ -86,7 +86,7 @@ namespace graphite::rsrc
 
     private:
         std::string m_path;
-        std::unordered_map<type::hash, struct type> m_types;
+        std::unordered_map<type::hash, struct type *> m_types;
         data::block *m_data { nullptr };
         enum format m_format { format::classic };
     };

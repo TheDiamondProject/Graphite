@@ -30,22 +30,25 @@ auto graphite::rsrc::manager::shared_manager() -> manager &
 
 // MARK: - File Management
 
-auto graphite::rsrc::manager::import_file(class file file) -> class file *
+auto graphite::rsrc::manager::import_file(class file *file) -> class file *
 {
-    auto hash = file.hash_value();
-    m_files.emplace(std::pair(hash, std::move(file)));
-    return &m_files.at(hash);
+    m_files.emplace(std::pair(file->hash_value(), file));
+    return file;
 }
 
 auto graphite::rsrc::manager::import_file(const std::string &path) -> class file *
 {
-    graphite::rsrc::file file(path);
-    return import_file(std::move(file));
+    auto file = new graphite::rsrc::file(path);
+    return import_file(file);
 }
 
 auto graphite::rsrc::manager::unload_file(file::hash file) -> void
 {
-    m_files.erase(file);
+    auto it = m_files.find(file);
+    if (it != m_files.end()) {
+        delete it->second;
+        m_files.erase(file);
+    }
 }
 
 auto graphite::rsrc::manager::unload_file(class file *file) -> void
@@ -64,7 +67,7 @@ auto graphite::rsrc::manager::file(file::hash file) -> class file *
 {
     auto it = m_files.find(file);
     if (it != m_files.end()) {
-        return &it->second;
+        return it->second;
     }
     return nullptr;
 }
@@ -87,21 +90,20 @@ auto graphite::rsrc::manager::file_references() const -> std::vector<class file 
 {
     std::vector<class file *> files;
     for (const auto& it : m_files) {
-        files.emplace_back(const_cast<class file *>(&it.second));
+        files.emplace_back(it.second);
     }
     return std::move(files);
 }
 
 // MARK: - Searching
 
-auto graphite::rsrc::manager::all_types(const std::string &type_code, const std::vector<attribute> &attributes) const -> std::vector<struct type *>
+auto graphite::rsrc::manager::all_types(const std::string &type_code, const std::vector<attribute> &attributes) const -> std::vector<const struct type *>
 {
-    std::vector<struct type *> types;
+    std::vector<const struct type *> types;
     for (const auto& it : m_files) {
-        auto type = it.second.type(type_code, attributes);
-
+        auto type = it.second->type(type_code, attributes);
         if (type) {
-            types.emplace_back(const_cast<struct type *>(type));
+            types.emplace_back(type);
         }
     }
     return types;
@@ -116,7 +118,7 @@ auto graphite::rsrc::manager::find(const std::string &type_code, const std::vect
     const auto& types = all_types(type_code, attributes);
     for (const auto type : types) {
         for (const auto& resource : *type) {
-            result.add(const_cast<struct resource *>(&resource));
+            result.add(resource);
         }
     }
 

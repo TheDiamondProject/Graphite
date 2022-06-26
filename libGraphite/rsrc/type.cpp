@@ -29,6 +29,13 @@ graphite::rsrc::type::type(const std::string &code)
 {
 }
 
+graphite::rsrc::type::~type()
+{
+    for (auto it : m_resources) {
+        delete it;
+    }
+}
+
 // MARK: - Accessors
 
 auto graphite::rsrc::type::attribute_string(const std::unordered_map<attribute::hash, attribute> &attributes) -> std::string
@@ -112,16 +119,16 @@ auto graphite::rsrc::type::has_resource(const std::string &name) const -> bool
     return (m_resource_name_map.find(hash) != m_resource_name_map.end());
 }
 
-auto graphite::rsrc::type::add_resource(resource resource) -> void
+auto graphite::rsrc::type::add_resource(resource *resource) -> void
 {
-    m_resources.emplace_back(std::move(resource));
+    m_resources.emplace_back(resource);
+    resource->set_type(this);
 
-    auto ref = &m_resources.back();
-    auto id_hash = resource::hash(ref->id());
-    auto name_hash = resource::hash(ref->name());
+    auto id_hash = resource::hash(resource->id());
+    auto name_hash = resource::hash(resource->name());
 
-    m_resource_id_map.emplace(std::pair(id_hash, ref));
-    m_resource_name_map.emplace(std::pair(name_hash, ref));
+    m_resource_id_map.emplace(std::pair(id_hash, resource));
+    m_resource_name_map.emplace(std::pair(name_hash, resource));
 }
 
 auto graphite::rsrc::type::remove_resource(resource::identifier id) -> void
@@ -132,9 +139,8 @@ auto graphite::rsrc::type::remove_resource(resource::identifier id) -> void
 auto graphite::rsrc::type::resource_with_id(resource::identifier id) const -> resource *
 {
     for (const auto& it : m_resources) {
-        if (it.id() == id) {
-            auto ptr = const_cast<resource *>(&it);
-            return ptr;
+        if (it->id() == id) {
+            return it;
         }
     }
     return nullptr;
@@ -143,20 +149,29 @@ auto graphite::rsrc::type::resource_with_id(resource::identifier id) const -> re
 auto graphite::rsrc::type::resource_with_name(const std::string &name) const -> resource *
 {
     for (const auto& it : m_resources) {
-        if (it.name() == name) {
-            auto ptr = const_cast<resource *>(&it);
-            return ptr;
+        if (it->name() == name) {
+            return it;
         }
     }
     return nullptr;
 }
 
-auto graphite::rsrc::type::begin() -> std::vector<resource>::iterator
+auto graphite::rsrc::type::begin() -> std::vector<resource *>::iterator
 {
     return m_resources.begin();
 }
 
-auto graphite::rsrc::type::end() -> std::vector<resource>::iterator
+auto graphite::rsrc::type::end() -> std::vector<resource *>::iterator
+{
+    return m_resources.end();
+}
+
+auto graphite::rsrc::type::begin() const -> std::vector<resource *>::const_iterator
+{
+    return m_resources.cbegin();
+}
+
+auto graphite::rsrc::type::end() const -> std::vector<resource *>::const_iterator
 {
     return m_resources.end();
 }
@@ -166,13 +181,6 @@ auto graphite::rsrc::type::at(int64_t idx) -> resource *
     if (idx < 0 || idx >= m_resources.size()) {
         return nullptr;
     }
-    return &m_resources.at(idx);
-}
-
-auto graphite::rsrc::type::sync_resource_type_references() -> void
-{
-    for (auto& resource : *this) {
-        resource.set_type(this);
-    }
+    return m_resources.at(idx);
 }
 

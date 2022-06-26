@@ -39,7 +39,7 @@ graphite::data::reader::reader(const class block *data, block::position pos, boo
 auto graphite::data::reader::file(const std::string &path, block::position pos) -> reader
 {
     auto data = new class block(path, byte_order::msb);
-    return std::move(reader(data, pos, true));
+    return reader(data, pos, true);
 }
 
 // MARK: - Destruction
@@ -55,10 +55,7 @@ graphite::data::reader::~reader()
 
 auto graphite::data::reader::set_position(block::position pos) -> void
 {
-    if (pos < 0 || pos > size()) {
-        throw std::runtime_error("Attempted to set position of data reader out of bounds.");
-    }
-    m_position = pos;
+    m_position = static_cast<block::position>(std::max(static_cast<std::size_t>(0), std::min(static_cast<std::size_t>(pos), size() + 1)));
 }
 
 auto graphite::data::reader::move(block::position delta) -> void

@@ -41,7 +41,7 @@ namespace graphite::rsrc
 
         static auto shared_manager() -> manager&;
 
-        auto import_file(file file) -> class file *;
+        auto import_file(class file *file) -> class file *;
         auto import_file(const std::string& path) -> class file *;
 
         auto unload_file(class file *file) -> void;
@@ -76,7 +76,7 @@ namespace graphite::rsrc
             return find(T::type_code(), name_prefix, attributes);
         }
 
-        [[nodiscard]] auto all_types(const std::string& type_code, const std::vector<attribute>& attributes = {}) const -> std::vector<struct type *>;
+        [[nodiscard]] auto all_types(const std::string& type_code, const std::vector<attribute>& attributes = {}) const -> std::vector<const struct type *>;
 
         template<resource_type T>
         [[nodiscard]] auto all_types(const std::vector<attribute>& attributes = {}) const -> std::vector<struct vector *>
@@ -94,7 +94,7 @@ namespace graphite::rsrc
         };
 
     private:
-        std::unordered_map<file::hash, class file> m_files;
+        std::unordered_map<file::hash, class file *> m_files;
 
         manager() = default;
     };
