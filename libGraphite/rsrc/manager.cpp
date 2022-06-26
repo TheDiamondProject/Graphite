@@ -98,9 +98,7 @@ auto graphite::rsrc::manager::all_types(const std::string &type_code, const std:
 {
     std::vector<struct type *> types;
     for (const auto& it : m_files) {
-        auto type = it.second.type(type_code);
-
-        // TODO: Attribute matching...
+        auto type = it.second.type(type_code, attributes);
 
         if (type) {
             types.emplace_back(const_cast<struct type *>(type));

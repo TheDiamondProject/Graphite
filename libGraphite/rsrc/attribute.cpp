@@ -38,7 +38,7 @@ graphite::rsrc::attribute::attribute(const std::string &name, T value)
 
 auto graphite::rsrc::attribute::hash_value() const -> hash
 {
-    return hashing::xxh64(m_name.c_str(), m_name.size());
+    return hash_for_name(m_name);
 }
 
 auto graphite::rsrc::attribute::name() const -> const std::string&
@@ -55,4 +55,11 @@ template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type
 auto graphite::rsrc::attribute::value() const -> T
 {
     return std::to_integer<T>(m_value);
+}
+
+// MARK: - Helpers
+
+auto graphite::rsrc::attribute::hash_for_name(const std::string& name) -> hash
+{
+    return hashing::xxh64(name.c_str(), name.size());
 }

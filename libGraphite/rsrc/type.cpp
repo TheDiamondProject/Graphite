@@ -31,9 +31,27 @@ graphite::rsrc::type::type(const std::string &code)
 
 // MARK: - Accessors
 
+auto graphite::rsrc::type::attribute_string(const std::unordered_map<attribute::hash, attribute> &attributes) -> std::string
+{
+    std::string descriptor;
+    for (const auto& attribute : attributes) {
+        descriptor += "<" + attribute.second.name() + ":" + attribute.second.string_value() + ">";
+    }
+    return std::move(descriptor);
+}
+
 auto graphite::rsrc::type::hash_for_type_code(const std::string &code) -> hash
 {
     return hashing::xxh64(code.c_str(), code.size());
+}
+
+auto graphite::rsrc::type::hash_for_type_code(const std::string &code, const std::unordered_map<attribute::hash, attribute> &attributes) -> graphite::rsrc::type::hash
+{
+    std::string assembled_code { code };
+    if (!attributes.empty()) {
+        assembled_code += ":" + attribute_string(attributes);
+    }
+    return hash_for_type_code(assembled_code);
 }
 
 auto graphite::rsrc::type::hash_value() const -> hash
@@ -62,11 +80,7 @@ auto graphite::rsrc::type::count() const -> std::size_t
 
 auto graphite::rsrc::type::attribute_descriptor_string() const -> std::string
 {
-    std::string descriptor;
-    for (const auto& attribute : m_attributes) {
-        descriptor += "<" + attribute.second.name() + ":" + attribute.second.string_value() + ">";
-    }
-    return std::move(descriptor);
+    return std::move(attribute_string(m_attributes));
 }
 
 // MARK: - Attribute Management
@@ -161,3 +175,4 @@ auto graphite::rsrc::type::sync_resource_type_references() -> void
         resource.set_type(this);
     }
 }
+

@@ -134,11 +134,36 @@ auto graphite::rsrc::file::add_types(const std::vector<struct type> &types) -> v
     }
 }
 
-auto graphite::rsrc::file::type(const std::string &code) const -> const struct type *
+auto graphite::rsrc::file::type(const std::string &code, const std::unordered_map<std::string, std::string>& attributes) const -> const struct type *
+{
+    // Convert the unordered map to what is required.
+    std::unordered_map<attribute::hash, attribute> attributes_map;
+    for (const auto& it : attributes) {
+        rsrc::attribute attr(it.first, it.second);
+        attributes_map.emplace(std::pair(attr.hash_value(), std::move(attr)));
+    }
+
+    auto it = m_types.find(type::hash_for_type_code(code, attributes_map));
+    return (it == m_types.end()) ? nullptr : &it->second;
+}
+
+auto graphite::rsrc::file::type(const std::string& code, const std::vector<attribute>& attributes) const -> const struct type *
+{
+    std::unordered_map<attribute::hash, attribute> attributes_map;
+    for (const auto& it : attributes) {
+        attributes_map.emplace(std::pair(it.hash_value(), it));
+    }
+
+    auto it = m_types.find(type::hash_for_type_code(code, attributes_map));
+    return (it == m_types.end()) ? nullptr : &it->second;
+}
+
+auto graphite::rsrc::file::type(const std::string& code) const -> const struct type *
 {
     auto it = m_types.find(type::hash_for_type_code(code));
     return (it == m_types.end()) ? nullptr : &it->second;
 }
+
 
 auto graphite::rsrc::file::type(type::hash hash) const -> const struct type *
 {
@@ -146,9 +171,9 @@ auto graphite::rsrc::file::type(type::hash hash) const -> const struct type *
     return (it == m_types.end()) ? nullptr : &it->second;
 }
 
-auto graphite::rsrc::file::find(const std::string &type_code, resource::identifier id) const -> const struct resource *
+auto graphite::rsrc::file::find(const std::string &type_code, resource::identifier id, const std::unordered_map<std::string, std::string>& attributes) const -> const struct resource *
 {
-    if (auto type = this->type(type_code)) {
+    if (auto type = this->type(type_code, attributes)) {
         return type->resource_with_id(id);
     }
     return nullptr;

@@ -56,6 +56,8 @@ namespace graphite::rsrc
 
         auto add_type(const struct type &type) -> void;
         auto add_types(const std::vector<struct type>& types) -> void;
+        [[nodiscard]] auto type(const std::string& code, const std::unordered_map<std::string, std::string>& attributes) const -> const struct type *;
+        [[nodiscard]] auto type(const std::string& code, const std::vector<attribute>& attributes) const -> const struct type *;
         [[nodiscard]] auto type(const std::string& code) const -> const struct type *;
         [[nodiscard]] auto type(type::hash hash) const -> const struct type *;
 
@@ -66,12 +68,12 @@ namespace graphite::rsrc
                           const std::unordered_map<std::string, std::string>& attributes = {}) -> void;
 
         template<resource_type T>
-        [[nodiscard]] auto find(resource::identifier id) const -> const struct resource *
+        [[nodiscard]] auto find(resource::identifier id, const std::unordered_map<std::string, std::string>& attributes = {}) const -> const struct resource *
         {
-            return find(T::type_code(), id);
+            return find(T::type_code(), id, attributes);
         }
 
-        [[nodiscard]] auto find(const std::string& type_code, resource::identifier id) const -> const struct resource *;
+        [[nodiscard]] auto find(const std::string& type_code, resource::identifier id, const std::unordered_map<std::string, std::string>& attributes = {}) const -> const struct resource *;
 
         template <resource_type T>
         [[nodiscard]] auto load(resource::identifier id) const -> T

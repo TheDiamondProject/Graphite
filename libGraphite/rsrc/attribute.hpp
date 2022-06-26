@@ -30,6 +30,8 @@ namespace graphite::rsrc
     public:
         typedef std::uint64_t hash;
 
+        static auto hash_for_name(const std::string& name) -> hash;
+
     public:
         attribute(const std::string& name, const std::string& value);
 
