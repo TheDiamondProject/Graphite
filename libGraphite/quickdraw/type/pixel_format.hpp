@@ -24,7 +24,7 @@
 
 namespace graphite::quickdraw
 {
-    enum pixel_format : std::uint8_t
+    enum pixel_format : std::uint32_t
     {
         unknown = 0x00,
         monochrome = 0x01,

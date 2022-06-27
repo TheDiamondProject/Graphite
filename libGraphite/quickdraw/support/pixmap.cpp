@@ -51,7 +51,7 @@ auto graphite::quickdraw::pixmap::row_bytes() const -> std::int16_t
     return m_row_bytes;
 }
 
-auto graphite::quickdraw::pixmap::pack_type() const -> std::int16_t
+auto graphite::quickdraw::pixmap::pack_type() const -> enum pack_type
 {
     return m_pack_type;
 }
@@ -101,7 +101,7 @@ auto graphite::quickdraw::pixmap::set_row_bytes(std::int16_t row_bytes) -> void
     m_row_bytes = row_bytes;
 }
 
-auto graphite::quickdraw::pixmap::set_pack_type(std::int16_t pack_type) -> void
+auto graphite::quickdraw::pixmap::set_pack_type(enum pack_type pack_type) -> void
 {
     m_pack_type = pack_type;
 }
@@ -169,12 +169,12 @@ auto graphite::quickdraw::pixmap::draw_configuration::aspect::expected_data_size
 auto graphite::quickdraw::pixmap::decode(data::reader &reader) -> void
 {
     m_base_address = reader.read_long();
-    m_row_bytes = static_cast<std::int16_t>(static_cast<std::uint16_t>(reader.read_signed_short()) & 0x7FFF);
+    m_row_bytes = static_cast<std::int16_t>(reader.read_short() & 0x7FFF);
     m_bounds = reader.read<rect<std::int16_t>>();
     m_pm_version = reader.read_signed_short();
-    m_pack_type = reader.read_signed_short();
+    m_pack_type = reader.read_enum<enum pack_type>();
     m_pack_size = reader.read_signed_long();
-    m_dpi = reader.read<size<double>>();
+    m_dpi = size<double>::read(reader, coding_type::macintosh);
     m_pixel_type = reader.read_signed_short();
     m_pixel_size = reader.read_signed_short();
     m_component_count = reader.read_signed_short();

@@ -62,7 +62,7 @@ auto graphite::quicktime::format::planar::decode(const quicktime::image_descript
             pack_counts[i] = reader.read_short();
         }
         for (auto count : pack_counts) {
-            raw = reader.read_compressed_data<compression::packbits16>(count);
+            raw = reader.read_compressed_data<compression::packbits<16>>(count);
         }
     }
 

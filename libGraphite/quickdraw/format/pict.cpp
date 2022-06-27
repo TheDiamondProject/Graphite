@@ -121,7 +121,6 @@ auto graphite::quickdraw::pict::decode(data::reader &reader) -> void
     quickdraw::rect<std::int16_t> clipping_rect;
     m_size = 0;
     m_surface = quickdraw::surface(m_frame.size);
-    auto has_bits = false;
 
     while (!reader.eof()) {
         if (v1) {
@@ -241,11 +240,6 @@ auto graphite::quickdraw::pict::decode(data::reader &reader) -> void
             }
         }
     }
-
-    // This is a safety check for QuickTime RLE which is skipped over. If no other image data was found, throw an error.
-    if (!has_bits) {
-        throw std::runtime_error("Encountered an incompatible PICT: " + std::to_string(m_id) + ", " + m_name);
-    }
 }
 
 // MARK: - Encoding
@@ -307,7 +301,7 @@ auto graphite::quickdraw::pict::read_indirect_bits_rect(data::reader &reader, bo
     }
     else {
         // Old style Bitmap
-        pm.set_pack_type(1);
+        pm.set_pack_type(pixmap::argb);
         pm.set_component_count(1);
         pm.set_component_size(1);
         pm.set_row_bytes(reader.read_short());
@@ -336,7 +330,7 @@ auto graphite::quickdraw::pict::read_indirect_bits_rect(data::reader &reader, bo
     if (packed) {
         data::writer raw(&raw_data);
         for (std::int16_t scanline = 0; scanline < height; ++scanline) {
-            auto data = reader.read_compressed_data<compression::packbits8>(row_bytes > 250 ? reader.read_short() : reader.read_byte());
+            auto data = reader.read_compressed_data<compression::packbits<8>>(row_bytes > 250 ? reader.read_short() : reader.read_byte());
             raw.write_data(&data);
         }
     }
@@ -353,123 +347,98 @@ auto graphite::quickdraw::pict::read_indirect_bits_rect(data::reader &reader, bo
 auto graphite::quickdraw::pict::read_direct_bits_rect(data::reader &reader, bool region) -> void
 {
     auto pm = reader.read<quickdraw::pixmap>();
+    m_format = pm.pixel_size() == 16 ? 16 : pm.component_size() * pm.component_count();
+
+    // Read the source and destination bounds
+    auto source_rect = reader.read<rect<std::int16_t>>();
+    auto destination_rect = reader.read<rect<std::int16_t>>();
+    auto transfer_mode = reader.read_short();
+
+    if (region) {
+        read_region(reader);
+    }
+
     auto pack_type = pm.pack_type();
     auto component_count = pm.component_count();
     auto color_model = pm.pixel_format();
     auto row_bytes = pm.row_bytes();
     auto bounds = pm.bounds();
 
-    // Read the source and destination bounds
-    auto source_rect = reader.read<rect<std::int16_t>>();
-    auto destinationm_rect = reader.read<rect<std::int16_t>>();
 
-    if (region) {
-        read_region(reader);
+    // Calculate the bounds of the pixels we need to copy to the surface, clipping to fit if necessary
+    auto copy_x = destination_rect.origin.x - m_frame.origin.x;
+    auto copy_y = destination_rect.origin.y - m_frame.origin.y;
+    auto copy_w = std::min(destination_rect.size.width, static_cast<std::int16_t>(m_frame.size.width - copy_x));
+    auto copy_h = std::min(destination_rect.size.height, static_cast<std::int16_t>(m_frame.size.height - copy_y));
+
+    // When row bytes < 8, data is never packed. Raw format will instead match the pixel size, either 16-bit words or
+    // 32-bit argb.
+    auto packed = row_bytes >= 8 && pack_type >= pixmap::packbits_word;
+    if (row_bytes < 8 && pack_type != pixmap::packbits_word) {
+        pack_type = pixmap::argb;
+    }
+    else if (pack_type == pixmap::none || pack_type == pixmap::rgb) {
+        // Row bytes is always width * 4, but alpha is omitted here so make sure we only read width * 3.
+        row_bytes = bounds.size.width * 3;
     }
 
-    // Verify the type of PixMap. We can only accept certain types for the time being, until support for decoding
-    // other types is added.
     data::block raw_data;
-    switch (pack_type) {
-        case 1:
-        case 2:
-        case 3: {
-            raw_data = data::block(row_bytes);
-            break;
-        }
-        case 4: {
-            raw_data = data::block(component_count * row_bytes / 4);
-            break;
-        }
-        default: {
-            throw std::runtime_error("Unsupported pack type " + std::to_string(pack_type) + " encountered in PICT: "
-                                     + std::to_string(m_id) + ", " + m_name);
-        }
-    }
-
-    // Allocate a private memory buffer before going to the surface.
-    data::writer pixel_buffer;
-    std::uint32_t width = source_rect.size.width;
-    std::uint32_t height = source_rect.size.height;
-    std::uint32_t bounds_width = bounds.size.width;
-    std::uint32_t source_length = width * height;
-
-    if (pack_type == 3) {
-        pixel_buffer.write_short(0, source_length);
-    }
-    else {
-        pixel_buffer.write_long(0, source_length);
-    }
-
-    auto packing_enabled = ((pack_type == 3 ? 2 : 1) + (row_bytes > 250 ? 2 : 1)) <= bounds_width;
-
-    for (std::uint32_t scanline = 0; scanline < height; ++scanline) {
-        if (pack_type > 2 && packing_enabled) {
-            if (pack_type == 3) {
-                raw_data = std::move(reader.read_compressed_data<compression::packbits16>(row_bytes > 250 ? reader.read_short() : reader.read_byte()));
+    for (auto y = 0; y < copy_h; ++y) {
+        if (packed) {
+            auto pack_bytes_count = row_bytes > 250 ? reader.read_short() : reader.read_byte();
+            if (pack_type == pixmap::packbits_word) {
+                raw_data = std::move(reader.read_compressed_data<compression::packbits<16>>(pack_bytes_count));
             }
             else {
-                raw_data = std::move(reader.read_compressed_data<compression::packbits8>(row_bytes > 250 ? reader.read_short() : reader.read_byte()));
+                raw_data = std::move(reader.read_compressed_data<compression::packbits<8>>(pack_bytes_count));
             }
         }
         else {
             raw_data = std::move(reader.read_data(row_bytes));
         }
 
-        if (pack_type == 3) {
-            for (std::uint32_t x = 0; x < width; ++x) {
-                pixel_buffer.write_short(
-                    (0xFF& raw_data.get<std::uint8_t>(2 * x + 1)) | ((0xFF & raw_data.get<std::uint8_t>(2 * x)) << 8)
-                );
-            }
-        }
-        else if (component_count == 3) {
-            // RGB Formatted Data
-            for (std::uint32_t x = 0; x < width; ++x) {
-                pixel_buffer.write_long(
-                    0xFF000000
-                    | ((raw_data.get<std::uint8_t>(x) & 0xFF) << 16)
-                    | ((raw_data.get<std::uint8_t>(bounds_width + x) & 0xFF) << 8)
-                    | (raw_data.get<std::uint8_t>(2 * bounds_width + x) & 0xFF)
-                );
-            }
-        }
-        else if (component_count == 4) {
-            // ARGB Formatted Data
-            for (std::uint32_t x = 0; x < width; ++x) {
-                pixel_buffer.write_long(
-                    ((raw_data.get<std::uint8_t>(x) & 0xFF) << 24)
-                    | ((raw_data.get<std::uint8_t>(bounds_width + x) & 0xFF) << 16)
-                    | ((raw_data.get<std::uint8_t>(2 * bounds_width + x) & 0xFF) << 8)
-                    | (raw_data.get<std::uint8_t>(3 * bounds_width + x) & 0xFF)
-                );
-            }
-        }
-    }
-
-    data::reader pixel_buffer_reader(pixel_buffer.data());
-    if (pack_type == 3) {
-        while (!pixel_buffer_reader.eof()) {
-            auto value = pixel_buffer_reader.read_short();
-            auto color = rgb(
-                static_cast<std::uint8_t>(((value & 0x7c00) >> 10) * 0xFF / 0x1F),
-                static_cast<std::uint8_t>(((value & 0x03e0) >> 5) * 0xFF / 0x1F),
-                static_cast<std::uint8_t>((value & 0x001f) * 0xFF / 0x1F)
-            );
-            m_surface.set(m_size++, color);
-        }
-    }
-    else {
-        while (!pixel_buffer_reader.eof()) {
-            while (!pixel_buffer_reader.eof()) {
-                auto value = pixel_buffer_reader.read_short();
-                auto color = rgb(
-                    static_cast<uint8_t>((value & 0xFF0000) >> 16),
-                    static_cast<uint8_t>((value & 0xFF00) >> 8),
-                    static_cast<uint8_t>(value & 0xFF),
-                    static_cast<uint8_t>((value & 0xFF000000) >> 24)
-                );
-                m_surface.set(m_size++, color);
+        for (auto x = 0; x < copy_w; ++x) {
+            switch (pack_type) {
+                case pixmap::none:
+                case pixmap::rgb: {
+                    m_surface.set(x + copy_x, y + copy_y, rgb(
+                        raw_data.get<std::uint8_t>(3 * x),
+                        raw_data.get<std::uint8_t>(3 * x + 1),
+                        raw_data.get<std::uint8_t>(3 * x + 2)
+                    ));
+                    break;
+                }
+                case pixmap::argb: {
+                    m_surface.set(x + copy_x, y + copy_y, rgb(
+                        raw_data.get<std::uint8_t>(4 * x + 1),
+                        raw_data.get<std::uint8_t>(4 * x + 2),
+                        raw_data.get<std::uint8_t>(4 * x + 3)
+                    ));
+                    break;
+                }
+                case pixmap::packbits_word: {
+                    m_surface.set(x + copy_x, y + copy_y, rgb(
+                        (raw_data.get<std::uint8_t>(2 * x) << 8) | (raw_data.get<std::uint8_t>(2 * x + 1))
+                    ));
+                    break;
+                }
+                case pixmap::packbits_component: {
+                    if (component_count == 3) {
+                        m_surface.set(x + copy_x, y + copy_y, rgb(
+                            raw_data.get<std::uint8_t>(x),
+                            raw_data.get<std::uint8_t>(bounds.size.width + x),
+                            raw_data.get<std::uint8_t>(2 * bounds.size.width + x)
+                        ));
+                    }
+                    else if (component_count == 4) {
+                        m_surface.set(x + copy_x, y + copy_y, rgb(
+                            raw_data.get<std::uint8_t>(bounds.size.width + x),
+                            raw_data.get<std::uint8_t>(2 * bounds.size.width + x),
+                            raw_data.get<std::uint8_t>(3 * bounds.size.width + x)
+                        ));
+                    }
+                    break;
+                }
             }
         }
     }
@@ -644,7 +613,7 @@ auto graphite::quickdraw::pict::write_direct_bits_rect(data::writer &writer) -> 
             }
         }
 
-        auto packed = std::move(compression::packbits8::compress(scanline_data));
+        auto packed = std::move(compression::packbits<8>::compress(scanline_data));
         if (pm.row_bytes() > 250) {
             writer.write_short(packed.size());
         }

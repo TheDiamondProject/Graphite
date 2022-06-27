@@ -54,6 +54,15 @@ namespace graphite::quickdraw
             struct clut *color_table { nullptr };
         };
 
+        enum pack_type : std::uint16_t
+        {
+            none = 0,
+            argb = 1,
+            rgb = 2,
+            packbits_word = 3,
+            packbits_component = 4
+        };
+
     public:
         static constexpr std::size_t length = 50;
 
@@ -70,7 +79,7 @@ namespace graphite::quickdraw
 
         [[nodiscard]] auto bounds() const -> rect<std::int16_t>;
         [[nodiscard]] auto row_bytes() const -> std::int16_t;
-        [[nodiscard]] auto pack_type() const -> std::int16_t;
+        [[nodiscard]] auto pack_type() const -> enum pack_type;
         [[nodiscard]] auto pack_size() const -> std::int16_t;
         [[nodiscard]] auto pixel_type() const -> std::int16_t;
         [[nodiscard]] auto pixel_size() const -> std::int16_t;
@@ -83,7 +92,7 @@ namespace graphite::quickdraw
 
         auto set_bounds(const rect<std::int16_t>& rect) -> void;
         auto set_row_bytes(std::int16_t row_bytes) -> void;
-        auto set_pack_type(std::int16_t pack_type) -> void;
+        auto set_pack_type(enum pack_type pack_type) -> void;
         auto set_pack_size(std::int16_t pack_size) -> void;
         auto set_pixel_type(std::int16_t pixel_type) -> void;
         auto set_pixel_size(std::int16_t pixel_size) -> void;
@@ -97,8 +106,6 @@ namespace graphite::quickdraw
         auto build_surface(surface& surface, const data::block& pixel_data, const clut& clut, const rect<std::int16_t>& destination) -> void;
         auto build_pixel_data(const data::block& color_data, std::uint16_t pixel_size) -> data::block;
 
-
-
         auto encode(data::writer& writer) -> void;
 
     private:
@@ -107,7 +114,7 @@ namespace graphite::quickdraw
         std::int16_t m_row_bytes { 0 };
         rect<std::int16_t> m_bounds;
         std::int16_t m_pm_version { 0 };
-        std::int16_t m_pack_type { 4 };
+        enum pack_type m_pack_type { none };
         std::int32_t m_pack_size { 0 };
         quickdraw::size<double> m_dpi { 0.001098632812 };
         std::int16_t m_pixel_type { 16 };

@@ -24,6 +24,7 @@
 
 graphite::quickdraw::surface::surface(const quickdraw::size<std::int16_t> &size)
     : m_size(size),
+      m_row_bytes(size.width * constants::color_width),
       m_data(size.width * size.height * constants::color_width)
 {
 
@@ -31,6 +32,7 @@ graphite::quickdraw::surface::surface(const quickdraw::size<std::int16_t> &size)
 
 graphite::quickdraw::surface::surface(std::int16_t width, std::int16_t height)
     : m_size(width, height),
+      m_row_bytes(width * constants::color_width),
       m_data(width * height * constants::color_width)
 {
 
@@ -38,6 +40,7 @@ graphite::quickdraw::surface::surface(std::int16_t width, std::int16_t height)
 
 graphite::quickdraw::surface::surface(const quickdraw::size<std::int16_t>& size, union color color)
     : m_size(size),
+      m_row_bytes(size.width * constants::color_width),
       m_data(size.width * size.height * constants::color_width)
 {
     m_data.set(color.value);
@@ -45,6 +48,7 @@ graphite::quickdraw::surface::surface(const quickdraw::size<std::int16_t>& size,
 
 graphite::quickdraw::surface::surface(std::int16_t width, std::int16_t height, union color color)
     : m_size(width, height),
+      m_row_bytes(width * constants::color_width),
       m_data(width * height * constants::color_width)
 {
     m_data.set(color.value);
@@ -81,7 +85,7 @@ auto graphite::quickdraw::surface::at(const point<std::int16_t> &p) const -> uni
 
 auto graphite::quickdraw::surface::at(std::int16_t x, std::int16_t y) const -> union color
 {
-    return at(y * m_size.width + x);
+    return at((y * m_row_bytes) + (x * constants::color_width));
 }
 
 auto graphite::quickdraw::surface::at(std::uint32_t offset) const -> union color
@@ -96,10 +100,10 @@ auto graphite::quickdraw::surface::set(const point<std::int16_t>& p, union color
 
 auto graphite::quickdraw::surface::set(std::int16_t x, std::int16_t y, union color color) -> void
 {
-    set(y * m_size.width + x, color);
+    set((y * m_row_bytes) + (x * constants::color_width), color);
 }
 
 auto graphite::quickdraw::surface::set(std::uint32_t offset, union color color) -> void
 {
-    m_data.set(color.value, 4, offset);
+    m_data.set(color.value, constants::color_width, offset);
 }

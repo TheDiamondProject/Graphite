@@ -290,8 +290,9 @@ auto graphite::data::block::copy_from(const block &source) const -> void
 
     std::size_t len = std::min(source.size(), size());
     std::size_t n = 0;
+    auto simd_fields_len = simd_fields * simd_field_size;
     while (n < len) {
-        if ((reinterpret_cast<uintptr_t>(source_ptr) & simd_alignment_width) || (len - n) < simd_fields) {
+        if ((reinterpret_cast<uintptr_t>(source_ptr) & simd_alignment_width) || (len - n) < simd_fields_len) {
             *dest_ptr = *source_ptr;
             ++dest_ptr;
             ++source_ptr;
@@ -314,8 +315,9 @@ static inline auto inline_set(graphite::data::block *dst, union simd_value v, st
     auto ptr = dst->get<uint32_t *>(start);
     std::size_t n = 0;
 
+    auto simd_fields_len = simd_fields * simd_field_size;
     while (n < len) {
-        if ((reinterpret_cast<uintptr_t>(ptr) & simd_alignment_width) || (len - n) < simd_fields) {
+        if ((reinterpret_cast<uintptr_t>(ptr) & simd_alignment_width) || (len - n) < simd_fields_len) {
             *ptr = v.fields[n & (simd_fields - 1)];
             ++ptr;
             n += simd_field_size;
@@ -364,5 +366,5 @@ auto graphite::data::block::set(uint32_t value, std::size_t bytes, block::positi
 
 auto graphite::data::block::slice(block::position pos, std::size_t size, bool copy) const -> block
 {
-    return std::move(block(*this, pos, size, copy));
+    return std::move(block(*this, m_start_position + pos, size, copy));
 }

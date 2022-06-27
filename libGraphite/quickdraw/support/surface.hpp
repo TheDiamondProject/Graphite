@@ -53,6 +53,7 @@ namespace graphite::quickdraw
         auto set(std::uint32_t offset, union color color) -> void;
 
     private:
+        std::uint32_t m_row_bytes;
         quickdraw::size<std::int16_t> m_size;
         data::block m_data;
     };
