@@ -38,7 +38,7 @@ namespace graphite::quickdraw
         explicit rle(const data::block& data, rsrc::resource::identifier id = 0, const std::string& name = "");
         explicit rle(data::reader& reader);
 
-        [[nodiscard]] auto surface() const -> const quickdraw::surface&;
+        auto surface() -> quickdraw::surface&;
         [[nodiscard]] auto frames() const -> std::vector<rect<std::int16_t>>;
 
         [[nodiscard]] auto frame_count() const -> std::size_t;

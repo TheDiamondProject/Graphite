@@ -20,43 +20,52 @@
 
 #pragma once
 
-#include <string>
 #include "libGraphite/quickdraw/support/surface.hpp"
-#include "libGraphite/quickdraw/type/rect.hpp"
-#include "libGraphite/quickdraw/support/pixmap.hpp"
 #include "libGraphite/quickdraw/format/clut.hpp"
 
-namespace graphite::quickdraw
+namespace graphite::quicktime
 {
-    struct cicn
+    struct image_description
     {
     public:
-        static auto type_code() -> std::string { return "cicn"; }
+        enum compression_type : std::uint32_t
+        {
+            unknown = 0,
+            rle = 'rle ',
+            planar = '8BPS',
+            raw = 'raw ',
+            quickdraw = 'qdrw',
+        };
 
     public:
-        cicn() = default;
-        explicit cicn(const data::block& data, rsrc::resource::identifier id = 0, const std::string& name = "");
-        explicit cicn(data::reader& reader);
-        explicit cicn(quickdraw::surface& surface);
+        image_description() = default;
+        explicit image_description(data::reader& reader);
 
-        auto surface() -> surface&;
-
-        auto encode(data::writer& writer) -> void;
-        auto data() -> data::block;
+        [[nodiscard]] auto length() const -> std::int32_t;
+        [[nodiscard]] auto compressor() const -> enum compression_type;
+        [[nodiscard]] auto version() const -> std::uint32_t;
+        [[nodiscard]] auto width() const -> std::int16_t;
+        [[nodiscard]] auto height() const -> std::int16_t;
+        [[nodiscard]] auto data_size() const -> std::int32_t;
+        [[nodiscard]] auto depth() const -> std::int16_t;
+        [[nodiscard]] auto data_offset() const -> std::int32_t;
+        [[nodiscard]] auto clut() const -> const quickdraw::clut&;
+        [[nodiscard]] auto surface() const -> const quickdraw::surface&;
 
     private:
-        rsrc::resource::identifier m_id { INT64_MIN };
-        std::string m_name;
-        quickdraw::pixmap m_pixmap;
-        std::uint32_t m_mask_base_address { 0 };
-        std::uint16_t m_mask_row_bytes { 0 };
-        rect<std::int16_t> m_mask_bounds;
-        std::uint32_t m_bmap_base_address { 0 };
-        std::uint16_t m_bmap_row_bytes { 0 };
-        rect<std::int16_t> m_bmap_bounds;
-        quickdraw::surface m_surface;
+        std::int32_t m_length { 0 };
+        enum compression_type m_compressor { unknown };
+        std::uint32_t m_version { 0 };
+        std::int16_t m_width { 0 };
+        std::int16_t m_height { 0 };
+        std::int32_t m_data_size { 0 };
+        std::int16_t m_depth { 0 };
+        std::int32_t m_data_offset { 0 };
         quickdraw::clut m_clut;
+        quickdraw::surface m_surface;
 
         auto decode(data::reader& reader) -> void;
     };
 }
+
+

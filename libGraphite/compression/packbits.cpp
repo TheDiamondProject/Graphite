@@ -27,9 +27,8 @@
 
 auto graphite::compression::packbits::decompress(const data::block &compressed, std::size_t value_size) -> data::block
 {
-    data::block decompressed_data;
     data::reader reader(&compressed);
-    data::writer writer(&decompressed_data);
+    data::writer writer;
 
     while (!reader.eof()) {
         auto count = reader.read_byte();
@@ -41,7 +40,12 @@ auto graphite::compression::packbits::decompress(const data::block &compressed, 
             auto data = std::move(reader.read_data(run));
             writer.write_data(&data);
         }
-        else if (count >= 128) {
+        else if (value_size == 1) {
+            // Run of single bytes (fast)
+            std::uint8_t run = 256 - count + 1;
+            writer.write_byte(reader.read_byte(), run);
+        }
+        else if (count > 128) {
             std::uint8_t run = 256 - count + 1;
             for (std::uint8_t i = 0; i < run; ++i) {
                 for (std::uint8_t j = 0; j < value_size; ++j) {
@@ -55,7 +59,7 @@ auto graphite::compression::packbits::decompress(const data::block &compressed, 
         }
     }
 
-    return std::move(decompressed_data);
+    return std::move(*const_cast<data::block *>(writer.data()));
 }
 
 // MARK: - Compression

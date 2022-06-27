@@ -57,7 +57,7 @@ graphite::quickdraw::rle::rle(const size<std::int16_t> &size, std::uint16_t fram
 
 // MARK: - Accessors
 
-auto graphite::quickdraw::rle::surface() const -> const quickdraw::surface&
+auto graphite::quickdraw::rle::surface() -> quickdraw::surface&
 {
     return m_surface;
 }

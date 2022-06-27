@@ -43,7 +43,7 @@ graphite::quickdraw::ppat::ppat(graphite::quickdraw::surface& surface)
 
 // MARK: - Accessors
 
-auto graphite::quickdraw::ppat::surface() const -> const struct surface &
+auto graphite::quickdraw::ppat::surface() -> struct surface &
 {
     return m_surface;
 }

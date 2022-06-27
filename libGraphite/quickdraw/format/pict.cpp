@@ -22,6 +22,7 @@
 #include "libGraphite/quickdraw/support/pixmap.hpp"
 #include "libGraphite/quickdraw/format/clut.hpp"
 #include "libGraphite/compression/packbits.hpp"
+#include "libGraphite/quicktime/image_description.hpp"
 
 // MARK: - Constants
 
@@ -52,7 +53,7 @@ graphite::quickdraw::pict::pict(quickdraw::surface &surface)
 
 // MARK: - Accessors
 
-auto graphite::quickdraw::pict::surface() const -> const quickdraw::surface &
+auto graphite::quickdraw::pict::surface() -> quickdraw::surface &
 {
     return m_surface;
 }
@@ -176,11 +177,38 @@ auto graphite::quickdraw::pict::decode(data::reader &reader) -> void
                 read_short_comment(reader);
                 break;
             }
+            case opcode::short_line_from:
+            case opcode::pen_mode: {
+                reader.move(2);
+                break;
+            }
+            case opcode::line_from:
+            case opcode::pen_size: {
+                reader.move(4);
+                break;
+            }
+            case opcode::short_line:
             case opcode::rgb_fg_color:
             case opcode::rgb_bg_color:
             case opcode::hilite_color:
             case opcode::op_color: {
                 reader.move(6);
+                break;
+            }
+            case opcode::pen_pattern:
+            case opcode::fill_pattern:
+            case opcode::line:
+            case opcode::frame_rect:
+            case opcode::paint_rect:
+            case opcode::erase_rect:
+            case opcode::invert_rect:
+            case opcode::fill_rect:
+            case opcode::frame_same_rect:
+            case opcode::paint_same_rect:
+            case opcode::erase_same_rect:
+            case opcode::invert_same_rect:
+            case opcode::fill_same_rect: {
+                reader.move(8);
                 break;
             }
             case opcode::frame_region:
@@ -360,8 +388,7 @@ auto graphite::quickdraw::pict::read_direct_bits_rect(data::reader &reader, bool
     }
 
     // Allocate a private memory buffer before going to the surface.
-    data::block pixel_buffer_data;
-    data::writer pixel_buffer(&pixel_buffer_data);
+    data::writer pixel_buffer;
     std::uint32_t width = source_rect.size.width;
     std::uint32_t height = source_rect.size.height;
     std::uint32_t bounds_width = bounds.size.width;
@@ -420,7 +447,7 @@ auto graphite::quickdraw::pict::read_direct_bits_rect(data::reader &reader, bool
         }
     }
 
-    data::reader pixel_buffer_reader(&pixel_buffer_data);
+    data::reader pixel_buffer_reader(pixel_buffer.data());
     if (pack_type == 3) {
         while (!pixel_buffer_reader.eof()) {
             auto value = pixel_buffer_reader.read_short();
@@ -460,14 +487,16 @@ auto graphite::quickdraw::pict::read_compressed_quicktime(data::reader &reader) 
     auto mask_size = reader.read_long();
 
     if (matte_size > 0) {
-        read_image_description(reader);
+        auto matte = quicktime::image_description(reader);
     }
 
     if (mask_size > 0) {
         reader.move(mask_size);
     }
 
-    read_image_description(reader);
+    auto image_description = quicktime::image_description(reader);
+    m_surface = image_description.surface();
+    m_format = static_cast<std::uint32_t>(image_description.compressor());
 }
 
 auto graphite::quickdraw::pict::read_uncompressed_quicktime(data::reader &reader) -> void

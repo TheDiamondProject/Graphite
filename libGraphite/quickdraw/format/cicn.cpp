@@ -46,7 +46,7 @@ graphite::quickdraw::cicn::cicn(quickdraw::surface& surface)
 
 // MARK: - Accessors
 
-auto graphite::quickdraw::cicn::surface() const -> const quickdraw::surface&
+auto graphite::quickdraw::cicn::surface() -> quickdraw::surface&
 {
     return m_surface;
 }
@@ -122,21 +122,7 @@ auto graphite::quickdraw::cicn::encode(data::writer &writer) -> void
     m_pixmap = pixmap(rect<std::int16_t>({ 0, 0 }, { width, height }));
     data::block pmap_data;
 
-    if (m_clut.size() > 256) {
-        throw std::runtime_error("Implementation does not currently handle more than 256 colors in a CICN");
-    }
-    else if (m_clut.size() > 16) {
-        pmap_data = m_pixmap.build_pixel_data(color_values, 8);
-    }
-    else if (m_clut.size() > 4) {
-        pmap_data = m_pixmap.build_pixel_data(color_values, 4);
-    }
-    else if (m_clut.size() > 2) {
-        pmap_data = m_pixmap.build_pixel_data(color_values, 2);
-    }
-    else {
-        pmap_data = m_pixmap.build_pixel_data(color_values, 1);
-    }
+    pmap_data = m_pixmap.build_pixel_data(color_values, m_clut.size());
 
     // Calculate some offsets
     m_mask_base_address = 4;

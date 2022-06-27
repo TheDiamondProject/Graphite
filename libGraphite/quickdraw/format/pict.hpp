@@ -40,26 +40,43 @@ namespace graphite::quickdraw
         auto encode(data::writer& writer) -> void;
         auto data() -> data::block;
 
-        [[nodiscard]] auto surface() const -> const quickdraw::surface&;
+        auto surface() -> quickdraw::surface&;
 
     private:
         enum class opcode : std::uint16_t {
             nop = 0x0000,
             clip_region = 0x0001,
+            pen_size = 0x0007,
+            pen_mode = 0x0008,
+            pen_pattern = 0x0009,
+            fill_pattern = 0x000a,
             origin = 0x000c,
-            bits_rect = 0x0090,
-            bits_region = 0x0091,
-            pack_bits_rect = 0x0098,
-            pack_bits_region = 0x0099,
-            direct_bits_rect = 0x009a,
-            direct_bits_region = 0x009b,
-            eof = 0x00ff,
             rgb_fg_color = 0x001a,
             rgb_bg_color = 0x001b,
             hilite_mode = 0x001c,
             hilite_color = 0x001d,
             def_hilite = 0x001e,
             op_color = 0x001f,
+            line = 0x0020,
+            line_from = 0x0021,
+            short_line = 0x0022,
+            short_line_from = 0x0023,
+            frame_rect = 0x0030,
+            paint_rect = 0x0031,
+            erase_rect = 0x0032,
+            invert_rect = 0x0033,
+            fill_rect = 0x0034,
+            frame_same_rect = 0x0038,
+            paint_same_rect = 0x0039,
+            erase_same_rect = 0x003a,
+            invert_same_rect = 0x003b,
+            fill_same_rect = 0x003c,
+            bits_rect = 0x0090,
+            bits_region = 0x0091,
+            pack_bits_rect = 0x0098,
+            pack_bits_region = 0x0099,
+            direct_bits_rect = 0x009a,
+            direct_bits_region = 0x009b,
             frame_region = 0x0080,
             paint_region = 0x0081,
             erase_region = 0x0082,
@@ -67,6 +84,7 @@ namespace graphite::quickdraw
             fill_region = 0x0084,
             short_comment = 0x00a0,
             long_comment = 0x00a1,
+            eof = 0x00ff,
             ext_header = 0x0c00,
             compressed_quicktime = 0x8200,
             uncompressed_quicktime = 0x8201,
@@ -79,6 +97,7 @@ namespace graphite::quickdraw
         rect<std::int16_t> m_frame;
         point<double> m_dpi;
         std::size_t m_size;
+        std::uint32_t m_format { 0 };
 
         auto decode(data::reader& reader) -> void;
         auto read_region(data::reader& reader) const -> rect<std::int16_t>;
