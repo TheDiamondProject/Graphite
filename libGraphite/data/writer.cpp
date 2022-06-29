@@ -70,11 +70,11 @@ auto graphite::data::writer::expand_storage(std::size_t amount) -> void
 auto graphite::data::writer::ensure_required_space(block::position position, std::size_t amount) -> void
 {
     auto remaining = static_cast<block::position>(this->size()) - position;
-    auto delta = amount;
+    auto delta = 0;
     if (amount > remaining) {
-        delta -= remaining;
+        delta = amount - remaining;
+        expand_storage(delta);
     }
-    expand_storage(delta);
 }
 
 // MARK: - Position Management
