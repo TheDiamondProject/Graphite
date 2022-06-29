@@ -142,10 +142,10 @@ auto graphite::quickdraw::rle::write_pixel(std::uint32_t pixel, std::uint8_t mas
     }
 }
 
-auto graphite::quickdraw::rle::surface_offset(std::uint32_t frame, std::uint64_t offset) -> std::uint64_t
+auto graphite::quickdraw::rle::surface_offset(std::int32_t frame, std::int32_t line) -> std::uint64_t
 {
     quickdraw::point<std::int16_t> fo(frame % constants::rle_grid_width, frame / constants::rle_grid_width);
-    quickdraw::point<std::int16_t> p(fo.x * m_frame_size.width, (fo.y * m_frame_size.height) + offset);
+    quickdraw::point<std::int16_t> p(fo.x * m_frame_size.width, (fo.y * m_frame_size.height) + line);
     return static_cast<uint64_t>(p.y * m_surface.size().width + p.x);
 }
 
@@ -173,7 +173,8 @@ auto graphite::quickdraw::rle::decode(data::reader &reader) -> void
 
     // Create the surface in which all frame will be draw to, and other working variables required to parse and decode
     // the RLE data correctly.
-    m_surface = quickdraw::surface(m_grid_size.width * m_frame_size.width, m_grid_size.height * m_frame_size.height);
+    m_surface = quickdraw::surface(m_grid_size.width * m_frame_size.width, m_grid_size.height * m_frame_size.height, colors::clear());
+    m_surface.clear();
     rle::opcode opcode = opcode::eof;
     std::uint64_t position = 0;
     std::uint32_t row_start = 0;

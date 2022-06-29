@@ -162,6 +162,10 @@ auto graphite::quickdraw::cicn::decode(data::reader &reader) -> void
     cfg.color_table = &(m_clut = reader.read<clut>());
     auto pmap_data = reader.read_data(cfg.pixmap.expected_data_size());
 
+    cfg.mask.data = &mask_data;
+    cfg.bitmap.data = &bmap_data;
+    cfg.pixmap.data = &pmap_data;
+
     m_surface = quickdraw::surface(cfg.pixmap.bounds.size);
 
     if (m_pixmap.total_component_width() == 1) {

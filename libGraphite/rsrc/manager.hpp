@@ -49,9 +49,10 @@ namespace graphite::rsrc
         auto unload_file(const std::string& path) -> void;
 
         auto file(file::hash file) -> class file *;
+        auto file(file::hash file) const -> class file *;
         auto file(const std::string& path) -> class file *;
 
-        [[nodiscard]] auto files() const -> std::vector<file::hash>;
+        [[nodiscard]] auto files() const -> const std::vector<file::hash>&;
         [[nodiscard]] auto file_references() const -> std::vector<class file *>;
 
         [[nodiscard]] auto find(const std::string& type_code, const std::vector<attribute>& attributes = {}) const -> resource_result;
@@ -94,6 +95,7 @@ namespace graphite::rsrc
         };
 
     private:
+        std::vector<file::hash> m_file_load_order;
         std::unordered_map<file::hash, class file *> m_files;
 
         manager() = default;

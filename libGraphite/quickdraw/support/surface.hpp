@@ -38,6 +38,8 @@ namespace graphite::quickdraw
         surface(const surface& surface);
         surface(surface&& surface) noexcept;
 
+        ~surface();
+
         auto operator=(const surface&) -> surface& = default;
         auto operator=(surface&&) -> surface& = default;
 
@@ -52,9 +54,11 @@ namespace graphite::quickdraw
         auto set(std::int16_t x, std::int16_t y, union color color) -> void;
         auto set(std::uint32_t offset, union color color) -> void;
 
+        auto clear() -> void;
+
     private:
         std::uint32_t m_row_bytes;
         quickdraw::size<std::int16_t> m_size;
-        data::block m_data;
+        data::block *m_data;
     };
 }

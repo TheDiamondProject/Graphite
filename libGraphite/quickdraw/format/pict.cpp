@@ -312,6 +312,8 @@ auto graphite::quickdraw::pict::read_indirect_bits_rect(data::reader &reader, bo
         color_table.set(colors::black());
     }
 
+    m_format = pm.pixel_size();
+
     // Read the source and destination bounds
     auto source_rect = reader.read<rect<std::int16_t>>();
     auto destination_rect = reader.read<rect<std::int16_t>>();
@@ -328,11 +330,12 @@ auto graphite::quickdraw::pict::read_indirect_bits_rect(data::reader &reader, bo
     auto height = pm.bounds().size.height;
 
     if (packed) {
-        data::writer raw(&raw_data);
+        data::writer raw;
         for (std::int16_t scanline = 0; scanline < height; ++scanline) {
             auto data = reader.read_compressed_data<compression::packbits<8>>(row_bytes > 250 ? reader.read_short() : reader.read_byte());
             raw.write_data(&data);
         }
+        raw_data = std::move(*raw.data());
     }
     else {
         raw_data = reader.read_data(row_bytes * height);

@@ -33,6 +33,7 @@ auto graphite::rsrc::manager::shared_manager() -> manager &
 auto graphite::rsrc::manager::import_file(class file *file) -> class file *
 {
     m_files.emplace(std::pair(file->hash_value(), file));
+    m_file_load_order.insert(m_file_load_order.begin(), file->hash_value());
     return file;
 }
 
@@ -72,25 +73,30 @@ auto graphite::rsrc::manager::file(file::hash file) -> class file *
     return nullptr;
 }
 
+auto graphite::rsrc::manager::file(file::hash file) const -> class file *
+{
+    auto it = m_files.find(file);
+    if (it != m_files.end()) {
+        return it->second;
+    }
+    return nullptr;
+}
+
 auto graphite::rsrc::manager::file(const std::string &path) -> class file *
 {
     return file(file::hash_for_path(path));
 }
 
-auto graphite::rsrc::manager::files() const -> std::vector<file::hash>
+auto graphite::rsrc::manager::files() const -> const std::vector<file::hash>&
 {
-    std::vector<file::hash> files;
-    for (const auto& it : m_files) {
-        files.emplace_back(it.first);
-    }
-    return std::move(files);
+    return m_file_load_order;
 }
 
 auto graphite::rsrc::manager::file_references() const -> std::vector<class file *>
 {
     std::vector<class file *> files;
-    for (const auto& it : m_files) {
-        files.emplace_back(it.second);
+    for (auto hash : this->files()) {
+        files.emplace_back(this->file(hash));
     }
     return std::move(files);
 }

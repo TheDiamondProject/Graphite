@@ -73,7 +73,7 @@ namespace graphite::quickdraw
 
         auto decode(data::reader& reader) -> void;
 
-        [[nodiscard]] auto surface_offset(std::uint32_t frame, std::uint64_t offset) -> std::uint64_t;
+        [[nodiscard]] auto surface_offset(std::int32_t frame, std::int32_t offset) -> std::uint64_t;
         auto write_pixel(std::uint16_t pixel, std::uint8_t mask, std::uint64_t offset) -> void;
         auto write_pixel(std::uint32_t pixel, std::uint8_t mask, std::uint64_t offset, enum pixel_type type) -> void;
     };
