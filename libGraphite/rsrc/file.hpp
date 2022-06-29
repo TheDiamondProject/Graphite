@@ -38,6 +38,13 @@ namespace graphite::rsrc
     public:
         file() = default;
         explicit file(const std::string& path);
+        file(const file& file);
+        file(file&& file) noexcept;
+
+        ~file();
+
+        auto operator=(const file& file) -> class file&;
+        auto operator=(file&& file) noexcept -> class file&;
 
         static auto hash_for_path(const std::string& path) -> hash;
 

@@ -174,7 +174,7 @@ auto graphite::quickdraw::rle::decode(data::reader &reader) -> void
     // Create the surface in which all frame will be draw to, and other working variables required to parse and decode
     // the RLE data correctly.
     m_surface = quickdraw::surface(m_grid_size.width * m_frame_size.width, m_grid_size.height * m_frame_size.height, colors::clear());
-    m_surface.clear();
+
     rle::opcode opcode = opcode::eof;
     std::uint64_t position = 0;
     std::uint32_t row_start = 0;

@@ -174,7 +174,7 @@ graphite::data::block::block(const block &data)
       m_data_size(data.m_data_size),
       m_allocation_owner(nullptr),
       m_start_position(data.m_start_position),
-      m_users(data.m_users),
+      m_users(0),
       m_count(data.m_count),
       m_byte_order(data.m_byte_order)
 {
@@ -212,7 +212,7 @@ auto graphite::data::block::operator=(const block &data) -> struct block &
     m_data_size = data.m_data_size;
     m_allocation_owner = nullptr;
     m_start_position = data.m_start_position;
-    m_users = data.m_users;
+    m_users = 0;
     m_count = data.m_count;
     m_byte_order = data.m_byte_order;
 

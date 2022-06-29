@@ -36,6 +36,71 @@ graphite::rsrc::file::file(const std::string &path)
     read(path);
 }
 
+graphite::rsrc::file::file(const file &file)
+    : m_format(file.m_format),
+      m_path(file.m_path),
+      m_data(new data::block(*file.m_data))
+{
+    // Copy the types.
+    for (const auto& it : file.m_types) {
+        m_types.emplace(std::pair(it.first, new struct type(*it.second)));
+    }
+}
+
+graphite::rsrc::file::file(file &&file) noexcept
+    : m_format(file.m_format),
+      m_path(std::move(file.m_path)),
+      m_data(file.m_data),
+      m_types(std::move(file.m_types))
+{
+    file.m_data = nullptr;
+    file.m_types = {};
+}
+
+// MARK: - Destruction
+
+graphite::rsrc::file::~file()
+{
+    for (auto& it : m_types) {
+        delete it.second;
+    }
+    delete m_data;
+}
+
+// MARK: - Operators
+
+auto graphite::rsrc::file::operator=(const file &file) -> class file &
+{
+    if (this == const_cast<class file *>(&file)) {
+        return *this;
+    }
+
+    m_path = file.m_path;
+    m_format = file.m_format;
+    m_data = new data::block(*file.m_data);
+
+    // Copy the types.
+    for (const auto& it : file.m_types) {
+        m_types.emplace(std::pair(it.first, new struct type(*it.second)));
+    }
+
+    return *this;
+}
+
+auto graphite::rsrc::file::operator=(file &&file) noexcept -> class file &
+{
+    if (this != &file) {
+        m_path = std::move(file.m_path);
+        m_format = file.m_format;
+        m_data = file.m_data;
+        m_types = std::move(file.m_types);
+
+        file.m_data = nullptr;
+        file.m_types = {};
+    }
+    return *this;
+}
+
 // MARK: - Hashing
 
 auto graphite::rsrc::file::hash_for_path(const std::string &path) -> hash
@@ -177,7 +242,7 @@ auto graphite::rsrc::file::read(const std::string &path) -> void
 {
     m_path = path;
     m_data = new graphite::data::block(m_path);
-    graphite::data::reader reader { m_data };
+    graphite::data::reader reader(m_data);
 
     if (rsrc::format::extended::parse(reader, *this)) {
         m_format = format::extended;

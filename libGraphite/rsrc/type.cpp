@@ -29,11 +29,68 @@ graphite::rsrc::type::type(const std::string &code)
 {
 }
 
+graphite::rsrc::type::type(const type &type)
+    : m_code(type.m_code),
+      m_attributes(type.m_attributes)
+{
+    for (const auto& resource : type.m_resources) {
+        add_resource(new rsrc::resource(*resource));
+    }
+}
+
+graphite::rsrc::type::type(type &&type) noexcept
+    : m_code(std::move(type.m_code)),
+      m_resources(std::move(type.m_resources)),
+      m_resource_id_map(std::move(type.m_resource_id_map)),
+      m_resource_name_map(std::move(type.m_resource_name_map)),
+      m_attributes(std::move(type.m_attributes))
+{
+    type.m_resources = {};
+    type.m_resource_id_map = {};
+    type.m_resource_name_map = {};
+}
+
+// MARK: - Destruction
+
 graphite::rsrc::type::~type()
 {
     for (auto it : m_resources) {
         delete it;
     }
+}
+
+// MARK: - Operators
+
+auto graphite::rsrc::type::operator=(const type &type) -> struct type&
+{
+    if (this == const_cast<struct type *>(&type)) {
+        return *this;
+    }
+
+    m_code = type.m_code;
+    m_attributes = type.m_attributes;
+
+    for (const auto& resource : type.m_resources) {
+        add_resource(new rsrc::resource(*resource));
+    }
+
+    return *this;
+}
+
+auto graphite::rsrc::type::operator=(type &&type) noexcept -> struct type&
+{
+    if (this != &type) {
+        m_code = std::move(type.m_code);
+        m_resources = std::move(type.m_resources);
+        m_resource_id_map = std::move(type.m_resource_id_map);
+        m_resource_name_map = std::move(type.m_resource_name_map);
+        m_attributes = std::move(type.m_attributes);
+
+        type.m_resources = {};
+        type.m_resource_id_map = {};
+        type.m_resource_name_map = {};
+    }
+    return *this;
 }
 
 // MARK: - Accessors

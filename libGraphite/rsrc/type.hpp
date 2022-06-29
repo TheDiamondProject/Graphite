@@ -35,7 +35,13 @@ namespace graphite::rsrc
 
     public:
         explicit type(const std::string& code);
+        type(const type& type);
+        type(type&& type) noexcept;
+
         ~type();
+
+        auto operator=(const type& type) -> struct type&;
+        auto operator=(type&& type) noexcept -> struct type&;
 
         static auto attribute_string(const std::unordered_map<attribute::hash, attribute>& attributes) -> std::string;
         static auto hash_for_type_code(const std::string& code) -> hash;

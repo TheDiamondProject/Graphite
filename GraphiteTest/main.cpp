@@ -20,10 +20,10 @@
 
 #include <iostream>
 #include "libGraphite/rsrc/manager.hpp"
+#include "libGraphite/data/data.hpp"
 
 int main(int argc, char const *argv[])
 {
-    auto file = graphite::rsrc::manager::shared_manager().import_file("/Applications/EV Nova.app/Contents/Resources/Nova Files/Nova Data 1.ndat");
 
     return 0;
 }
