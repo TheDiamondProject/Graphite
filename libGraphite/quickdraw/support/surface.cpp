@@ -76,6 +76,35 @@ graphite::quickdraw::surface::~surface()
     delete m_data;
 }
 
+// MARK: - Operators
+
+auto graphite::quickdraw::surface::operator=(const surface& surface) -> class surface&
+{
+    if (this == const_cast<class surface *>(&surface)) {
+        return *this;
+    }
+
+    m_data = new data::block(*surface.m_data);
+    m_size = surface.m_size;
+    m_row_bytes = surface.m_row_bytes;
+
+    return *this;
+}
+
+auto graphite::quickdraw::surface::operator=(class surface&& surface) -> class surface&
+{
+    if (this != &surface) {
+        delete m_data;
+
+        m_data = surface.m_data;
+        m_size = surface.m_size;
+        m_row_bytes = surface.m_row_bytes;
+
+        surface.m_data = nullptr;
+    }
+    return *this;
+}
+
 // MARK: - Accessors
 
 auto graphite::quickdraw::surface::raw() const -> const data::block&

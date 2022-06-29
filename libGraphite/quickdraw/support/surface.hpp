@@ -40,8 +40,8 @@ namespace graphite::quickdraw
 
         ~surface();
 
-        auto operator=(const surface&) -> surface& = default;
-        auto operator=(surface&&) -> surface& = default;
+        auto operator=(const surface&) -> surface&;
+        auto operator=(surface&&) -> surface&;
 
         [[nodiscard]] auto raw() const -> const data::block&;
         [[nodiscard]] auto size() const -> struct size<std::int16_t>;
@@ -59,6 +59,6 @@ namespace graphite::quickdraw
     private:
         std::uint32_t m_row_bytes;
         quickdraw::size<std::int16_t> m_size;
-        data::block *m_data;
+        data::block *m_data { nullptr };
     };
 }
