@@ -35,7 +35,7 @@ auto graphite::quickdraw::drawing::monochrome::pixmap::draw(const quickdraw::pix
     for (std::int16_t y = 0; y < cfg.pixmap.bounds.size.height; ++y) {
         auto y_offset = y * cfg.pixmap.row_bytes;
         for (std::int16_t x = 0; x < cfg.pixmap.bounds.size.width; ++x) {
-            auto byte_offset = y - (x % CHAR_BIT);
+            auto byte_offset = 7 - (x % CHAR_BIT);
             auto byte = cfg.pixmap.data->get<std::uint8_t>(y_offset + (x / CHAR_BIT));
             auto value = (byte >> byte_offset) & 0x1;
             surface.set(x, y, cfg.color_table->at(value));
@@ -49,7 +49,7 @@ auto graphite::quickdraw::drawing::monochrome::pixmap::draw_masked(const quickdr
         auto y_offset = y * cfg.pixmap.row_bytes;
         auto mask_y_offset = y * cfg.mask.row_bytes;
         for (std::int16_t x = 0; x < cfg.pixmap.bounds.size.width; ++x) {
-            auto byte_offset = y - (x % CHAR_BIT);
+            auto byte_offset = 7 - (x % CHAR_BIT);
             auto byte = cfg.pixmap.data->get<std::uint8_t>(y_offset + (x / CHAR_BIT));
             auto mask = cfg.mask.data->get<std::uint8_t>(mask_y_offset + (x / CHAR_BIT));
             auto value = (byte >> byte_offset) & 0x1;

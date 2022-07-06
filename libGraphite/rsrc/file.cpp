@@ -206,13 +206,29 @@ auto graphite::rsrc::file::type(const std::string &code, const std::unordered_ma
 
 auto graphite::rsrc::file::type(const std::string& code, const std::vector<attribute>& attributes) const -> const struct type *
 {
+    bool universal_namespace = false;
     std::unordered_map<attribute::hash, attribute> attributes_map;
     for (const auto& it : attributes) {
-        attributes_map.emplace(std::pair(it.hash_value(), it));
+        if (it.name() == "namespace" && it.string_value() == "*") {
+            universal_namespace = true;
+        }
+        else {
+            attributes_map.emplace(std::pair(it.hash_value(), it));
+        }
     }
 
-    auto it = m_types.find(type::hash_for_type_code(code, attributes_map));
-    return (it == m_types.end()) ? nullptr : it->second;
+    if (universal_namespace) {
+        // TODO: Merge types together so that we can browse all namespaces.
+        for (const auto& it : m_types) {
+            if (it.second->code() == code) {
+                return it.second;
+            }
+        }
+    }
+    else {
+        auto it = m_types.find(type::hash_for_type_code(code, attributes_map));
+        return (it == m_types.end()) ? nullptr : it->second;
+    }
 }
 
 auto graphite::rsrc::file::type(const std::string& code) const -> const struct type *

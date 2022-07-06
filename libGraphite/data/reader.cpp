@@ -134,11 +134,11 @@ auto graphite::data::reader::read_pstr(block::position offset, mode mode) -> std
     switch (mode) {
         case mode::advance: {
             auto length = read_byte(offset, mode);
-            return read_cstr(length, 0, mode);
+            return length == 0 ? "" : read_cstr(length, 0, mode);
         }
         case mode::peek: {
             auto length = read_byte(offset, mode);
-            return read_cstr(length, offset + 1, mode);
+            return length == 0 ? "" : read_cstr(length, offset + 1, mode);
         }
         default: {
             return "";
