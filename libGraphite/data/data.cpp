@@ -252,7 +252,7 @@ auto graphite::data::block::operator=(block &&data) noexcept -> struct block &
         if (m_allocation_owner) {
             const_cast<struct block*>(m_allocation_owner)->m_users--;
         }
-        else if (!m_allocation_owner || m_has_ownership) {
+        else if ((!m_allocation_owner && m_has_ownership) || m_has_ownership) {
             assert(m_users == 0);
             free(m_raw);
         }
@@ -285,7 +285,7 @@ graphite::data::block::~block()
     if (m_allocation_owner) {
         const_cast<block*>(m_allocation_owner)->m_users--;
     }
-    else if (!m_allocation_owner || m_has_ownership) {
+    else if ((!m_allocation_owner && m_has_ownership) || m_has_ownership) {
         assert(m_users == 0);
         free(m_raw);
     }
