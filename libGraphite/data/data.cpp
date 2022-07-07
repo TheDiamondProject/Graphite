@@ -92,13 +92,15 @@ graphite::data::block::block(std::size_t capacity, enum byte_order order)
       m_raw(malloc(m_raw_size)),
       m_data(simd_align(m_raw)),
       m_allocation_owner(nullptr),
-      m_byte_order(order)
+      m_byte_order(order),
+      m_has_ownership(true)
 {
 }
 
 graphite::data::block::block(const std::string &path, enum byte_order order)
     : m_byte_order(order),
-      m_allocation_owner(nullptr)
+      m_allocation_owner(nullptr),
+      m_has_ownership(true)
 {
     std::ifstream file { path, std::ios::binary };
     if (!file.is_open() || file.fail()) {
@@ -120,7 +122,8 @@ graphite::data::block::block(const std::string &path, enum byte_order order)
 
 graphite::data::block::block(const std::vector<char>& bytes, enum byte_order order)
     : m_byte_order(order),
-      m_allocation_owner(nullptr)
+      m_allocation_owner(nullptr),
+      m_has_ownership(true)
 {
     m_data_size = bytes.size();
     m_raw_size = simd_expand_capacity(m_data_size);
@@ -140,7 +143,8 @@ graphite::data::block::block(const block &source, bool copy)
       m_start_position(source.m_start_position),
       m_count(source.m_count),
       m_byte_order(source.m_byte_order),
-      m_allocation_owner(copy ? nullptr : &source)
+      m_allocation_owner(copy ? nullptr : &source),
+      m_has_ownership(copy)
 {
     clone_from(source);
 }
@@ -156,6 +160,7 @@ graphite::data::block::block(const block &source, block::position pos, std::size
         m_data_size = source.m_data_size;
         m_start_position = pos;
         m_count = amount;
+        m_has_ownership = false;
 
         const_cast<block*>(m_allocation_owner)->m_users++;
     }
@@ -166,7 +171,21 @@ graphite::data::block::block(const block &source, block::position pos, std::size
         m_data = simd_align(m_raw);
         m_start_position = 0;
         m_count = 0;
+        m_has_ownership = true;
     }
+}
+
+graphite::data::block::block(const void *data, std::size_t count, bool take_ownership, enum byte_order order)
+    : m_allocation_owner(nullptr),
+      m_has_ownership(take_ownership),
+      m_raw(const_cast<void *>(data)),
+      m_data(const_cast<void *>(data)),
+      m_raw_size(count),
+      m_data_size(count),
+      m_start_position(0),
+      m_count(count),
+      m_byte_order(order)
+{
 }
 
 graphite::data::block::block(const block &data)
@@ -176,7 +195,8 @@ graphite::data::block::block(const block &data)
       m_start_position(data.m_start_position),
       m_users(0),
       m_count(data.m_count),
-      m_byte_order(data.m_byte_order)
+      m_byte_order(data.m_byte_order),
+      m_has_ownership(data.m_has_ownership)
 {
     m_raw = malloc(m_raw_size);
     m_data = simd_align(m_raw);
@@ -192,7 +212,8 @@ graphite::data::block::block(block &&data) noexcept
       m_start_position(data.m_start_position),
       m_users(data.m_users),
       m_count(data.m_count),
-      m_byte_order(data.m_byte_order)
+      m_byte_order(data.m_byte_order),
+      m_has_ownership(data.m_has_ownership)
 {
     data.m_raw = nullptr;
     data.m_data = nullptr;
@@ -215,6 +236,7 @@ auto graphite::data::block::operator=(const block &data) -> struct block &
     m_users = 0;
     m_count = data.m_count;
     m_byte_order = data.m_byte_order;
+    m_has_ownership = true;
 
     m_raw = malloc(m_raw_size);
     m_data = simd_align(m_raw);
@@ -230,7 +252,7 @@ auto graphite::data::block::operator=(block &&data) noexcept -> struct block &
         if (m_allocation_owner) {
             const_cast<struct block*>(m_allocation_owner)->m_users--;
         }
-        else if (!m_allocation_owner) {
+        else if (!m_allocation_owner || m_has_ownership) {
             assert(m_users == 0);
             free(m_raw);
         }
@@ -245,10 +267,12 @@ auto graphite::data::block::operator=(block &&data) noexcept -> struct block &
         m_users = data.m_users;
         m_count = data.m_count;
         m_byte_order = data.m_byte_order;
+        m_has_ownership = data.m_has_ownership;
 
         data.m_allocation_owner = nullptr;
         data.m_raw = nullptr;
         data.m_data = nullptr;
+        data.m_has_ownership = false;
 
     }
     return *this;
@@ -261,7 +285,7 @@ graphite::data::block::~block()
     if (m_allocation_owner) {
         const_cast<block*>(m_allocation_owner)->m_users--;
     }
-    else if (!m_allocation_owner) {
+    else if (!m_allocation_owner || m_has_ownership) {
         assert(m_users == 0);
         free(m_raw);
     }
@@ -274,11 +298,13 @@ auto graphite::data::block::clone_from(const graphite::data::block &source) -> v
     if (m_allocation_owner) {
         m_raw = source.m_raw;
         m_data = source.m_data;
+        m_has_ownership = false;
         const_cast<block*>(m_allocation_owner)->m_users++;
     }
     else {
         m_raw = malloc(m_raw_size);
         m_data = simd_align(m_raw);
+        m_has_ownership = true;
         copy_from(source);
     }
 }

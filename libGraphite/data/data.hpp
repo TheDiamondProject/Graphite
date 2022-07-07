@@ -59,6 +59,7 @@ namespace graphite::data
         explicit block(std::size_t capacity, enum byte_order order = byte_order::msb);
         explicit block(const std::string& path, enum byte_order order = byte_order::msb);
         explicit block(const std::vector<char>& bytes, enum byte_order order = byte_order::msb);
+        block(const void *data, std::size_t count, bool take_ownership = true, enum byte_order order = byte_order::msb);
         block(const block& source);
         block(const block& source, bool copy);
         block(const block& source, block::position pos, std::size_t count, bool copy = true);
@@ -108,6 +109,7 @@ namespace graphite::data
         void *m_raw { nullptr };
         void *m_data { nullptr };
 
+        bool m_has_ownership { false };
         const block *m_allocation_owner { nullptr };
         std::uint32_t m_users { 0 };
 
