@@ -229,6 +229,8 @@ auto graphite::rsrc::file::type(const std::string& code, const std::vector<attri
         auto it = m_types.find(type::hash_for_type_code(code, attributes_map));
         return (it == m_types.end()) ? nullptr : it->second;
     }
+
+    return nullptr;
 }
 
 auto graphite::rsrc::file::type(const std::string& code) const -> const struct type *
