@@ -25,7 +25,7 @@
 #include "libGraphite/quickdraw/support/surface.hpp"
 #include "libGraphite/quickdraw/type/rect.hpp"
 
-namespace graphite::quickdraw
+namespace graphite::spriteworld
 {
     struct rle
     {
@@ -34,15 +34,17 @@ namespace graphite::quickdraw
 
     public:
         rle() = default;
-        rle(const size<std::int16_t>& size, std::uint16_t frame_count);
+        rle(const quickdraw::size<std::int16_t>& size, std::uint16_t frame_count);
         explicit rle(const data::block& data, rsrc::resource::identifier id = 0, const std::string& name = "");
         explicit rle(data::reader& reader);
 
+        ~rle() = default;
+
         auto surface() -> quickdraw::surface&;
-        [[nodiscard]] auto frames() const -> std::vector<rect<std::int16_t>>;
+        [[nodiscard]] auto frames() const -> std::vector<quickdraw::rect<std::int16_t>>;
 
         [[nodiscard]] auto frame_count() const -> std::size_t;
-        [[nodiscard]] auto frame_rect(std::uint32_t idx) const -> rect<std::int16_t>;
+        [[nodiscard]] auto frame_rect(std::uint32_t idx) const -> quickdraw::rect<std::int16_t>;
         [[nodiscard]] auto frame_surface(std::uint32_t idx) const -> quickdraw::surface;
         auto write_frame(std::uint32_t frame, const quickdraw::surface& surface) -> void;
 
@@ -63,10 +65,10 @@ namespace graphite::quickdraw
 
         rsrc::resource::identifier m_id { 0 };
         std::string m_name;
-        std::vector<rect<std::int16_t>> m_frames;
+        std::vector<quickdraw::rect<std::int16_t>> m_frames;
         quickdraw::surface m_surface;
-        size<std::int16_t> m_frame_size { 0 };
-        size<std::int16_t> m_grid_size { 0 };
+        quickdraw::size<std::int16_t> m_frame_size { 0 };
+        quickdraw::size<std::int16_t> m_grid_size { 0 };
         std::uint16_t m_frame_count { 0 };
         std::uint16_t m_bpp { 0 };
         std::uint16_t m_palette_id { 0 };

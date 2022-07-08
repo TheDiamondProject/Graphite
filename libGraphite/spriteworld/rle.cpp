@@ -18,12 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "libGraphite/quickdraw/format/rle.hpp"
+#include "libGraphite/spriteworld/rle.hpp"
 #include <cmath>
 
 // MARK: - Constants
 
-namespace graphite::quickdraw::constants
+namespace graphite::spriteworld::constants
 {
     static constexpr std::uint16_t rle_grid_width = 6;
     static constexpr std::size_t advance = 2;
@@ -31,19 +31,19 @@ namespace graphite::quickdraw::constants
 
 // MARK: - Construction
 
-graphite::quickdraw::rle::rle(const data::block &data, rsrc::resource::identifier id, const std::string &name)
+graphite::spriteworld::rle::rle(const data::block &data, rsrc::resource::identifier id, const std::string &name)
     : m_id(id), m_name(name)
 {
     data::reader reader(&data);
     decode(reader);
 }
 
-graphite::quickdraw::rle::rle(data::reader &reader)
+graphite::spriteworld::rle::rle(data::reader &reader)
 {
     decode(reader);
 }
 
-graphite::quickdraw::rle::rle(const size<std::int16_t> &size, std::uint16_t frame_count)
+graphite::spriteworld::rle::rle(const quickdraw::size<std::int16_t> &size, std::uint16_t frame_count)
     : m_id(0), m_name("RLE"), m_frame_size(size), m_frame_count(frame_count), m_bpp(16), m_palette_id(0)
 {
     // Determine what the grid will be. We need to round up to the next whole number and have blank tiles
@@ -57,22 +57,22 @@ graphite::quickdraw::rle::rle(const size<std::int16_t> &size, std::uint16_t fram
 
 // MARK: - Accessors
 
-auto graphite::quickdraw::rle::surface() -> quickdraw::surface&
+auto graphite::spriteworld::rle::surface() -> quickdraw::surface&
 {
     return m_surface;
 }
 
-auto graphite::quickdraw::rle::frames() const -> std::vector<rect<std::int16_t>>
+auto graphite::spriteworld::rle::frames() const -> std::vector<quickdraw::rect<std::int16_t>>
 {
     return m_frames;
 }
 
-auto graphite::quickdraw::rle::frame_count() const -> std::size_t
+auto graphite::spriteworld::rle::frame_count() const -> std::size_t
 {
     return m_frame_count;
 }
 
-auto graphite::quickdraw::rle::data() -> data::block
+auto graphite::spriteworld::rle::data() -> data::block
 {
     data::writer writer;
     encode(writer);
@@ -81,10 +81,10 @@ auto graphite::quickdraw::rle::data() -> data::block
 
 // MARK: - Operations
 
-auto graphite::quickdraw::rle::frame_rect(std::uint32_t frame) const -> rect <std::int16_t>
+auto graphite::spriteworld::rle::frame_rect(std::uint32_t frame) const -> quickdraw::rect<std::int16_t>
 {
     return {
-        point<std::int16_t>(
+        quickdraw::point<std::int16_t>(
             static_cast<std::int16_t>(frame % constants::rle_grid_width) * m_frame_size.width,
             static_cast<std::int16_t>(frame / constants::rle_grid_width) * m_frame_size.height
         ),
@@ -92,10 +92,10 @@ auto graphite::quickdraw::rle::frame_rect(std::uint32_t frame) const -> rect <st
     };
 }
 
-auto graphite::quickdraw::rle::frame_surface(std::uint32_t frame) const -> quickdraw::surface
+auto graphite::spriteworld::rle::frame_surface(std::uint32_t frame) const -> quickdraw::surface
 {
     quickdraw::surface surface(m_frame_size);
-    rect<std::int16_t> src_rect(frame_rect(frame));
+    quickdraw::rect<std::int16_t> src_rect(frame_rect(frame));
 
     // Extract the frame area of the origin surface
     for (std::int16_t y = 0; y < src_rect.size.height; ++y) {
@@ -107,10 +107,10 @@ auto graphite::quickdraw::rle::frame_surface(std::uint32_t frame) const -> quick
     return std::move(surface);
 }
 
-auto graphite::quickdraw::rle::write_frame(std::uint32_t frame, const quickdraw::surface &surface) -> void
+auto graphite::spriteworld::rle::write_frame(std::uint32_t frame, const quickdraw::surface &surface) -> void
 {
-    rect<std::int16_t> dst_rect = frame_rect(frame);
-    size<std::int16_t> src_size = surface.size();
+    quickdraw::rect<std::int16_t> dst_rect = frame_rect(frame);
+    quickdraw::size<std::int16_t> src_size = surface.size();
 
     if (src_size.width != m_frame_size.width || src_size.height != m_frame_size.height) {
         throw std::runtime_error("Incorrect frame dimensions " + std::to_string(src_size.width) + "x" + std::to_string(src_size.height) +
@@ -125,24 +125,24 @@ auto graphite::quickdraw::rle::write_frame(std::uint32_t frame, const quickdraw:
     }
 }
 
-auto graphite::quickdraw::rle::write_pixel(std::uint16_t pixel, std::uint8_t mask, std::uint64_t offset) -> void
+auto graphite::spriteworld::rle::write_pixel(std::uint16_t pixel, std::uint8_t mask, std::uint64_t offset) -> void
 {
-    m_surface.set(offset, rgb(pixel));
+    m_surface.set(offset, quickdraw::rgb(pixel));
 }
 
-auto graphite::quickdraw::rle::write_pixel(std::uint32_t pixel, std::uint8_t mask, std::uint64_t offset, enum pixel_type type) -> void
+auto graphite::spriteworld::rle::write_pixel(std::uint32_t pixel, std::uint8_t mask, std::uint64_t offset, enum pixel_type type) -> void
 {
     switch (type) {
         case pixel_type::type1: {
-            m_surface.set(offset, rgb(pixel >> 16));
+            m_surface.set(offset, quickdraw::rgb(pixel >> 16));
         }
         case pixel_type::type2: {
-            m_surface.set(offset, rgb(pixel & 0xFFFF));
+            m_surface.set(offset, quickdraw::rgb(pixel & 0xFFFF));
         }
     }
 }
 
-auto graphite::quickdraw::rle::surface_offset(std::int32_t frame, std::int32_t line) -> std::uint64_t
+auto graphite::spriteworld::rle::surface_offset(std::int32_t frame, std::int32_t line) -> std::uint64_t
 {
     quickdraw::point<std::int16_t> fo(frame % constants::rle_grid_width, frame / constants::rle_grid_width);
     quickdraw::point<std::int16_t> p(fo.x * m_frame_size.width, (fo.y * m_frame_size.height) + line);
@@ -151,11 +151,11 @@ auto graphite::quickdraw::rle::surface_offset(std::int32_t frame, std::int32_t l
 
 // MARK: - Decoding
 
-auto graphite::quickdraw::rle::decode(data::reader &reader) -> void
+auto graphite::spriteworld::rle::decode(data::reader &reader) -> void
 {
     // Read the header of the RLE information. This will tell us what we need to do in order to actually
     // decode the frames.
-    m_frame_size = size<std::int16_t>::read(reader, coding_type::macintosh);
+    m_frame_size = quickdraw::size<std::int16_t>::read(reader, quickdraw::coding_type::macintosh);
     m_bpp = reader.read_short();
     m_palette_id = reader.read_short();
     m_frame_count = reader.read_short();
@@ -173,7 +173,7 @@ auto graphite::quickdraw::rle::decode(data::reader &reader) -> void
 
     // Create the surface in which all frame will be draw to, and other working variables required to parse and decode
     // the RLE data correctly.
-    m_surface = quickdraw::surface(m_grid_size.width * m_frame_size.width, m_grid_size.height * m_frame_size.height, colors::clear());
+    m_surface = quickdraw::surface(m_grid_size.width * m_frame_size.width, m_grid_size.height * m_frame_size.height, quickdraw::colors::clear());
 
     rle::opcode opcode = opcode::eof;
     std::uint64_t position = 0;
@@ -257,10 +257,10 @@ auto graphite::quickdraw::rle::decode(data::reader &reader) -> void
 
 // MARK: - Encoding
 
-auto graphite::quickdraw::rle::encode(data::writer &writer) -> void
+auto graphite::spriteworld::rle::encode(data::writer &writer) -> void
 {
     // Write out the header
-    m_frame_size.encode(writer, coding_type::macintosh);
+    m_frame_size.encode(writer, quickdraw::coding_type::macintosh);
     writer.write_short(m_bpp);
     writer.write_short(m_palette_id);
     writer.write_short(m_frame_count);
