@@ -28,12 +28,6 @@ graphite::rsrc::attribute::attribute(const std::string &name, const std::string 
 {
 }
 
-template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type*>
-graphite::rsrc::attribute::attribute(const std::string &name, T value)
-    : m_name(name), m_value(std::to_string(value))
-{
-}
-
 // MARK: - Accessors
 
 auto graphite::rsrc::attribute::hash_value() const -> hash
@@ -49,12 +43,6 @@ auto graphite::rsrc::attribute::name() const -> const std::string&
 auto graphite::rsrc::attribute::string_value() const -> const std::string&
 {
     return m_value;
-}
-
-template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type*>
-auto graphite::rsrc::attribute::value() const -> T
-{
-    return std::to_integer<T>(m_value);
 }
 
 // MARK: - Helpers
