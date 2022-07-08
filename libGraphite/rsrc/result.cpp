@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include <limits>
 #include "libGraphite/rsrc/result.hpp"
 #include "libGraphite/rsrc/resource.hpp"
 #include "libGraphite/util/hashing.hpp"
