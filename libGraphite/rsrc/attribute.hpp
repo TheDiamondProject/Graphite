@@ -45,7 +45,7 @@ namespace graphite::rsrc
         template<typename T, typename std::enable_if<std::is_integral<T>::value>::type* = nullptr>
         [[nodiscard]] auto value() const -> T
         {
-            return std::to_integer<T>(m_value);
+            return std::to_integer<T>(std::stoi(m_value));
         }
 
     private:
