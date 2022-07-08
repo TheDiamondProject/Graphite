@@ -20,9 +20,10 @@
 
 #pragma once
 
-#include <unordered_map>
 #include <vector>
 #include <cstdint>
+#include <functional>
+#include <unordered_map>
 #include "libGraphite/rsrc/resource.hpp"
 
 namespace graphite::rsrc
@@ -68,7 +69,7 @@ namespace graphite::rsrc
             resource_result *m_ptr { nullptr };
             std::uint64_t m_index { 0 };
 
-            auto get() const -> pointer
+            [[nodiscard]] auto get() const -> pointer
             {
                 if (m_index == std::numeric_limits<uint64_t>::max()) {
                     return nullptr;
