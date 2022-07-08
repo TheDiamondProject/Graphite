@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-
+#include <limits>
 #include "libGraphite/quickdraw/support/drawing/true_color.hpp"
 #include "libGraphite/data/data.hpp"
 
@@ -50,10 +50,10 @@ auto graphite::quickdraw::drawing::true_color::pixmap::draw_masked(const quickdr
         auto mask_y_offset = y * cfg.mask.row_bytes;
 
         for (std::int16_t x = 0; x < cfg.pixmap.bounds.size.width; ++x) {
-            auto mask_offset = (7 - (x % 8));
+            auto mask_offset = (7 - (x % CHAR_BIT));
 
             auto byte = cfg.pixmap.data->get<std::uint8_t>(y_offset + x);
-            auto mask = cfg.mask.data->get<std::uint8_t>(mask_y_offset + (x / 8));
+            auto mask = cfg.mask.data->get<std::uint8_t>(mask_y_offset + (x / CHAR_BIT));
 
             if ((mask >> mask_offset) & 0x1) {
                 surface.set(x, y, cfg.color_table->at(byte));

@@ -18,11 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-
 #include "libGraphite/quickdraw/support/drawing/depth_4bpp.hpp"
 #include "libGraphite/data/data.hpp"
-
-static_assert(CHAR_BIT == 8, "We require CHAR_BIT to be equal to 8 here.");
 
 // MARK: - Drawing
 
