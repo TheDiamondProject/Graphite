@@ -33,7 +33,15 @@ namespace graphite::spriteworld
     public:
         static_assert(Width == 16 || Width == 32);
 
-        static auto type_code() -> std::string;
+        static auto type_code() -> std::string
+        {
+            if (Width == 16) {
+                return "rlëD";
+            }
+            else if (Width == 32) {
+                return "rlëX";
+            }
+        }
 
     public:
         rle() = default;
@@ -136,7 +144,4 @@ namespace graphite::spriteworld
         auto _write_pixel(std::uint32_t pixel, std::uint8_t mask, std::uint64_t offset) -> void;
         auto _write_pixel(std::uint64_t pixel, std::uint8_t mask, std::uint64_t offset, enum pixel_type type) -> void;
     };
-
-    template<> auto rle<16>::type_code() -> std::string { return "rlëD"; }
-    template<> auto rle<32>::type_code() -> std::string { return "rlëX"; }
 }

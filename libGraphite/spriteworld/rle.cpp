@@ -31,8 +31,20 @@ namespace graphite::spriteworld::constants
 
 // MARK: - Construction
 
-template<std::size_t Width>
-auto graphite::spriteworld::rle<Width>::_create_surface() -> void
+template<>
+auto graphite::spriteworld::rle<16>::_create_surface() -> void
+{
+    // Determine what the grid will be. We need to round up to the next whole number and have blank tiles
+    // if the frame count is not divisible by the grid width constant.
+    auto grid_width = std::min(constants::rle_grid_width, m_frame_count);
+    m_grid_size = quickdraw::size<std::int16_t>(grid_width, std::ceil(m_frame_count / static_cast<double>(grid_width)));
+
+    // Create the surface
+    m_surface = quickdraw::surface(m_grid_size.width * m_frame_size.width, m_grid_size.height * m_frame_size.height);
+}
+
+template<>
+auto graphite::spriteworld::rle<32>::_create_surface() -> void
 {
     // Determine what the grid will be. We need to round up to the next whole number and have blank tiles
     // if the frame count is not divisible by the grid width constant.
@@ -73,8 +85,8 @@ auto graphite::spriteworld::rle<Width>::_frame_surface(std::uint32_t frame) cons
     return std::move(surface);
 }
 
-template<std::size_t Width>
-auto graphite::spriteworld::rle<Width>::_write_frame(std::uint32_t frame, const quickdraw::surface &surface) -> void
+template<>
+auto graphite::spriteworld::rle<16>::_write_frame(std::uint32_t frame, const quickdraw::surface &surface) -> void
 {
     quickdraw::rect<std::int16_t> dst_rect = frame_rect(frame);
     quickdraw::size<std::int16_t> src_size = surface.size();
@@ -84,7 +96,27 @@ auto graphite::spriteworld::rle<Width>::_write_frame(std::uint32_t frame, const 
                                  ", expected " + std::to_string(m_frame_size.width) + "x" + std::to_string(m_frame_size.height));
     }
 
-    // Copy from the source surfac e into the destination frame
+    // Copy from the source surface into the destination frame
+    for (std::int16_t y = 0; y < dst_rect.size.height; ++y) {
+        for (std::int16_t x = 0; x < dst_rect.size.width; ++x) {
+            m_surface.set(x + dst_rect.origin.x, y + dst_rect.origin.y, surface.at(x, y));
+        }
+    }
+}
+
+
+template<>
+auto graphite::spriteworld::rle<32>::_write_frame(std::uint32_t frame, const quickdraw::surface &surface) -> void
+{
+    quickdraw::rect<std::int16_t> dst_rect = frame_rect(frame);
+    quickdraw::size<std::int16_t> src_size = surface.size();
+
+    if (src_size.width != m_frame_size.width || src_size.height != m_frame_size.height) {
+        throw std::runtime_error("Incorrect frame dimensions " + std::to_string(src_size.width) + "x" + std::to_string(src_size.height) +
+                                 ", expected " + std::to_string(m_frame_size.width) + "x" + std::to_string(m_frame_size.height));
+    }
+
+    // Copy from the source surface into the destination frame
     for (std::int16_t y = 0; y < dst_rect.size.height; ++y) {
         for (std::int16_t x = 0; x < dst_rect.size.width; ++x) {
             m_surface.set(x + dst_rect.origin.x, y + dst_rect.origin.y, surface.at(x, y));
@@ -480,7 +512,7 @@ template<>
 auto graphite::spriteworld::rle<32>::_encode(data::writer &writer) -> void
 {
 #warning "This implementation is currently incorrect and needs to be fixed"
-    
+
     // Write out the header
     m_frame_size.encode(writer, quickdraw::coding_type::macintosh);
     writer.write_short(m_bpp);
