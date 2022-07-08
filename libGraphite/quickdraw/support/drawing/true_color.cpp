@@ -22,7 +22,11 @@
 #include "libGraphite/quickdraw/support/drawing/true_color.hpp"
 #include "libGraphite/data/data.hpp"
 
-static_assert(CHAR_BIT == 8, "We require CHAR_BIT to be equal to 8 here.");
+#if defined(CHAR_BIT)
+    static_assert(CHAR_BIT == 8, "We require CHAR_BIT to be equal to 8 here.");
+#else
+#   define CHAR_BIT 8
+#endif
 
 // MARK: - Drawing
 
