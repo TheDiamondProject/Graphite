@@ -21,6 +21,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
+#include <cassert>
 #include "libGraphite/data/writer.hpp"
 #include "libGraphite/encoding/macroman/macroman.hpp"
 

@@ -21,6 +21,7 @@
 #include <stdexcept>
 #include <fstream>
 #include <iostream>
+#include <cassert>
 #include "libGraphite/data/data.hpp"
 
 // MARK: - SIMD Support
