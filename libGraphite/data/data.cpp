@@ -199,9 +199,15 @@ graphite::data::block::block(const block &data)
       m_byte_order(data.m_byte_order),
       m_has_ownership(data.m_has_ownership)
 {
-    m_raw = malloc(m_raw_size);
-    m_data = simd_align(m_raw);
-    copy_from(data);
+    if (m_has_ownership) {
+        m_raw = malloc(m_raw_size);
+        m_data = simd_align(m_raw);
+        copy_from(data);
+    }
+    else {
+        m_raw = data.m_raw;
+        m_data = data.m_data;
+    }
 }
 
 graphite::data::block::block(block &&data) noexcept
@@ -228,6 +234,15 @@ auto graphite::data::block::operator=(const block &data) -> struct block &
 {
     if (this == const_cast<block *>(&data)) {
         return *this;
+    }
+
+    // Clean up the current data...
+    if (m_allocation_owner) {
+        const_cast<struct block*>(m_allocation_owner)->m_users--;
+    }
+    else if ((!m_allocation_owner && m_has_ownership) || m_has_ownership) {
+        assert(m_users == 0);
+        free(m_raw);
     }
 
     m_raw_size = data.m_raw_size;
