@@ -216,7 +216,7 @@ graphite::sound_manager::sound::sound(std::uint32_t sample_rate, std::uint8_t sa
     m_descriptor.sample_rate = sample_rate;
     m_descriptor.bit_width = sample_bits;
 
-    graphite::data::writer writer(&m_samples);
+    graphite::data::writer writer(data::byte_order::lsb);
     if (sample_bits == 8) {
         for (auto& channel : sample_data) {
             for (auto& frame : channel) {
@@ -232,6 +232,7 @@ graphite::sound_manager::sound::sound(std::uint32_t sample_rate, std::uint8_t sa
         }
     }
 
+    m_samples = std::move(*const_cast<graphite::data::block *>(writer.data()));
 }
 
 graphite::sound_manager::sound::sound(std::uint32_t sample_rate, std::uint8_t sample_bits, const graphite::data::block& sample_data)

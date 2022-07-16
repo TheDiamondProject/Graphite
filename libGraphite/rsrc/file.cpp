@@ -165,11 +165,22 @@ auto graphite::rsrc::file::add_resource(const std::string &type_code,
 {
     auto resource = new struct resource(nullptr, id, name, data);
 
-    auto type_hash = rsrc::type::hash_for_type_code(type_code);
+    std::unordered_map<attribute::hash, attribute> type_attributes;
+    for (const auto& it : attributes) {
+        attribute attr(it.first, it.second);
+        type_attributes.emplace(std::pair(attr.hash_value(), std::move(attr)));
+    }
+
+    auto type_hash = rsrc::type::hash_for_type_code(type_code, type_attributes);
     auto it = m_types.find(type_hash);
     if (it == m_types.end()) {
         // The type doesn't exist, so we need to create it.
         auto type = new struct type(type_code);
+
+        for (const auto& attr : type_attributes) {
+            type->add_attribute(attr.second.name(), attr.second.string_value());
+        }
+
         m_types.emplace(std::pair(type_hash, type));
         type->add_resource(resource);
     }
