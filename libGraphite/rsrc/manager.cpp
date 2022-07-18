@@ -19,6 +19,8 @@
 // SOFTWARE.
 
 #include "libGraphite/rsrc/manager.hpp"
+#include "libGraphite/font/manager.hpp"
+#include "libGraphite/font/sfnt.hpp"
 
 // MARK: - Singleton / Construction
 
@@ -34,6 +36,11 @@ auto graphite::rsrc::manager::import_file(class file *file) -> class file *
 {
     m_files.emplace(std::pair(file->hash_value(), file));
     m_file_load_order.insert(m_file_load_order.begin(), file->hash_value());
+
+    if (file->type(sfnt::type_code())) {
+        font_manager::shared_manager().update_font_table();
+    }
+
     return file;
 }
 
