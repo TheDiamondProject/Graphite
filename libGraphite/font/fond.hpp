@@ -27,17 +27,17 @@
 #include "libGraphite/data/reader.hpp"
 #include "libGraphite/rsrc/resource.hpp"
 
-namespace graphite
+namespace graphite::font
 {
-    struct fond
+    struct descriptor
     {
     public:
         static auto type_code() -> std::string { return "FOND"; }
 
     public:
-        fond() = default;
-        explicit fond(const data::block& data, rsrc::resource::identifier = 0, const std::string& name = "");
-        explicit fond(data::reader& reader);
+        descriptor() = default;
+        explicit descriptor(const data::block& data, rsrc::resource::identifier = 0, const std::string& name = "");
+        explicit descriptor(data::reader& reader);
 
     private:
         struct assoc

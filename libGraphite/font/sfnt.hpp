@@ -27,17 +27,17 @@
 #include "libGraphite/data/reader.hpp"
 #include "libGraphite/rsrc/resource.hpp"
 
-namespace graphite
+namespace graphite::font
 {
-    struct sfnt
+    struct outline_font
     {
     public:
         static auto type_code() -> std::string { return "sfnt"; }
 
     public:
-        sfnt() = default;
-        explicit sfnt(const data::block& data, rsrc::resource::identifier = 0, const std::string& name = "");
-        explicit sfnt(data::reader& reader);
+        outline_font() = default;
+        explicit outline_font(const data::block& data, rsrc::resource::identifier = 0, const std::string& name = "");
+        explicit outline_font(data::reader& reader);
 
         [[nodiscard]] auto ttf_data() const -> const data::block&;
 

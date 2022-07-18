@@ -20,44 +20,40 @@
 
 #pragma once
 
-#include <unordered_map>
-#include <string>
 #include "libGraphite/data/data.hpp"
-
-#include "libGraphite/font/fond.hpp"
-#include "libGraphite/font/nfnt.hpp"
+#include "libGraphite/data/reader.hpp"
+#include "libGraphite/rsrc/resource.hpp"
 
 namespace graphite::font
 {
-    class manager
+    struct bitmapped_font
     {
     public:
-        struct font
-        {
-            std::string name;
-            descriptor m_bitmap_descriptor;
-            std::unordered_map<rsrc::resource::identifier_hash, bitmapped_font> m_bitmaps;
-            data::block ttf;
-        };
+        static auto type_code() -> std::string { return "nfnt"; }
 
     public:
-        manager(const manager&) = delete;
-        manager(manager&&) = delete;
-        auto operator=(const manager&) -> manager& = delete;
-        auto operator=(manager&&) -> manager& = delete;
-
-        static auto shared_manager() -> manager&;
-
-        auto update_font_table() -> void;
-
-        [[nodiscard]] auto has_font_named(const std::string& name) const -> bool;
-        [[nodiscard]] auto font_has_bitmap(const std::string& name) const -> bool;
-        [[nodiscard]] auto font_has_truetype(const std::string& name) const -> bool;
-        [[nodiscard]] auto ttf_font_named(const std::string& name) const -> const data::block *;
+        bitmapped_font() = default;
+        explicit bitmapped_font(const data::block& data, rsrc::resource::identifier id = 0, const std::string& name = "");
+        explicit bitmapped_font(data::reader& reader);
 
     private:
-        std::unordered_map<std::string, struct font> m_fonts;
+        rsrc::resource::identifier m_id { INT64_MIN };
+        std::string m_name;
 
-        manager() = default;
+        std::int16_t m_font_type { 0 };
+        std::int16_t m_first_char_code { 0 };
+        std::int16_t m_last_char_code { 0 };
+        std::int16_t m_max_width { 0 };
+        std::int16_t m_max_kerning { 0 };
+        std::int16_t m_descent { 0 };
+        std::int16_t m_font_rect_width { 0 };
+        std::int16_t m_font_rect_height { 0 };
+        std::int16_t m_width_table_offset { 0 };
+        std::int16_t m_max_ascent { 0 };
+        std::int16_t m_max_descent { 0 };
+        std::int16_t m_leading { 0 };
+        std::int16_t m_bit_image_row_width { 0 };
+
+        auto decode(data::reader& reader) -> void;
     };
 }

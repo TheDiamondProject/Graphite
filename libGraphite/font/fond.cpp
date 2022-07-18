@@ -22,21 +22,21 @@
 
 // MARK: - Construction
 
-graphite::fond::fond(const data::block &data, rsrc::resource::identifier id, const std::string &name)
+graphite::font::descriptor::descriptor(const data::block &data, rsrc::resource::identifier id, const std::string &name)
     : m_id(id), m_name(name)
 {
     data::reader reader(&data);
     decode(reader);
 }
 
-graphite::fond::fond(data::reader &reader)
+graphite::font::descriptor::descriptor(data::reader &reader)
 {
     decode(reader);
 }
 
 // MARK: - Decoding
 
-auto graphite::fond::decode(data::reader &reader) -> void
+auto graphite::font::descriptor::decode(data::reader &reader) -> void
 {
     m_fixed = reader.read_short() & 0x8000 ? true : false;
     m_family_id = reader.read_short();

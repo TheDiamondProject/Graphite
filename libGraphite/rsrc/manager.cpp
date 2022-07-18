@@ -37,8 +37,12 @@ auto graphite::rsrc::manager::import_file(class file *file) -> class file *
     m_files.emplace(std::pair(file->hash_value(), file));
     m_file_load_order.insert(m_file_load_order.begin(), file->hash_value());
 
-    if (file->type(sfnt::type_code())) {
-        font_manager::shared_manager().update_font_table();
+    if (
+        file->type(font::outline_font::type_code()) ||
+        file->type(font::descriptor::type_code()) ||
+        file->type(font::bitmapped_font::type_code())
+    ) {
+        font::manager::shared_manager().update_font_table();
     }
 
     return file;

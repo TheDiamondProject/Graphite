@@ -18,32 +18,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "libGraphite/font/sfnt.hpp"
-#include "libGraphite/data/writer.hpp"
+#include "libGraphite/font/nfnt.hpp"
 
 // MARK: - Construction
 
-graphite::font::outline_font::outline_font(const data::block &data, rsrc::resource::identifier id, const std::string &name)
+graphite::font::bitmapped_font::bitmapped_font(const data::block &data, rsrc::resource::identifier id, const std::string &name)
     : m_id(id), m_name(name)
 {
-    m_ttf = data;
+    data::reader reader(&data);
+    decode(reader);
 }
 
-graphite::font::outline_font::outline_font(data::reader &reader)
+graphite::font::bitmapped_font::bitmapped_font(data::reader &reader)
 {
     decode(reader);
 }
 
 // MARK: - Decoding
 
-auto graphite::font::outline_font::decode(data::reader &reader) -> void
+auto graphite::font::bitmapped_font::decode(data::reader &reader) -> void
 {
-    m_ttf = std::move(*const_cast<data::block *>(reader.data()));
-}
-
-// MARK: - Accessors
-
-auto graphite::font::outline_font::ttf_data() const -> const data::block&
-{
-    return m_ttf;
+    m_font_type = reader.read_signed_short();
+    m_first_char_code = reader.read_signed_short();
+    m_last_char_code = reader.read_signed_short();
+    m_max_width = reader.read_signed_short();
+    m_max_kerning = reader.read_signed_short();
+    m_descent = reader.read_signed_short();
+    m_font_rect_width = reader.read_signed_short();
+    m_font_rect_height = reader.read_signed_short();
+    m_width_table_offset = reader.read_signed_short();
+    m_max_ascent = reader.read_signed_short();
+    m_max_descent = reader.read_signed_short();
+    m_leading = reader.read_signed_short();
+    m_bit_image_row_width = reader.read_signed_short();
 }
