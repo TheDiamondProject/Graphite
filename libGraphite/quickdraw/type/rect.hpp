@@ -45,7 +45,11 @@ namespace graphite::quickdraw
         rect(rect&&) noexcept = default;
 
         explicit rect(data::reader& reader) : origin(reader), size(reader) {}
-        rect(data::reader& reader, coding_type type) : origin(reader, type), size(reader, type) {}
+        rect(data::reader& reader, coding_type type) : origin(reader, type), size(reader, type)
+        {
+            size.width -= origin.x;
+            size.height -= origin.y;
+        }
 
         static auto read(data::reader& reader, coding_type type) -> rect { return { reader, type }; }
 

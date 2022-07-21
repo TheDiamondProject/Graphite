@@ -73,7 +73,7 @@ auto graphite::toolbox::dialog_item_list::decode(data::reader &reader) -> void
         reader.move(4);
 
         struct item item;
-        item.frame = quickdraw::rect<std::int16_t>::read(reader, quickdraw::coding_type::macintosh);
+        item.frame = quickdraw::rect<std::int16_t>::read(reader, quickdraw::coding_type::quickdraw);
         item.type = static_cast<item_type>(reader.read_byte());
         item.info = reader.read_pstr();
 
