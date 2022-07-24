@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 #include "libGraphite/font/fond.hpp"
+#include <cstring>
 
 // MARK: - Construction
 
