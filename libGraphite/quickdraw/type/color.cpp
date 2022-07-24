@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include <algorithm>
 #include "libGraphite/quickdraw/type/color.hpp"
 
 // MARK: - Construction
@@ -64,4 +65,37 @@ auto graphite::quickdraw::colors::black() -> union color
 auto graphite::quickdraw::colors::clear() -> union color
 {
     return rgb(0, 0, 0, 0);
+}
+
+// MARK: - YCrCb Color
+
+auto graphite::quickdraw::ycrcb(const union color& rgb) -> struct ycrcb
+{
+    double r = rgb.components.red;
+    double g = rgb.components.green;
+    double b = rgb.components.blue;
+
+    std::int32_t y = static_cast<std::int32_t>( 0.299    * r + 0.587    * g + 0.114    * b);
+    std::int32_t u = static_cast<std::int32_t>(-0.168736 * r - 0.331264 * g + 0.500    * b + 128);
+    std::int32_t v = static_cast<std::int32_t>( 0.500    * r - 0.418688 * g - 0.081312 * b + 128);
+
+    std::uint8_t y_clamped = std::clamp<std::uint8_t>(y, 0, 255);
+    std::uint8_t u_clamped = std::clamp<std::uint8_t>(u, 0, 255);
+    std::uint8_t v_clamped = std::clamp<std::uint8_t>(v, 0, 255);
+
+    return (struct ycrcb) {
+        .y = y_clamped,
+        .cr = u_clamped,
+        .cb = v_clamped,
+        .alpha = rgb.components.alpha
+    };
+}
+
+auto graphite::quickdraw::rgb(const struct ycrcb& color) -> union color
+{
+    auto r = std::clamp<std::int16_t>(color.y + 1.4075 * (color.cb - 128), 0, 255);
+    auto g = std::clamp<std::int16_t>(color.y - (0.3455 * (color.cr - 128)) - (0.7169 * (color.cb - 128)), 0, 255);
+    auto b = std::clamp<std::int16_t>(color.y + 1.7790 * (color.cr - 128), 0, 255);
+
+    return rgb(r, g, b, color.alpha);
 }
