@@ -128,13 +128,27 @@ namespace graphite::data
             ensure_required_space(position(), size * count);
             auto ptr = m_data->template get<uint8_t *>(position());
 
+            // Correct the alignment.
+            if (m_data->byte_order() == byte_order::msb) {
+                for (auto i = size; i < sizeof(swapped); ++i) {
+                    swapped >>= 8;
+                }
+            }
+            else {
+                for (auto i = size; i < sizeof(swapped); ++i) {
+                    swapped <<= 8;
+                }
+            }
+
+
             for (auto n = 0; n < count; ++n) {
                 for (auto i = 0; i < size; ++i) {
                     auto b = i << 3ULL;
                     *ptr++ = (swapped >> b) & 0xFF;
-                    move();
                 }
             }
+
+            move(size * count);
         }
 
         template<typename E, typename std::enable_if<std::is_enum<E>::value>::type* = nullptr>

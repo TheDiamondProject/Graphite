@@ -118,8 +118,8 @@ auto graphite::spriteworld::rleD::write_frame(std::uint32_t frame, const quickdr
     }
 
     // Copy from the source surface into the destination frame
-    for (std::int16_t y = 0; y < dst_rect.size.height; ++y) {
-        for (std::int16_t x = 0; x < dst_rect.size.width; ++x) {
+    for (std::int16_t y = 0; y < src_size.height; ++y) {
+        for (std::int16_t x = 0; x < src_size.width; ++x) {
             m_surface.set(x + dst_rect.origin.x, y + dst_rect.origin.y, surface.at(x, y));
         }
     }
@@ -259,6 +259,8 @@ COMPLETED_LAST_FRAME:
 
 auto graphite::spriteworld::rleD::encode(data::writer &writer) -> void
 {
+    writer.change_byte_order(data::byte_order::msb);
+
     // Write out the header
     m_frame_size.encode(writer, quickdraw::coding_type::macintosh);
     writer.write_short(m_bpp);
@@ -271,10 +273,11 @@ auto graphite::spriteworld::rleD::encode(data::writer &writer) -> void
     // Write out the RLE frames
     for (auto f = 0; f < m_frame_count; ++f) {
         auto frame = frame_rect(f);
+        auto line_count = 0;
 
         for (std::int16_t y = 0; y < frame.size.height; ++y) {
+            ++line_count;
             auto line_start_pos = writer.position();
-            writer.write_long(0);
 
             rleD::opcode run_state = opcode::line_start;
             auto run_start_pos = line_start_pos + 4;
@@ -286,8 +289,6 @@ auto graphite::spriteworld::rleD::encode(data::writer &writer) -> void
                 if (pixel.components.alpha == 0) {
                     if (run_state == opcode::line_start) {
                         // Start of a transparent run
-                        run_start_pos = writer.position();
-                        writer.write_long(0);
                         run_state = opcode::transparent_run;
                         run_count = constants::advance;
                     }
@@ -305,17 +306,25 @@ auto graphite::spriteworld::rleD::encode(data::writer &writer) -> void
 
                         // Pad to nearest 4-byte boundary
                         if (run_count & 0x3) {
-                            writer.move(4 - (run_count & 0x3));
+                            writer.write_byte(0, 4 - (run_count & 0x3));
                         }
 
                         // Start transparent run
-                        run_start_pos = writer.position();
-                        writer.write_long(0);
                         run_state = opcode::transparent_run;
                         run_count = constants::advance;
                     }
                 }
                 else {
+                    if (line_count != 0) {
+                        // First pixel data for this line, write the line start
+                        // Doing this only on demand allows us to omit trailing blank lines in the frame.
+                        for (auto i = 0; i < line_count; ++i) {
+                            writer.write_enum(opcode::line_start);
+                            writer.write_triple(0);
+                        }
+                        line_count = 0;
+                    }
+
                     if (run_state == opcode::line_start) {
                         // Start of pixel run
                         run_start_pos = writer.position();
@@ -325,7 +334,6 @@ auto graphite::spriteworld::rleD::encode(data::writer &writer) -> void
                     }
                     else if (run_state == opcode::transparent_run) {
                         // End of transparent run, start of pixel run
-                        writer.move(-4);
                         writer.write_enum(opcode::transparent_run);
                         writer.write_triple(run_count);
 
@@ -355,23 +363,21 @@ auto graphite::spriteworld::rleD::encode(data::writer &writer) -> void
                 writer.set_position(run_start_pos);
                 writer.write_enum(opcode::pixel_data);
                 writer.write_triple(run_count);
+                writer.set_position(run_end_pos);
 
                 // Pad to the nearest 4-byte boundary
-                if ((run_end_pos - line_start_pos) & 0x3) {
-                    writer.move(4 - ((run_end_pos - line_start_pos) & 0x3));
+                if (run_count & 0x3) {
+                    writer.write_byte(0, 4 - (run_count & 0x3));
                 }
             }
-            else if (run_state == opcode::transparent_run) {
-                // Erase the transparent run opcode placeholder -- remaining data is assumed transparent
-                writer.set_position(run_start_pos);
-            }
 
-            // Write out the opcode and the size at the start of the line
-            auto line_end_pos = writer.position();
-            writer.set_position(line_start_pos);
-            writer.write_enum(opcode::line_start);
-            writer.write_triple(line_end_pos - line_start_pos - 4);
-            writer.set_position(line_end_pos);
+            if (run_state != opcode::line_start) {
+                auto line_end_pos = writer.position();
+                writer.set_position(line_start_pos);
+                writer.write_enum(opcode::line_start);
+                writer.write_triple((line_end_pos - line_start_pos - 4));
+                writer.set_position(line_end_pos);
+            }
         }
 
         writer.write_enum(opcode::eof);

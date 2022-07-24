@@ -118,8 +118,8 @@ auto graphite::spriteworld::rleX::write_frame(std::uint32_t frame, const quickdr
     }
 
     // Copy from the source surface into the destination frame
-    for (std::int16_t y = 0; y < dst_rect.size.height; ++y) {
-        for (std::int16_t x = 0; x < dst_rect.size.width; ++x) {
+    for (std::int16_t y = 0; y < src_size.height; ++y) {
+        for (std::int16_t x = 0; x < src_size.width; ++x) {
             m_surface.set(x + dst_rect.origin.x, y + dst_rect.origin.y, surface.at(x, y));
         }
     }
@@ -216,6 +216,8 @@ COMPLETED_LAST_FRAME:
 
 auto graphite::spriteworld::rleX::encode(data::writer &writer) -> void
 {
+    writer.change_byte_order(data::byte_order::msb);
+
     // Write out the header
     m_frame_size.encode(writer, quickdraw::coding_type::macintosh);
     writer.write_short(m_bpp);
@@ -264,7 +266,7 @@ auto graphite::spriteworld::rleX::encode(data::writer &writer) -> void
                     new_run = true;
                 }
 
-                if (new_run) {
+                if (new_run && count > 0) {
                     if (count < 127) {
                         auto opcode = static_cast<std::uint8_t>(opcode::short_advance) + count;
                         writer.write_byte(opcode);
@@ -275,6 +277,7 @@ auto graphite::spriteworld::rleX::encode(data::writer &writer) -> void
                     }
                     count = 0;
                 }
+                new_run = false;
 
                 count++;
             }

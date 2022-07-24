@@ -73,7 +73,9 @@ graphite::quickdraw::surface::surface(surface &&surface) noexcept
 
 graphite::quickdraw::surface::~surface()
 {
-    delete m_data;
+    if (!m_weak_data && m_data) {
+        delete m_data;
+    }
 }
 
 // MARK: - Operators
@@ -85,18 +87,20 @@ auto graphite::quickdraw::surface::operator=(const surface& surface) -> class su
     }
 
     m_data = new data::block(*surface.m_data);
+    m_weak_data = false;
     m_size = surface.m_size;
     m_row_bytes = surface.m_row_bytes;
 
     return *this;
 }
 
-auto graphite::quickdraw::surface::operator=(class surface&& surface) -> class surface&
+auto graphite::quickdraw::surface::operator=(class surface&& surface) noexcept -> class surface&
 {
     if (this != &surface) {
         delete m_data;
 
         m_data = surface.m_data;
+        m_weak_data = false;
         m_size = surface.m_size;
         m_row_bytes = surface.m_row_bytes;
 
@@ -131,7 +135,7 @@ auto graphite::quickdraw::surface::at(std::int16_t x, std::int16_t y) const -> u
 
 auto graphite::quickdraw::surface::at(std::uint32_t offset) const -> union color
 {
-    return m_data->get<union color *>()[offset * constants::color_width];
+    return m_data->get<union color *>()[offset];
 }
 
 auto graphite::quickdraw::surface::set(const point<std::int16_t>& p, union color color) -> void

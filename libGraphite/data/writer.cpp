@@ -189,7 +189,7 @@ auto graphite::data::writer::write_bytes(const std::vector<uint8_t> &bytes) -> v
 
 auto graphite::data::writer::write_bytes(const std::vector<char> &bytes) -> void
 {
-    write_bytes(std::move(std::vector<uint8_t>(bytes.begin(), bytes.end())));
+    write_bytes(std::vector<uint8_t>(bytes.begin(), bytes.end()));
 }
 
 auto graphite::data::writer::write_data(const class block *data) -> void
