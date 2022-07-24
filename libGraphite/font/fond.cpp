@@ -139,11 +139,11 @@ auto graphite::font::descriptor::decode(data::reader &reader) -> void
 
             char *ptr_str = (char *)malloc(len + 1);
             char *pt = ptr_str;
-            strlcpy(pt, strings[0] + 1, len + 1);
+            strncpy(pt, strings[0] + 1, len + 1);
             pt += strings[0][0];
             if (format != 0 && format != -1) {
                 for (k = 0; k < strings[format][0]; ++k) {
-                    strlcpy(pt, strings[strings[format][k + 1] - 1] + 1, len + 1);
+                    strncpy(pt, strings[strings[format][k + 1] - 1] + 1, len + 1);
                     pt += strings[strings[format][k + 1] - 1][0];
                 }
             }
