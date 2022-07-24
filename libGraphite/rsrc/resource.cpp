@@ -133,6 +133,12 @@ auto graphite::rsrc::resource::set_type(struct type *type) -> void
     m_type = type;
 }
 
+auto graphite::rsrc::resource::set_data(graphite::data::block &data) -> void
+{
+    m_data = data;
+    m_data_offset = 0;
+}
+
 // MARK: - Hashing
 
 auto graphite::rsrc::resource::hash(identifier id) -> identifier_hash

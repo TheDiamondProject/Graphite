@@ -81,6 +81,7 @@ namespace graphite::rsrc
         }
 
         [[nodiscard]] auto find(const std::string& type_code, resource::identifier id, const std::unordered_map<std::string, std::string>& attributes = {}) const -> const struct resource *;
+        [[nodiscard]] auto find(const std::string& type_code, resource::identifier id, const std::vector<attribute>& attributes) const -> const struct resource *;
 
         template <resource_type T>
         [[nodiscard]] auto load(resource::identifier id) const -> T

@@ -57,6 +57,7 @@ namespace graphite::rsrc
         auto set_id(resource::identifier id) -> void;
         auto set_name(const std::string& name) -> void;
         auto set_type(struct type *type) -> void;
+        auto set_data(data::block& data) -> void;
 
         static auto hash(identifier id) -> identifier_hash;
         static auto hash(const std::string& name) -> name_hash;

@@ -265,6 +265,14 @@ auto graphite::rsrc::file::find(const std::string &type_code, resource::identifi
     return nullptr;
 }
 
+auto graphite::rsrc::file::find(const std::string &type_code, resource::identifier id, const std::vector<attribute>& attributes) const -> const struct resource *
+{
+    if (auto type = const_cast<rsrc::type *>(this->type(type_code, attributes))) {
+        return type->resource_with_id(id);
+    }
+    return nullptr;
+}
+
 // MARK: - File Access
 
 auto graphite::rsrc::file::read(const std::string &path) -> void

@@ -30,6 +30,11 @@ graphite::toolbox::dialog::dialog(const data::block &data, rsrc::resource::ident
     decode(reader);
 }
 
+graphite::toolbox::dialog::dialog(graphite::data::reader &reader)
+{
+    decode(reader);
+}
+
 // MARK: - Accessors
 
 auto graphite::toolbox::dialog::bounds() const -> quickdraw::rect<std::int16_t>
