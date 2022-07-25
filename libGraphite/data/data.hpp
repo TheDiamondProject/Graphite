@@ -57,6 +57,7 @@ namespace graphite::data
     public:
         block() = default;
         explicit block(std::size_t capacity, enum byte_order order = byte_order::msb);
+        block(std::size_t capacity, std::size_t allocation_size, enum byte_order order = byte_order::msb);
         explicit block(const std::string& path, enum byte_order order = byte_order::msb);
         explicit block(const std::vector<char>& bytes, enum byte_order order = byte_order::msb);
         block(const void *data, std::size_t count, bool take_ownership = true, enum byte_order order = byte_order::msb);
@@ -89,6 +90,7 @@ namespace graphite::data
         [[nodiscard]] inline auto byte_order() const -> byte_order { return m_byte_order; }
 
         auto change_byte_order(enum byte_order order) -> void { m_byte_order = order; }
+        auto increase_size_to(std::size_t new_size) -> void;
 
         auto clear() -> void;
 

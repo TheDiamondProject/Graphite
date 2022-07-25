@@ -38,11 +38,11 @@ namespace graphite::quickdraw
         } components;
     };
 
-    struct ycrcb
+    struct ycbcr
     {
         color_component y;
-        color_component cr;
         color_component cb;
+        color_component cr;
         color_component alpha;
     };
 
@@ -64,6 +64,6 @@ namespace graphite::quickdraw
         [[nodiscard]] auto clear() -> union color;
     }
 
-    [[nodiscard]] auto ycrcb(const union color& rgb) -> struct ycrcb;
-    [[nodiscard]] auto rgb(const struct ycrcb& color) -> union color;
+    [[nodiscard]] auto ycbcr(const union color& rgb) -> struct ycbcr;
+    [[nodiscard]] auto rgb(const struct ycbcr& color) -> union color;
 }

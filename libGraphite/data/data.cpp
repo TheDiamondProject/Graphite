@@ -98,6 +98,17 @@ graphite::data::block::block(std::size_t capacity, enum byte_order order)
 {
 }
 
+graphite::data::block::block(std::size_t capacity, std::size_t allocation_size, enum byte_order order)
+    : m_raw_size(simd_expand_capacity(allocation_size)),
+      m_data_size(capacity),
+      m_raw(malloc(m_raw_size)),
+      m_data(simd_align(m_raw)),
+      m_allocation_owner(nullptr),
+      m_byte_order(order),
+      m_has_ownership(true)
+{
+}
+
 graphite::data::block::block(const std::string &path, enum byte_order order)
     : m_byte_order(order),
       m_allocation_owner(nullptr),
@@ -370,6 +381,14 @@ static inline auto inline_set(graphite::data::block *dst, union simd_value v, st
             n += simd_alignment_width;
         }
     }
+}
+
+auto graphite::data::block::increase_size_to(std::size_t new_size) -> void
+{
+    if (new_size > m_raw_size) {
+        throw std::runtime_error("Attempted to increase size of data::block beyond allowed range.");
+    }
+    m_data_size = new_size;
 }
 
 auto graphite::data::block::clear() -> void
