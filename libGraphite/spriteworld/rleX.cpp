@@ -162,6 +162,7 @@ auto graphite::spriteworld::rleX::decode(data::reader &reader) -> void
     std::uint64_t current_offset = 0;
     std::int32_t current_frame = 0;
     std::uint16_t count = 0;
+    auto frame = frame_rect(0);
 
     struct quickdraw::ycbcr yuv { 0 };
 
@@ -173,6 +174,10 @@ auto graphite::spriteworld::rleX::decode(data::reader &reader) -> void
                 if (++current_frame >= m_frame_count) {
                     goto COMPLETED_LAST_FRAME;
                 }
+
+                frame = frame_rect(current_frame);
+                current_offset = 0;
+
                 break;
             }
             case opcode::set_luma: {
@@ -200,7 +205,7 @@ auto graphite::spriteworld::rleX::decode(data::reader &reader) -> void
                 }
                 auto rgb = quickdraw::rgb(yuv);
                 for (auto i = 0; i < count; ++i) {
-                    m_surface.set(current_offset++, rgb);
+                    m_surface.set((current_offset % m_frame_size.width) + frame.origin.x, (current_offset / m_frame_size.width) + frame.origin.y, rgb);
                 }
                 break;
             }
