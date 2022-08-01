@@ -336,7 +336,7 @@ auto graphite::data::block::clone_from(const graphite::data::block &source) -> v
     }
 }
 
-auto graphite::data::block::copy_from(const block &source) const -> void
+__attribute__((optnone)) auto graphite::data::block::copy_from(const block &source) const -> void
 {
     auto source_ptr = source.get<uint32_t *>();
     auto dest_ptr = get<uint32_t *>();
@@ -362,7 +362,7 @@ auto graphite::data::block::copy_from(const block &source) const -> void
 
 // MARK: - Operations
 
-static inline auto inline_set(graphite::data::block *dst, union simd_value v, std::size_t bytes, std::size_t start) -> void
+__attribute__((optnone)) static inline auto inline_set(graphite::data::block *dst, union simd_value v, std::size_t bytes, std::size_t start) -> void
 {
     auto len = std::min(dst->size() - start, bytes);
     auto ptr = dst->get<uint32_t *>(start);
