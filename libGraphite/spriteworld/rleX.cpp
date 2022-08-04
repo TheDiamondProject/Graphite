@@ -164,7 +164,12 @@ auto graphite::spriteworld::rleX::decode(data::reader &reader) -> void
     std::uint16_t count = 0;
     auto frame = frame_rect(0);
 
-    struct quickdraw::ycbcr yuv { 0 };
+    struct quickdraw::ycbcr yuv {
+        .y = 0,
+        .cb = 128,
+        .cr = 128,
+        .alpha = 255
+    };
 
     while (!reader.eof()) {
         opcode = reader.read_enum<rleX::opcode>();
@@ -206,6 +211,7 @@ auto graphite::spriteworld::rleX::decode(data::reader &reader) -> void
                 auto rgb = quickdraw::rgb(yuv);
                 for (auto i = 0; i < count; ++i) {
                     m_surface.set((current_offset % m_frame_size.width) + frame.origin.x, (current_offset / m_frame_size.width) + frame.origin.y, rgb);
+                    current_offset++;
                 }
                 break;
             }
