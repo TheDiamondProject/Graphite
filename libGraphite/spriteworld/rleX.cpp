@@ -248,10 +248,10 @@ auto graphite::spriteworld::rleX::encode(data::writer &writer) -> void
             for (std::int16_t x = 0; x < frame.size.width; ++x) {
                 auto next_yuv = quickdraw::ycbcr(m_surface.at(frame.origin.x + x, frame.origin.y + y));
 
-                if (count > 0 && next_yuv.y > 0) {
+                if (count > 0 && next_yuv.y > 1) {
                     if ((next_yuv.y != yuv.y) || (next_yuv.cr != yuv.cr) || (next_yuv.cb != yuv.cb) || (next_yuv.alpha != yuv.alpha)) {
                         if (count < 127) {
-                            auto opcode = static_cast<std::uint8_t>(opcode::short_advance) + count;
+                            auto opcode = static_cast<std::uint8_t>(opcode::short_advance) | count;
                             writer.write_byte(opcode);
                         }
                         else {

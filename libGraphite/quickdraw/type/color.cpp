@@ -85,9 +85,9 @@ auto graphite::quickdraw::ycbcr(const union color& rgb) -> struct ycbcr
     std::uint8_t g = rgb.components.green;
     std::uint8_t b = rgb.components.blue;
 
-    std::int16_t y  = static_cast<std::int16_t>( 0.29900 * r + 0.58700 * g + 0.11400 * b);
-    std::int16_t cb = static_cast<std::int16_t>(-0.16874 * r - 0.33126 * g + 0.50000 * b + 128);
-    std::int16_t cr = static_cast<std::int16_t>( 0.50000 * r - 0.41868 * g - 0.08131 * b + 128);
+    auto y  = static_cast<std::int16_t>(      0.299000 * r + 0.587000 * g + 0.114000 * b);
+    auto cb = static_cast<std::int16_t>(128 - 0.168736 * r - 0.331264 * g + 0.500000 * b);
+    auto cr = static_cast<std::int16_t>(128 + 0.500000 * r - 0.418688 * g - 0.081312 * b);
 
     std::uint8_t y_clamped  = std::clamp<std::uint8_t>(y , 0, 255);
     std::uint8_t cb_clamped = std::clamp<std::uint8_t>(cb, 0, 255);
@@ -103,9 +103,9 @@ auto graphite::quickdraw::ycbcr(const union color& rgb) -> struct ycbcr
 
 auto graphite::quickdraw::rgb(const struct ycbcr& color) -> union color
 {
-    auto r = std::clamp<std::int16_t>(color.y + (1.4075 * (color.cr - 128)), 0, 255);
-    auto g = std::clamp<std::int16_t>(color.y - (0.3455 * (color.cb - 128)) - (0.7169 * (color.cr - 128)), 0, 255);
-    auto b = std::clamp<std::int16_t>(color.y + (1.7790 * (color.cb - 128)), 0, 255);
+    auto r = std::clamp<std::int16_t>(color.y + (1.402000 * (color.cr - 128)), 0, 255);
+    auto g = std::clamp<std::int16_t>(color.y - (0.344136 * (color.cb - 128)) - (0.714136 * (color.cr - 128)), 0, 255);
+    auto b = std::clamp<std::int16_t>(color.y + (1.772000 * (color.cb - 128)), 0, 255);
 
     return rgb(r, g, b, color.alpha);
 }
