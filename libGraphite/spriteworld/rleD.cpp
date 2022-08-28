@@ -197,7 +197,7 @@ auto graphite::spriteworld::rleD::decode(data::reader &reader) -> void
         switch (opcode) {
             case opcode::eof: {
                 // Check that we're not erroneously an EOF.
-                if (current_line != m_frame_size.height - 1) {
+                if (current_line > m_frame_size.height - 1) {
                     throw std::runtime_error("Incorrect number of scanlines in rlëD resource: " + std::to_string(m_id) + ", " + m_name);
                 }
 
