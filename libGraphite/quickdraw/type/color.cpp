@@ -69,14 +69,14 @@ auto graphite::quickdraw::colors::clear() -> union color
 
 // MARK: - YCrCb Color
 
-auto graphite::quickdraw::ycbcr(const union color& rgb) -> struct ycbcr
+auto graphite::quickdraw::ycbcr(const union color& rgb) -> union ycbcr
 {
     if ((rgb.value & 0x00FFFFFF) == 0) {
-        return (struct ycbcr) {
-            .y = 0,
-            .cb = 0,
-            .cr = 0,
-            .alpha = rgb.components.alpha
+        return (union ycbcr) {
+            .components.y = 0,
+            .components.cb = 0,
+            .components.cr = 0,
+            .components.alpha = rgb.components.alpha
         };
     }
 
@@ -93,19 +93,19 @@ auto graphite::quickdraw::ycbcr(const union color& rgb) -> struct ycbcr
     std::uint8_t cb_clamped = std::clamp<std::uint8_t>(cb, 0, 255);
     std::uint8_t cr_clamped = std::clamp<std::uint8_t>(cr, 0, 255);
 
-    return (struct ycbcr) {
-        .y  = y_clamped,
-        .cb = cb_clamped,
-        .cr = cr_clamped,
-        .alpha = rgb.components.alpha
+    return (union ycbcr) {
+        .components.y  = y_clamped,
+        .components.cb = cb_clamped,
+        .components.cr = cr_clamped,
+        .components.alpha = rgb.components.alpha
     };
 }
 
-auto graphite::quickdraw::rgb(const struct ycbcr& color) -> union color
+auto graphite::quickdraw::rgb(const union ycbcr& color) -> union color
 {
-    auto r = std::clamp<std::int16_t>(color.y + (1.402000 * (color.cr - 128)), 0, 255);
-    auto g = std::clamp<std::int16_t>(color.y - (0.344136 * (color.cb - 128)) - (0.714136 * (color.cr - 128)), 0, 255);
-    auto b = std::clamp<std::int16_t>(color.y + (1.772000 * (color.cb - 128)), 0, 255);
+    auto r = std::clamp<std::int16_t>(color.components.y + (1.402000 * (color.components.cr - 128)), 0, 255);
+    auto g = std::clamp<std::int16_t>(color.components.y - (0.344136 * (color.components.cb - 128)) - (0.714136 * (color.components.cr - 128)), 0, 255);
+    auto b = std::clamp<std::int16_t>(color.components.y + (1.772000 * (color.components.cb - 128)), 0, 255);
 
-    return rgb(r, g, b, color.alpha);
+    return rgb(r, g, b, color.components.alpha);
 }

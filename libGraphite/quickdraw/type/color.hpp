@@ -38,12 +38,15 @@ namespace graphite::quickdraw
         } components;
     };
 
-    struct ycbcr
+    union ycbcr
     {
-        color_component y;
-        color_component cb;
-        color_component cr;
-        color_component alpha;
+        std::uint32_t value;
+        struct {
+            color_component y;
+            color_component cb;
+            color_component cr;
+            color_component alpha;
+        } components;
     };
 
     static auto operator==(const union color& lhs, const union color& rhs) -> bool { return lhs.value == rhs.value; }
@@ -64,6 +67,6 @@ namespace graphite::quickdraw
         [[nodiscard]] auto clear() -> union color;
     }
 
-    [[nodiscard]] auto ycbcr(const union color& rgb) -> struct ycbcr;
-    [[nodiscard]] auto rgb(const struct ycbcr& color) -> union color;
+    [[nodiscard]] auto ycbcr(const union color& rgb) -> union ycbcr;
+    [[nodiscard]] auto rgb(const union ycbcr& color) -> union color;
 }

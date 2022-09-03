@@ -164,11 +164,11 @@ auto graphite::spriteworld::rleX::decode(data::reader &reader) -> void
     std::uint16_t count = 0;
     auto frame = frame_rect(0);
 
-    struct quickdraw::ycbcr yuv {
-        .y = 0,
-        .cb = 128,
-        .cr = 128,
-        .alpha = 255
+    union quickdraw::ycbcr yuv {
+        .components.y = 0,
+        .components.cb = 128,
+        .components.cr = 128,
+        .components.alpha = 255
     };
 
     while (!reader.eof()) {
@@ -186,19 +186,19 @@ auto graphite::spriteworld::rleX::decode(data::reader &reader) -> void
                 break;
             }
             case opcode::set_luma: {
-                yuv.y = reader.read_byte();
+                yuv.components.y = reader.read_byte();
                 break;
             }
             case opcode::set_cr: {
-                yuv.cr = reader.read_byte();
+                yuv.components.cr = reader.read_byte();
                 break;
             }
             case opcode::set_cb: {
-                yuv.cb = reader.read_byte();
+                yuv.components.cb = reader.read_byte();
                 break;
             }
             case opcode::set_alpha: {
-                yuv.alpha = reader.read_byte();
+                yuv.components.alpha = reader.read_byte();
                 break;
             }
             case opcode::advance: {
@@ -242,11 +242,11 @@ auto graphite::spriteworld::rleX::encode(data::writer &writer) -> void
     for (auto f = 0; f < m_frame_count; ++f) {
         auto frame = frame_rect(f);
 
-        struct quickdraw::ycbcr yuv {
-            .y = 0,
-            .cb = 128,
-            .cr = 128,
-            .alpha = 255
+        union quickdraw::ycbcr yuv {
+            .components.y = 0,
+            .components.cb = 128,
+            .components.cr = 128,
+            .components.alpha = 255
         };
 
         std::uint16_t count = 0;
@@ -255,42 +255,39 @@ auto graphite::spriteworld::rleX::encode(data::writer &writer) -> void
             for (std::int16_t x = 0; x < frame.size.width; ++x) {
                 auto next_yuv = quickdraw::ycbcr(m_surface.at(frame.origin.x + x, frame.origin.y + y));
 
-                if (count > 0 && std::abs(next_yuv.y - yuv.y) > 1) {
-                    if ((next_yuv.y != yuv.y) || (next_yuv.cr != yuv.cr) || (next_yuv.cb != yuv.cb) || (next_yuv.alpha != yuv.alpha)) {
+                if (next_yuv.value != yuv.value) {
+                    if (count > 0) {
                         if (count < 127) {
                             auto opcode = static_cast<std::uint8_t>(opcode::short_advance) | count;
                             writer.write_byte(opcode);
-                        }
-                        else {
+                        } else {
                             writer.write_enum(opcode::advance);
                             writer.write_short(count);
                         }
                         count = 0;
                     }
-                }
 
-                if (std::abs(next_yuv.y - yuv.y) > 1) {
-                    yuv.y = next_yuv.y;
-                    writer.write_enum(rleX::opcode::set_luma);
-                    writer.write_byte(yuv.y);
-                }
+                    if (next_yuv.components.y != yuv.components.y && next_yuv.components.alpha > 0) {
+                        writer.write_enum(rleX::opcode::set_luma);
+                        writer.write_byte(next_yuv.components.y);
+                    }
 
-                if (std::abs(next_yuv.cr - yuv.cr) > 1 && yuv.y > 0) {
-                    yuv.cr = next_yuv.cr;
-                    writer.write_enum(rleX::opcode::set_cr);
-                    writer.write_byte(yuv.cr);
-                }
+                    if (next_yuv.components.cr != yuv.components.cr && next_yuv.components.alpha > 0) {
+                        writer.write_enum(rleX::opcode::set_cr);
+                        writer.write_byte(next_yuv.components.cr);
+                    }
 
-                if (std::abs(next_yuv.cb - yuv.cb) > 1 && yuv.y > 0) {
-                    yuv.cb = next_yuv.cb;
-                    writer.write_enum(rleX::opcode::set_cb);
-                    writer.write_byte(yuv.cb);
-                }
+                    if (next_yuv.components.cb != yuv.components.cb && next_yuv.components.alpha > 0) {
+                        writer.write_enum(rleX::opcode::set_cb);
+                        writer.write_byte(next_yuv.components.cb);
+                    }
 
-                if (std::abs(next_yuv.alpha - yuv.alpha) > 1) {
-                    yuv.alpha = next_yuv.alpha;
-                    writer.write_enum(rleX::opcode::set_alpha);
-                    writer.write_byte(yuv.alpha);
+                    if (next_yuv.components.alpha != yuv.components.alpha) {
+                        writer.write_enum(rleX::opcode::set_alpha);
+                        writer.write_byte(next_yuv.components.alpha);
+                    }
+
+                    yuv.value = next_yuv.value;
                 }
 
                 count++;
