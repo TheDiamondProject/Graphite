@@ -241,6 +241,7 @@ auto graphite::spriteworld::rleX::encode(data::writer &writer) -> void
     // Write out the RLE frames
     for (auto f = 0; f < m_frame_count; ++f) {
         auto frame = frame_rect(f);
+
         struct quickdraw::ycbcr yuv {
             .y = 0,
             .cb = 128,
@@ -249,11 +250,10 @@ auto graphite::spriteworld::rleX::encode(data::writer &writer) -> void
         };
 
         std::uint16_t count = 0;
+        auto next_yuv = quickdraw::ycbcr(m_surface.at(frame.origin.x, frame.origin.y));
 
         for (std::int16_t y = 0; y < frame.size.height; ++y) {
             for (std::int16_t x = 0; x < frame.size.width; ++x) {
-                auto next_yuv = quickdraw::ycbcr(m_surface.at(frame.origin.x + x, frame.origin.y + y));
-
                 if (count > 0 && std::abs(next_yuv.y - yuv.y) > 1) {
                     if ((next_yuv.y != yuv.y) || (next_yuv.cr != yuv.cr) || (next_yuv.cb != yuv.cb) || (next_yuv.alpha != yuv.alpha)) {
                         if (count < 127) {
@@ -294,6 +294,15 @@ auto graphite::spriteworld::rleX::encode(data::writer &writer) -> void
 
                 count++;
             }
+        }
+
+        if (count < 127) {
+            auto opcode = static_cast<std::uint8_t>(opcode::short_advance) | count;
+            writer.write_byte(opcode);
+        }
+        else {
+            writer.write_enum(opcode::advance);
+            writer.write_short(count);
         }
 
         writer.write_enum(opcode::eof);
