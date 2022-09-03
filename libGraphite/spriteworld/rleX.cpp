@@ -250,10 +250,10 @@ auto graphite::spriteworld::rleX::encode(data::writer &writer) -> void
         };
 
         std::uint16_t count = 0;
-        
+
         for (std::int16_t y = 0; y < frame.size.height; ++y) {
             for (std::int16_t x = 0; x < frame.size.width; ++x) {
-                auto next_yuv = quickdraw::ycbcr(m_surface.at(frame.origin.x, frame.origin.y));
+                auto next_yuv = quickdraw::ycbcr(m_surface.at(frame.origin.x + x, frame.origin.y + y));
 
                 if (count > 0 && std::abs(next_yuv.y - yuv.y) > 1) {
                     if ((next_yuv.y != yuv.y) || (next_yuv.cr != yuv.cr) || (next_yuv.cb != yuv.cb) || (next_yuv.alpha != yuv.alpha)) {
