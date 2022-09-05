@@ -161,7 +161,7 @@ auto graphite::spriteworld::rleX::decode(data::reader &reader) -> void
     rleX::opcode opcode = opcode::eof;
     std::uint64_t current_offset = 0;
     std::int32_t current_frame = 0;
-    std::uint16_t count = 0;
+    std::uint32_t count = 0;
     auto frame = frame_rect(0);
 
     union quickdraw::ycbcr yuv {
@@ -202,7 +202,7 @@ auto graphite::spriteworld::rleX::decode(data::reader &reader) -> void
                 break;
             }
             case opcode::advance: {
-                count = reader.read_short();
+                count = reader.read_long();
             }
             default: {
                 if (static_cast<std::uint8_t>(opcode) & static_cast<std::uint8_t>(opcode::short_advance)) {
@@ -249,7 +249,7 @@ auto graphite::spriteworld::rleX::encode(data::writer &writer) -> void
             .components.alpha = 255
         };
 
-        std::uint16_t count = 0;
+        std::uint32_t count = 0;
 
         for (std::int16_t y = 0; y < frame.size.height; ++y) {
             for (std::int16_t x = 0; x < frame.size.width; ++x) {
@@ -262,7 +262,7 @@ auto graphite::spriteworld::rleX::encode(data::writer &writer) -> void
                             writer.write_byte(opcode);
                         } else {
                             writer.write_enum(opcode::advance);
-                            writer.write_short(count);
+                            writer.write_long(count);
                         }
                         count = 0;
                     }
@@ -300,7 +300,7 @@ auto graphite::spriteworld::rleX::encode(data::writer &writer) -> void
         }
         else {
             writer.write_enum(opcode::advance);
-            writer.write_short(count);
+            writer.write_long(count);
         }
 
         writer.write_enum(opcode::eof);
