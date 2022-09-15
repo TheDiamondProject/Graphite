@@ -71,16 +71,6 @@ auto graphite::quickdraw::colors::clear() -> union color
 
 auto graphite::quickdraw::ycbcr(const union color& rgb) -> union ycbcr
 {
-    if ((rgb.value & 0x00FFFFFF) == 0) {
-        return (union ycbcr) {
-            .components.y = 0,
-            .components.cb = 0,
-            .components.cr = 0,
-            .components.alpha = rgb.components.alpha
-        };
-    }
-
-
     std::uint8_t r = rgb.components.red;
     std::uint8_t g = rgb.components.green;
     std::uint8_t b = rgb.components.blue;

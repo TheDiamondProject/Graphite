@@ -267,17 +267,17 @@ auto graphite::spriteworld::rleX::encode(data::writer &writer) -> void
                         count = 0;
                     }
 
-                    if (next_yuv.components.y != yuv.components.y && next_yuv.components.alpha > 0) {
+                    if (next_yuv.components.y != yuv.components.y) {
                         writer.write_enum(rleX::opcode::set_luma);
                         writer.write_byte(next_yuv.components.y);
                     }
 
-                    if (next_yuv.components.cr != yuv.components.cr && next_yuv.components.alpha > 0) {
+                    if (next_yuv.components.cr != yuv.components.cr) {
                         writer.write_enum(rleX::opcode::set_cr);
                         writer.write_byte(next_yuv.components.cr);
                     }
 
-                    if (next_yuv.components.cb != yuv.components.cb && next_yuv.components.alpha > 0) {
+                    if (next_yuv.components.cb != yuv.components.cb) {
                         writer.write_enum(rleX::opcode::set_cb);
                         writer.write_byte(next_yuv.components.cb);
                     }
