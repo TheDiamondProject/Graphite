@@ -156,14 +156,16 @@ graphite::data::block::block(const block &source, bool copy)
       m_count(source.m_count),
       m_byte_order(source.m_byte_order),
       m_allocation_owner(copy ? nullptr : &source),
-      m_has_ownership(copy)
+      m_has_ownership(copy),
+      m_extended(source.m_extended)
 {
     clone_from(source);
 }
 
 graphite::data::block::block(const block &source, block::position pos, std::size_t amount, bool copy)
     : m_allocation_owner(copy ? nullptr : &source),
-      m_byte_order(source.m_byte_order)
+      m_byte_order(source.m_byte_order),
+      m_extended(source.m_extended)
 {
     if (m_allocation_owner) {
         m_raw = source.m_raw;
@@ -208,7 +210,8 @@ graphite::data::block::block(const block &data)
       m_users(0),
       m_count(data.m_count),
       m_byte_order(data.m_byte_order),
-      m_has_ownership(data.m_has_ownership)
+      m_has_ownership(data.m_has_ownership),
+      m_extended(data.m_extended)
 {
     if (m_has_ownership) {
         m_raw = malloc(m_raw_size);
@@ -231,7 +234,8 @@ graphite::data::block::block(block &&data) noexcept
       m_users(data.m_users),
       m_count(data.m_count),
       m_byte_order(data.m_byte_order),
-      m_has_ownership(data.m_has_ownership)
+      m_has_ownership(data.m_has_ownership),
+      m_extended(data.m_extended)
 {
     data.m_raw = nullptr;
     data.m_data = nullptr;
@@ -264,6 +268,7 @@ auto graphite::data::block::operator=(const block &data) -> struct block &
     m_count = data.m_count;
     m_byte_order = data.m_byte_order;
     m_has_ownership = true;
+    m_extended = data.m_extended;
 
     m_raw = malloc(m_raw_size);
     m_data = simd_align(m_raw);
@@ -295,6 +300,7 @@ auto graphite::data::block::operator=(block &&data) noexcept -> struct block &
         m_count = data.m_count;
         m_byte_order = data.m_byte_order;
         m_has_ownership = data.m_has_ownership;
+        m_extended = data.m_extended;
 
         data.m_allocation_owner = nullptr;
         data.m_raw = nullptr;
@@ -322,6 +328,7 @@ graphite::data::block::~block()
 
 auto graphite::data::block::clone_from(const graphite::data::block &source) -> void
 {
+    m_extended = source.m_extended;
     if (m_allocation_owner) {
         m_raw = source.m_raw;
         m_data = source.m_data;
@@ -336,10 +343,12 @@ auto graphite::data::block::clone_from(const graphite::data::block &source) -> v
     }
 }
 
-__attribute__((optnone)) auto graphite::data::block::copy_from(const block &source) const -> void
+__attribute__((optnone)) auto graphite::data::block::copy_from(const block &source) -> void
 {
     auto source_ptr = source.get<uint32_t *>();
     auto dest_ptr = get<uint32_t *>();
+
+    m_extended = source.m_extended;
 
     std::size_t len = std::min(source.size(), size());
     std::size_t n = 0;

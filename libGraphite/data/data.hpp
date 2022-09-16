@@ -89,6 +89,9 @@ namespace graphite::data
         [[nodiscard]] inline auto start() const -> block::position { return m_start_position; }
         [[nodiscard]] inline auto byte_order() const -> byte_order { return m_byte_order; }
 
+        auto originates_from_extended_format() -> void { m_extended = true; }
+        [[nodiscard]] inline auto is_extended_format() const -> bool { return m_extended; }
+
         auto change_byte_order(enum byte_order order) -> void { m_byte_order = order; }
         auto increase_size_to(std::size_t new_size) -> void;
 
@@ -98,12 +101,13 @@ namespace graphite::data
         auto set(uint16_t value, std::size_t bytes = 0, block::position start = 0) -> void;
         auto set(uint32_t value, std::size_t bytes = 0, block::position start = 0) -> void;
 
-        auto copy_from(const block& source) const -> void;
+        auto copy_from(const block& source) -> void;
 
         [[nodiscard]] auto slice(block::position pos, std::size_t size, bool copy = false) const -> block;
 
     private:
         enum byte_order m_byte_order { byte_order::msb };
+        bool m_extended { false };
         std::size_t m_raw_size { 0 };
         std::size_t m_data_size { 0 };
         block::position m_start_position { 0 };
