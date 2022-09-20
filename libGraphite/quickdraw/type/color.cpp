@@ -93,6 +93,17 @@ auto graphite::quickdraw::ycbcr(const union color& rgb) -> union ycbcr
 
 auto graphite::quickdraw::rgb(const union ycbcr& color) -> union color
 {
+    auto color_value = color.value & 0xFFFFFF;
+    if (color.components.alpha < 0.05) {
+        return rgb(0, 0, 0, 0);
+    }
+    else if (color_value == 0x008080) {
+        return rgb(0, 0, 0, color.components.alpha);
+    }
+    else if (color_value == 0xFF8080) {
+        return rgb(255, 255, 255, color.components.alpha);
+    }
+
     auto r = std::clamp<std::int16_t>(color.components.y + (1.402000 * (color.components.cr - 128)), 0, 255);
     auto g = std::clamp<std::int16_t>(color.components.y - (0.344136 * (color.components.cb - 128)) - (0.714136 * (color.components.cr - 128)), 0, 255);
     auto b = std::clamp<std::int16_t>(color.components.y + (1.772000 * (color.components.cb - 128)), 0, 255);

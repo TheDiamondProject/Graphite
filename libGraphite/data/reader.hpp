@@ -25,6 +25,8 @@
 #include "libGraphite/data/data.hpp"
 #include "libGraphite/util/concepts.hpp"
 #include "libGraphite/data/encoding.hpp"
+#include "libGraphite/data/internals/specialised_reader.hpp"
+#include "libGraphite/data/internals/swap_reader.hpp"
 
 namespace graphite::data
 {
@@ -52,7 +54,21 @@ namespace graphite::data
         [[nodiscard]] inline auto eof() const -> bool { return position() >= size(); }
         [[nodiscard]] inline auto byte_order() const -> byte_order { return m_data->byte_order(); }
 
-        auto change_byte_order(enum byte_order order) -> void { const_cast<class block *>(m_data)->change_byte_order(order); }
+        auto change_byte_order(enum byte_order order) -> void
+        {
+            const_cast<class block *>(m_data)->change_byte_order(order);
+            update_swap_wrapper();
+        }
+
+        auto update_swap_wrapper() -> void
+        {
+            if (m_data && byte_order() == native_byte_order()) {
+                m_swap_wrapper = std::make_shared<internals::specialised_reader>();
+            }
+            else {
+                m_swap_wrapper = std::make_shared<internals::swap_reader>();
+            }
+        }
 
         auto set_position(block::position pos) -> void;
         auto move(block::position delta = 1) -> void;
@@ -138,19 +154,8 @@ namespace graphite::data
         template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
         auto read_integer(block::position offset = 0, mode mode = mode::advance, std::size_t size = sizeof(T)) -> T
         {
-            T v = 0;
-            if (size <= 0 || size > sizeof(T)) {
-                throw std::runtime_error("Invalid integer size specified in data reader.");
-            }
-
-            for (block::position i = 0; i < size; ++i) {
-                auto b = m_data->template operator[]<uint8_t>(m_position + offset + i);
-                v |= static_cast<T>(b) << (i << 3ULL);
-            }
-
-            if (size > 1) {
-                v = swap(v, m_data->byte_order(), native_byte_order(), size);
-            }
+            T v = *reinterpret_cast<T *>(m_data->template get<std::uint8_t *>(m_position + offset));
+            v = m_swap_wrapper->swap(v, size);
 
             if (mode == mode::advance) {
                 move(offset + size);
@@ -179,6 +184,7 @@ namespace graphite::data
     private:
         bool m_owns_data { false };
         const class block *m_data { nullptr };
+        std::shared_ptr<internals::specialised_reader> m_swap_wrapper;
         std::vector<block::position> m_position_stack;
         block::position m_position;
     };

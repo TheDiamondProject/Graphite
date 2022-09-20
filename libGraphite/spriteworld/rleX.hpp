@@ -64,7 +64,7 @@ namespace graphite::spriteworld
             set_cb = 0x03,
             set_alpha = 0x04,
             advance = 0x05,
-            short_advance = 0x80,
+            short_advance = 0x06,
         };
 
         rsrc::resource::identifier m_id { 0 };

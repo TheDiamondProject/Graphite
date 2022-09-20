@@ -23,75 +23,15 @@
 #include <iostream>
 #include <cassert>
 #include "libGraphite/data/data.hpp"
-
-// MARK: - SIMD Support
-
-#if __x86_64__
-    typedef          __int128    int128_t;
-    typedef unsigned __int128   uint128_t;
-
-    typedef uint128_t           simd_wide_type;
-    typedef simd_wide_type      simd_type;
-    typedef uint64_t            simd_wide_field_type;
-
-    static constexpr std::size_t simd_alignment_width = 16;
-    static constexpr std::size_t simd_fields = 4;
-    static constexpr std::size_t simd_wide_fields = 2;
-
-#elif __arm64__
-    typedef uint64_t            simd_wide_type;
-    typedef simd_wide_type      simd_type;
-    typedef simd_type           simd_wide_field_type;
-
-    static constexpr std::size_t simd_alignment_width = 8;
-    static constexpr std::size_t simd_fields = 2;
-    static constexpr std::size_t simd_wide_fields = 1;
-
-#else
-    typedef uint32_t            simd_wide_type;
-    typedef simd_wide_type      simd_type;
-
-    static constexpr std::size_t simd_alignment_width = 4;
-    static constexpr std::size_t simd_fields = 1;
-    static constexpr std::size_t simd_wide_fields = 0;
-
-#endif
-
-typedef uint32_t            simd_field_type;
-typedef uint16_t            simd_half_field_type;
-static constexpr std::size_t simd_field_size = sizeof(simd_field_type);
-
-union alignas(simd_alignment_width) simd_value
-{
-    simd_type wide;
-#if __x86_64__ || __arm64__
-    simd_wide_field_type wide_fields[simd_wide_fields];
-#endif
-    simd_field_type fields[simd_fields];
-    uint8_t bytes[sizeof(simd_type)];
-};
-
-static constexpr std::size_t simd_alignment_mask = ~(simd_alignment_width - 1);
-
-template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-static inline auto simd_expand_capacity(T capacity) -> T
-{
-    return (capacity + simd_alignment_width - 1) & simd_alignment_mask;
-}
-
-template<typename T, typename std::enable_if<std::is_pointer<T>::value>::type* = nullptr>
-static inline auto simd_align(T ptr) -> T
-{
-    return reinterpret_cast<T>((reinterpret_cast<std::uintptr_t>(ptr) + simd_alignment_width - 1) & simd_alignment_mask);
-}
+#include "libGraphite/data/simd.hpp"
 
 // MARK: - Construction
 
 graphite::data::block::block(std::size_t capacity, enum byte_order order)
-    : m_raw_size(simd_expand_capacity(capacity)),
+    : m_raw_size(simd::expand_capacity(capacity)),
       m_data_size(capacity),
       m_raw(malloc(m_raw_size)),
-      m_data(simd_align(m_raw)),
+      m_data(simd::align(m_raw)),
       m_allocation_owner(nullptr),
       m_byte_order(order),
       m_has_ownership(true)
@@ -99,10 +39,10 @@ graphite::data::block::block(std::size_t capacity, enum byte_order order)
 }
 
 graphite::data::block::block(std::size_t capacity, std::size_t allocation_size, enum byte_order order)
-    : m_raw_size(simd_expand_capacity(allocation_size)),
+    : m_raw_size(simd::expand_capacity(allocation_size)),
       m_data_size(capacity),
       m_raw(malloc(m_raw_size)),
-      m_data(simd_align(m_raw)),
+      m_data(simd::align(m_raw)),
       m_allocation_owner(nullptr),
       m_byte_order(order),
       m_has_ownership(true)
@@ -124,9 +64,9 @@ graphite::data::block::block(const std::string &path, enum byte_order order)
     m_data_size = file.tellg();
     file.seekg(0, std::ios::beg);
 
-    m_raw_size = simd_expand_capacity(m_data_size);
+    m_raw_size = simd::expand_capacity(m_data_size);
     m_raw = malloc(m_raw_size);
-    m_data = simd_align(m_raw);
+    m_data = simd::align(m_raw);
     file.read(reinterpret_cast<char *>(m_data), m_data_size);
 
     file.close();
@@ -138,9 +78,9 @@ graphite::data::block::block(const std::vector<char>& bytes, enum byte_order ord
       m_has_ownership(true)
 {
     m_data_size = bytes.size();
-    m_raw_size = simd_expand_capacity(m_data_size);
+    m_raw_size = simd::expand_capacity(m_data_size);
     m_raw = malloc(m_raw_size);
-    m_data = simd_align(m_raw);
+    m_data = simd::align(m_raw);
 
     // TODO: This is slow, and should be speeded up in the future.
     auto ptr = static_cast<char *>(m_data);
@@ -179,10 +119,10 @@ graphite::data::block::block(const block &source, block::position pos, std::size
         const_cast<block*>(m_allocation_owner)->m_users++;
     }
     else {
-        m_raw_size = simd_expand_capacity(amount);
+        m_raw_size = simd::expand_capacity(amount);
         m_data_size = amount;
         m_raw = malloc(m_raw_size);
-        m_data = simd_align(m_raw);
+        m_data = simd::align(m_raw);
         m_start_position = 0;
         m_count = 0;
         m_has_ownership = true;
@@ -215,7 +155,7 @@ graphite::data::block::block(const block &data)
 {
     if (m_has_ownership) {
         m_raw = malloc(m_raw_size);
-        m_data = simd_align(m_raw);
+        m_data = simd::align(m_raw);
         copy_from(data);
     }
     else {
@@ -271,7 +211,7 @@ auto graphite::data::block::operator=(const block &data) -> struct block &
     m_extended = data.m_extended;
 
     m_raw = malloc(m_raw_size);
-    m_data = simd_align(m_raw);
+    m_data = simd::align(m_raw);
     copy_from(data);
 
     return *this;
@@ -337,7 +277,7 @@ auto graphite::data::block::clone_from(const graphite::data::block &source) -> v
     }
     else {
         m_raw = malloc(m_raw_size);
-        m_data = simd_align(m_raw);
+        m_data = simd::align(m_raw);
         m_has_ownership = true;
         copy_from(source);
     }
@@ -352,45 +292,23 @@ __attribute__((optnone)) auto graphite::data::block::copy_from(const block &sour
 
     std::size_t len = std::min(source.size(), size());
     std::size_t n = 0;
-    auto simd_fields_len = simd_fields * simd_field_size;
     while (n < len) {
-        if ((reinterpret_cast<uintptr_t>(source_ptr) & simd_alignment_width) || (len - n) < simd_fields_len) {
+        if ((reinterpret_cast<uintptr_t>(source_ptr) & simd::alignment_width) || (len - n) < simd::fields_length) {
             *dest_ptr = *source_ptr;
             ++dest_ptr;
             ++source_ptr;
-            n += simd_field_size;
+            n += simd::field_size;
         }
         else {
-            *reinterpret_cast<simd_wide_type *>(dest_ptr) = *reinterpret_cast<simd_wide_type *>(source_ptr);
-            dest_ptr += simd_fields;
-            source_ptr += simd_fields;
-            n += simd_alignment_width;
+            *reinterpret_cast<simd::wide_type *>(dest_ptr) = *reinterpret_cast<simd::wide_type *>(source_ptr);
+            dest_ptr += simd::field_count;
+            source_ptr += simd::field_count;
+            n += simd::alignment_width;
         }
     }
 }
 
 // MARK: - Operations
-
-__attribute__((optnone)) static inline auto inline_set(graphite::data::block *dst, union simd_value v, std::size_t bytes, std::size_t start) -> void
-{
-    auto len = std::min(dst->size() - start, bytes);
-    auto ptr = dst->get<uint32_t *>(start);
-    std::size_t n = 0;
-
-    auto simd_fields_len = simd_fields * simd_field_size;
-    while (n < len) {
-        if ((reinterpret_cast<uintptr_t>(ptr) & simd_alignment_width) || (len - n) < simd_fields_len) {
-            *ptr = v.fields[n & (simd_fields - 1)];
-            ++ptr;
-            n += simd_field_size;
-        }
-        else {
-            *reinterpret_cast<simd_wide_type *>(ptr) = v.wide;
-            ptr += simd_fields;
-            n += simd_alignment_width;
-        }
-    }
-}
 
 auto graphite::data::block::increase_size_to(std::size_t new_size) -> void
 {
@@ -407,17 +325,16 @@ auto graphite::data::block::clear() -> void
 
 auto graphite::data::block::set(uint8_t value, std::size_t bytes, block::position start) -> void
 {
-    union simd_value v;
-    for (auto n = 0; n < simd_alignment_width; ++n) {
-        v.bytes[n] = value;
+    union simd::value v;
+    for (unsigned char & byte : v.bytes) {
+        byte = value;
     }
-    inline_set(this, v, bytes, start);
+    simd::set(get<std::uint32_t *>(start), size() - start, v, bytes);
 }
 
-auto graphite::data::block::set(uint16_t value, std::size_t bytes, block::position start) -> void
+__attribute__((optnone)) auto graphite::data::block::set(uint16_t value, std::size_t bytes, block::position start) -> void
 {
-    union simd_value v;
-
+    union simd::value v;
     v.fields[0] = (value << 16) | value;
 #if __x86_64__
     v.fields[1] = v.fields[0];
@@ -426,24 +343,7 @@ auto graphite::data::block::set(uint16_t value, std::size_t bytes, block::positi
 #elif __arm64__
     v.fields[1] = v.fields[0];
 #endif
-
-    inline_set(this, v, bytes, start);
-}
-
-auto graphite::data::block::set(uint32_t value, std::size_t bytes, block::position start) -> void
-{
-    union simd_value v { 0 };
-
-    v.fields[0] = value;
-#if __x86_64__
-    v.fields[1] = value;
-    v.fields[2] = value;
-    v.fields[3] = value;
-#elif __arm64__
-    v.fields[1] = value;
-#endif
-
-    inline_set(this, v, bytes, start);
+    simd::set(get<std::uint32_t *>(start), size() - start, v, bytes);
 }
 
 // MARK: - Slicing

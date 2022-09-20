@@ -26,6 +26,7 @@
 #include <type_traits>
 #include <concepts>
 #include "libGraphite/data/endianess.hpp"
+#include "libGraphite/data/simd.hpp"
 
 namespace graphite::data
 {
@@ -99,7 +100,20 @@ namespace graphite::data
 
         auto set(uint8_t value, std::size_t bytes = 0, block::position start = 0) -> void;
         auto set(uint16_t value, std::size_t bytes = 0, block::position start = 0) -> void;
-        auto set(uint32_t value, std::size_t bytes = 0, block::position start = 0) -> void;
+
+        inline auto set(uint32_t value, std::size_t bytes = 0, block::position start = 0) -> void
+        {
+            union simd::value v;
+            v.fields[0] = value;
+#if __x86_64__
+            v.fields[1] = value;
+            v.fields[2] = value;
+            v.fields[3] = value;
+#elif __arm64__
+            v.fields[1] = value;
+#endif
+            simd::set(get<std::uint32_t *>(start), size() - start, v, bytes);
+        }
 
         auto copy_from(const block& source) -> void;
 

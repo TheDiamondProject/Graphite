@@ -59,4 +59,18 @@ namespace graphite::data
 
         return v;
     }
+
+    template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
+    static auto fixed_swap(T value, std::size_t size = sizeof(T)) -> T
+    {
+        T v = 0;
+
+        for (auto i = 0; i < size; ++i) {
+            auto b = (size - i - 1) << 3ULL;
+            v |= ((value >> b) & 0xFF) << (i << 3ULL);
+        }
+
+        return v;
+    }
+
 }

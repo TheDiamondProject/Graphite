@@ -34,6 +34,7 @@ graphite::data::reader::reader(const class block *data, block::position pos, boo
       m_owns_data(owns),
       m_position(pos)
 {
+    update_swap_wrapper();
 }
 
 auto graphite::data::reader::file(const std::string &path, block::position pos) -> reader
