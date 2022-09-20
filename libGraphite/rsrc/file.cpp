@@ -283,7 +283,6 @@ auto graphite::rsrc::file::read(const std::string &path) -> void
 
     if (rsrc::format::extended::parse(reader, *this)) {
         m_format = format::extended;
-        m_data->originates_from_extended_format();
     }
     else if (rsrc::format::rez::parse(reader, *this)) {
         m_format = format::rez;

@@ -81,6 +81,8 @@ auto graphite::rsrc::format::extended::parse(data::reader &reader, file &file) -
         return false;
     }
 
+    const_cast<data::block *>(reader.data())->originates_from_extended_format();
+
     // 2. Now that the preamble is parsed and verified, parse the contents
     // of the ResourceMap. The first two fields are used by the actual Resource Manager in
     // the Classic Macintosh OS, but are not used by this implementation.

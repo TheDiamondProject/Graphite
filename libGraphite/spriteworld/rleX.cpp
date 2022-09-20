@@ -136,6 +136,8 @@ auto graphite::spriteworld::rleX::surface_offset(std::int32_t frame, std::int32_
 
 auto graphite::spriteworld::rleX::decode(data::reader &reader) -> void
 {
+    reader.change_byte_order(data::byte_order::lsb);
+
     // Read the header of the RLE information. This will tell us what we need to do in order to actually
     // decode the frame.
     m_frame_size = quickdraw::size<std::int16_t>::read(reader, quickdraw::coding_type::macintosh);
@@ -159,9 +161,13 @@ auto graphite::spriteworld::rleX::decode(data::reader &reader) -> void
     m_surface = quickdraw::surface(m_grid_size.width * m_frame_size.width, m_grid_size.height * m_frame_size.height, quickdraw::colors::clear());
 
     rleX::opcode opcode = opcode::eof;
-    std::uint64_t current_offset = 0;
     std::int32_t current_frame = 0;
     std::uint32_t count = 0;
+    std::uint32_t current_offset = 0;
+    std::uint32_t right_bound = 0;
+    std::uint32_t pitch = 0;
+
+    bool completed_last_frame = false;
     auto frame = frame_rect(0);
 
     union quickdraw::ycbcr yuv {
@@ -171,63 +177,68 @@ auto graphite::spriteworld::rleX::decode(data::reader &reader) -> void
         .components.alpha = 255
     };
 
-    while (!reader.eof()) {
+    // NOTE: This is a very _hot_ code path and thus we need to squeeze out as much performance as possible.
+    // Build a lookup table of opcodes, in order to reduce the number of comparisons.
+    /* quickdraw::surface&, data::reader&, union quickdraw::ycbcr&, std::int32_t&, std::uint32_t&, quickdraw::rect<std::int16_t>& */
+    std::function<auto()->void> opcode_lut[9] = {
+        /* EOF */
+        /* 0 */ [&] {
+            if (++current_frame >= m_frame_count) {
+                completed_last_frame = true;
+                return;
+            }
+            opcode_lut[8]();
+        },
+
+        /* set components */
+        /* 1 */ [&] { yuv.components.y = reader.read_byte(); },
+        /* 2 */ [&] { yuv.components.cr = reader.read_byte(); },
+        /* 3 */ [&] { yuv.components.cb = reader.read_byte(); },
+        /* 4 */ [&] { yuv.components.alpha = reader.read_byte(); },
+
+        /* advance */
+        /* 5 */ [&] { count = reader.read_long(); opcode_lut[7](); },
+        /* 6 */ [&] {
+            count = static_cast<std::uint8_t>(opcode) & ~static_cast<std::uint8_t>(rleX::opcode::short_advance);
+            opcode_lut[7]();
+        },
+
+        /* fill operation */
+        /* 7 */ [&] {
+            auto rgb = quickdraw::rgb(yuv);
+            for (auto i = 0; i < count; ++i) {
+                m_surface.set(current_offset, rgb);
+                if (++current_offset >= right_bound) {
+                    current_offset += pitch;
+                    right_bound = current_offset + frame.size.width;
+                }
+            }
+        },
+        /* 8 */ [&] {
+            frame = frame_rect(current_frame);
+            current_offset = (frame.origin.y * m_surface.size().width) + frame.origin.x;
+            right_bound = current_offset + frame.size.width;
+            pitch = m_surface.size().width - frame.size.width;
+        },
+    };
+
+    opcode_lut[8]();
+
+    while (!reader.eof() && !completed_last_frame) {
         opcode = reader.read_enum<rleX::opcode>();
-        switch (opcode) {
-            case opcode::eof: {
-                // Have we finished decoding the last frame in the data?
-                if (++current_frame >= m_frame_count) {
-                    goto COMPLETED_LAST_FRAME;
-                }
-
-                frame = frame_rect(current_frame);
-                current_offset = 0;
-
-                break;
-            }
-            case opcode::set_luma: {
-                yuv.components.y = reader.read_byte();
-                break;
-            }
-            case opcode::set_cr: {
-                yuv.components.cr = reader.read_byte();
-                break;
-            }
-            case opcode::set_cb: {
-                yuv.components.cb = reader.read_byte();
-                break;
-            }
-            case opcode::set_alpha: {
-                yuv.components.alpha = reader.read_byte();
-                break;
-            }
-            case opcode::advance: {
-                count = reader.read_long();
-            }
-            default: {
-                if (static_cast<std::uint8_t>(opcode) & static_cast<std::uint8_t>(opcode::short_advance)) {
-                    count = static_cast<std::uint8_t>(opcode) & ~static_cast<std::uint8_t>(opcode::short_advance);
-                }
-                auto rgb = quickdraw::rgb(yuv);
-                for (auto i = 0; i < count; ++i) {
-                    m_surface.set((current_offset % m_frame_size.width) + frame.origin.x, (current_offset / m_frame_size.width) + frame.origin.y, rgb);
-                    current_offset++;
-                }
-                break;
-            }
+        if (static_cast<std::uint8_t>(opcode) & static_cast<std::uint8_t>(rleX::opcode::short_advance)) {
+            opcode_lut[6]();
+            continue;
         }
-
+        opcode_lut[static_cast<int>(opcode)]();
     }
-
-COMPLETED_LAST_FRAME:
-    return;
 }
 
 // MARK: - Encoding
 
 auto graphite::spriteworld::rleX::encode(data::writer &writer) -> void
 {
-    writer.change_byte_order(data::byte_order::msb);
+    writer.change_byte_order(data::byte_order::lsb);
 
     // Write out the header
     m_frame_size.encode(writer, quickdraw::coding_type::macintosh);

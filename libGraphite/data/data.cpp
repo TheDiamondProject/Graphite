@@ -417,18 +417,32 @@ auto graphite::data::block::set(uint8_t value, std::size_t bytes, block::positio
 auto graphite::data::block::set(uint16_t value, std::size_t bytes, block::position start) -> void
 {
     union simd_value v;
-    for (auto n = 0; n < simd_fields; ++n) {
-        v.fields[n] = (value << 16) | value;
-    }
+
+    v.fields[0] = (value << 16) | value;
+#if __x86_64__
+    v.fields[1] = v.fields[0];
+    v.fields[2] = v.fields[0];
+    v.fields[3] = v.fields[0];
+#elif __arm64__
+    v.fields[1] = v.fields[0];
+#endif
+
     inline_set(this, v, bytes, start);
 }
 
 auto graphite::data::block::set(uint32_t value, std::size_t bytes, block::position start) -> void
 {
     union simd_value v { 0 };
-    for (auto n = 0; n < simd_fields; ++n) {
-        v.fields[n] = value;
-    }
+
+    v.fields[0] = value;
+#if __x86_64__
+    v.fields[1] = value;
+    v.fields[2] = value;
+    v.fields[3] = value;
+#elif __arm64__
+    v.fields[1] = value;
+#endif
+
     inline_set(this, v, bytes, start);
 }
 
