@@ -29,11 +29,19 @@ if (APPLE)
 	set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64")
 endif()
 
+# libGraphite
 include_directories("${PROJECT_SOURCE_DIR}")
 
 file(GLOB_RECURSE graphite_sources
 	libGraphite/*.cpp
 ) 
 add_library(Graphite ${graphite_sources})
+
+# libGraphite Tests
+file(GLOB_RECURSE graphiteTest_sources
+	Tests/*.cpp
+)
+add_executable(GraphiteTestRunner ${graphiteTest_sources})
+target_include_directories(GraphiteTestRunner PUBLIC "${PROJECT_SOURCE_DIR}/Tests")
 
 
