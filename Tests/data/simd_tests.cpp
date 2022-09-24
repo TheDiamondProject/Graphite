@@ -19,18 +19,25 @@
 // SOFTWARE.
 
 #include "test.hpp"
-#include <libGraphite/data/data.hpp>
+#include <libGraphite/data/simd.hpp>
 
-// MARK: - data::block construction tests
+// MARK: - SIMD Capacity Expansion
 
-TEST("Construct data::block with a power of 2 capacity") {
-    graphite::data::block block(64);
-    assert_equal(block.raw_size(), 64, "Raw size of block was expected to be 64");
-    assert_equal(block.size(), 64, "Size of block was expected to be 64.");
+#if __x86_64__
+
+TEST("[x64] Verify SIMD capacity expansion with alignment width of 16-bytes") {
+    assert_equal(graphite::data::simd::expand_capacity(0), 0, "Expanded capacity from 0 bytes should remain the same.");
+    assert_equal(graphite::data::simd::expand_capacity(8), 16, "Expanded capacity from 8 bytes should expand to 16 bytes.");
+    assert_equal(graphite::data::simd::expand_capacity(16), 16, "Expanded capacity from 16 bytes should remain the same.");
 };
 
-TEST("Construct data::block with a none power of 2 capacity") {
-    graphite::data::block block(43);
-    assert_equal(block.raw_size(), 48, "Raw size of block was expected to be 48. Got " + std::to_string(block.raw_size()));
-    assert_equal(block.size(), 43, "Size of block was expected to be 43. Got " + std::to_string(block.size()));
+#elif __arm64__
+
+TEST("[ARM64] Verify SIMD capacity expansion with alignment width of 8-bytes") {
+    assert_equal(graphite::data::simd::expand_capacity(0), 0, "Expanded capacity from 0 bytes should remain the same.");
+    assert_equal(graphite::data::simd::expand_capacity(2), 8, "Expanded capacity from 2 bytes should expand to 8 bytes.");
+    assert_equal(graphite::data::simd::expand_capacity(8), 8, "Expanded capacity from 2 bytes should remain the same.");
 };
+
+#endif
+

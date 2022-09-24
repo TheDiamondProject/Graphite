@@ -30,22 +30,38 @@ typedef void(*test_function_t)(const std::string&);
  */
 auto register_unit_test(const char* name, test_function_t test) -> void;
 
-auto test_fail(const char *reason) -> void;
+auto test_fail(const std::string &reason, const char *expr) -> void;
+
+#define TEST_SYMBOL(a,b)                X_TEST_SYMBOL(a, b)
+#define X_TEST_SYMBOL(a,b)              a##b
 
 /*
  * Unit Tests need to be setup and registered when the binary undergoes its initial
  * static construction as it launches. Unit tests should be declared using the TEST()
  * macro and specifying a plain English name to describe the purpose of the test.
  */
-#define TEST(_name)     auto test_##__FILE__##_##__LINE__(const std::string&) -> void;                  \
-                        __attribute__((constructor)) auto test_stub_##__FILE__##_##__LINE__() -> void { \
-                            register_unit_test((_name), test_##__FILE__##_##__LINE__);       \
+#define TEST(_name)     auto TEST_SYMBOL(test_, __LINE__)(const std::string&) -> void;                  \
+                        __attribute__((constructor)) auto TEST_SYMBOL(test_stub_, __LINE__)() -> void { \
+                            register_unit_test((_name), TEST_SYMBOL(test_, __LINE__));                  \
                         }                                                                               \
-                        auto test_##__FILE__##_##__LINE__(const std::string& test_name) -> void
+                        auto TEST_SYMBOL(test_, __LINE__)(const std::string& test_name) -> void
 
 // MARK: - Test Helpers / Assertions
 
+#define xstr(s)     str(s)
+#define str(s)      #s
+
 #define assert_base(_cond, _note)  if (!(_cond)) { \
-    test_fail((_note));                            \
+    test_fail((_note), str((_cond)));              \
     return;                                        \
 }
+
+#define assert_true(_cond, _note)   assert_base((_cond), (_note))
+#define assert_false(_cond, _note)  assert_base(!(_cond), (_note))
+#define assert_null(_ptr, _note)  assert_base((_ptr) == nullptr, (_note))
+#define assert_equal(_subject, _expect, _note) assert_base((_subject) == (_expect), (_note))
+#define assert_not_equal(_subject, _expect, _note) assert_base((_subject) != (_expect), (_note))
+#define assert_less_than(_subject, _expect, _note) assert_base((_subject) < (_expect), (_note))
+#define assert_less_than_equal(_subject, _expect, _note) assert_base((_subject) <= (_expect), (_note))
+#define assert_greater_than(_subject, _expect, _note) assert_base((_subject) > (_expect), (_note))
+#define assert_greater_than_equal(_subject, _expect, _note) assert_base((_subject) >= (_expect), (_note))

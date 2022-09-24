@@ -31,6 +31,7 @@ struct test_case
     test_function_t impl;
     enum result result { result::not_run };
     std::string reason;
+    std::string expression;
 };
 
 struct test_suite
@@ -73,6 +74,7 @@ auto main(int argc, const char *argv[]) -> int
         else if (it.result == test_case::result::failed) {
             std::cout << "Failed" << std::endl;
             std::cout << "\t" << it.reason << std::endl;
+            std::cout << "\t\t" << it.expression << std::endl;
             test_suite::instance().tests_failed++;
         }
         else if (it.result == test_case::result::passed) {
@@ -103,10 +105,11 @@ auto register_unit_test(const char *name, test_function_t test) -> void
     test_suite::instance().test_count++;
 }
 
-auto test_fail(const char *reason) -> void
+auto test_fail(const std::string &reason, const char *expr) -> void
 {
     if (test_suite::instance().current_test) {
         test_suite::instance().current_test->reason = reason;
+        test_suite::instance().current_test->expression = expr;
         test_suite::instance().current_test->result = test_case::result::failed;
     }
 }

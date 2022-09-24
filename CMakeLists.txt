@@ -42,6 +42,7 @@ file(GLOB_RECURSE graphiteTest_sources
 	Tests/*.cpp
 )
 add_executable(GraphiteTestRunner ${graphiteTest_sources})
+target_link_libraries(GraphiteTestRunner Graphite)
 target_include_directories(GraphiteTestRunner PUBLIC "${PROJECT_SOURCE_DIR}/Tests")
 
 
