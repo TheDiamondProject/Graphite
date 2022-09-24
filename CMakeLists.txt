@@ -36,14 +36,4 @@ file(GLOB_RECURSE graphite_sources
 ) 
 add_library(Graphite ${graphite_sources})
 
-#file(GLOB_RECURSE graphite_test_sources
-#	GraphiteTest/*.cpp
-#		libGraphite/fast_data/*.cpp
-#		libGraphite/encoding/*.cpp
-#		libGraphite/new_rsrc/*.cpp
-#		libGraphite/util/*.cpp
-#)
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
-#add_executable(GraphiteTest ${graphite_test_sources})
-#target_link_libraries(GraphiteTest Graphite)
 
