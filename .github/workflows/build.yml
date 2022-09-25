@@ -59,6 +59,7 @@ jobs:
           pacman -S --noconfirm mingw-w64-${{ matrix.env.arch }}-clang
           pacman -S --noconfirm mingw-w64-${{ matrix.env.arch }}-cmake
           pacman -S --noconfirm mingw-w64-${{ matrix.env.arch }}-ninja
+          pacman -S --noconfirm mingw-w64-${{ matrix.env.arch }}-make
       - name: Build
         env:
           CC: ${{ matrix.env.CC }}
