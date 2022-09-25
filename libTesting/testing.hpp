@@ -56,10 +56,10 @@ namespace test
      * Indicate that the current test has failed.
      * @param reason        The message to be shown in the test log describing the failure.
      */
-    auto fail(const std::string &reason, const char *file = __builtin_FILE(), int line = __builtin_LINE()) -> void;
+    auto fail(const std::string &reason = "", const char *file = __builtin_FILE(), int line = __builtin_LINE()) -> void;
 
     template<typename T, typename U, typename std::enable_if<std::is_convertible<T, U>::value>::type* = nullptr>
-    auto equal(const T& lhs, const U& rhs, const std::string& reason, const char *file = __builtin_FILE(), int line = __builtin_LINE()) -> void
+    static auto equal(const T& lhs, const U& rhs, const std::string& reason = "", const char *file = __builtin_FILE(), int line = __builtin_LINE()) -> void
     {
         /* in order to make sure the implementation of a custom '==' operator is valid, we need to explicitly call
          * it, and not rely on shorthand. */
@@ -70,7 +70,7 @@ namespace test
     }
 
     template<typename T, typename U, typename std::enable_if<std::is_convertible<T, U>::value>::type* = nullptr>
-    auto not_equal(const T& lhs, const U& rhs, const std::string& reason, const char *file = __builtin_FILE(), int line = __builtin_LINE()) -> void
+    static auto not_equal(const T& lhs, const U& rhs, const std::string& reason = "", const char *file = __builtin_FILE(), int line = __builtin_LINE()) -> void
     {
         /* in order to make sure the implementation of a custom '!=' operator is valid, we need to explicitly call
          * it, and not rely on shorthand. */
@@ -81,7 +81,7 @@ namespace test
     }
 
     template<typename T, typename U, typename std::enable_if<std::is_convertible<T, U>::value>::type* = nullptr>
-    auto less_than(const T& lhs, const U& rhs, const std::string& reason, const char *file = __builtin_FILE(), int line = __builtin_LINE()) -> void
+    static auto less_than(const T& lhs, const U& rhs, const std::string& reason = "", const char *file = __builtin_FILE(), int line = __builtin_LINE()) -> void
     {
         /* in order to make sure the implementation of a custom '<' operator is valid, we need to explicitly call
          * it, and not rely on shorthand. */
@@ -92,7 +92,7 @@ namespace test
     }
 
     template<typename T, typename U, typename std::enable_if<std::is_convertible<T, U>::value>::type* = nullptr>
-    auto less_than_equal(const T& lhs, const U& rhs, const std::string& reason, const char *file = __builtin_FILE(), int line = __builtin_LINE()) -> void
+    static auto less_than_equal(const T& lhs, const U& rhs, const std::string& reason = "", const char *file = __builtin_FILE(), int line = __builtin_LINE()) -> void
     {
         /* in order to make sure the implementation of a custom '<=' operator is valid, we need to explicitly call
          * it, and not rely on shorthand. */
@@ -103,7 +103,7 @@ namespace test
     }
 
     template<typename T, typename U, typename std::enable_if<std::is_convertible<T, U>::value>::type* = nullptr>
-    auto greater_than(const T& lhs, const U& rhs, const std::string& reason, const char *file = __builtin_FILE(), int line = __builtin_LINE()) -> void
+    static auto greater_than(const T& lhs, const U& rhs, const std::string& reason = "", const char *file = __builtin_FILE(), int line = __builtin_LINE()) -> void
     {
         /* in order to make sure the implementation of a custom '>' operator is valid, we need to explicitly call
          * it, and not rely on shorthand. */
@@ -114,7 +114,7 @@ namespace test
     }
 
     template<typename T, typename U, typename std::enable_if<std::is_convertible<T, U>::value>::type* = nullptr>
-    auto greater_than_equal(const T& lhs, const U& rhs, const std::string& reason, const char *file = __builtin_FILE(), int line = __builtin_LINE()) -> void
+    static auto greater_than_equal(const T& lhs, const U& rhs, const std::string& reason = "", const char *file = __builtin_FILE(), int line = __builtin_LINE()) -> void
     {
         /* in order to make sure the implementation of a custom '>=' operator is valid, we need to explicitly call
          * it, and not rely on shorthand. */
@@ -124,19 +124,27 @@ namespace test
         }
     }
 
-    template<typename T, typename U, typename std::enable_if<std::is_convertible<T, U>::value>::type* = nullptr>
-    auto is_true(bool condition, const std::string& reason, const char *file = __builtin_FILE(), int line = __builtin_LINE()) -> void
+    static auto is_true(bool condition, const std::string& reason = "", const char *file = __builtin_FILE(), int line = __builtin_LINE()) -> void
     {
         if (!condition) {
             fail(reason, file, line);
         }
     }
 
-    template<typename T, typename U, typename std::enable_if<std::is_convertible<T, U>::value>::type* = nullptr>
-    auto is_false(bool condition, const std::string& reason, const char *file = __builtin_FILE(), int line = __builtin_LINE()) -> void
+    static auto is_false(bool condition, const std::string& reason = "", const char *file = __builtin_FILE(), int line = __builtin_LINE()) -> void
     {
         if (condition) {
             fail(reason, file, line);
+        }
+    }
+
+    static auto bytes_equal(const std::uint8_t *lhs, const std::uint8_t *rhs, std::size_t count,
+                            const std::string& reason = "", const char *file = __builtin_FILE(), int line = __builtin_LINE()) -> void
+    {
+        for (auto i = 0; i < count; ++i) {
+            if (lhs[i] != rhs[i]) {
+                fail(reason, file, line);
+            }
         }
     }
 }
