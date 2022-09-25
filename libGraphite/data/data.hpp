@@ -79,16 +79,11 @@ namespace graphite::data
         template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
         [[nodiscard]] inline auto get(block::position offset = 0) const -> T { return swap(*get<T *>(offset), m_byte_order); }
 
-        template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-        [[nodiscard]] inline auto operator[] (block::position offset) const -> T
-        {
-            return get<T>(offset);
-        }
-
         [[nodiscard]] inline auto raw_size() const -> std::size_t { return m_raw_size; }
         [[nodiscard]] inline auto size() const -> std::size_t { return m_count > 0 ? m_count : m_data_size; }
         [[nodiscard]] inline auto start() const -> block::position { return m_start_position; }
         [[nodiscard]] inline auto byte_order() const -> byte_order { return m_byte_order; }
+        [[nodiscard]] inline auto has_ownership() const -> bool { return m_has_ownership; }
 
         auto originates_from_extended_format() -> void { m_extended = true; }
         [[nodiscard]] inline auto is_extended_format() const -> bool { return m_extended; }
