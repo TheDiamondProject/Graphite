@@ -18,24 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#pragma once
+#include <libTesting/testing.hpp>
+#include <libGraphite/util/hashing.hpp>
 
-#include <type_traits>
+using namespace graphite;
 
-namespace graphite::hashing
+// MARK: - XXHash64 Verification Tests
+
+TEST(xxh64_verifyCorrectHashIsProduced)
 {
-    /**
-     * A hash value.
-     * This type definition is intended to help provide semantic context.
-     */
-    typedef std::uint64_t value;
-
-    /**
-     * Produce a hash value using the 64-bit variant of the XXHash algorithm, using the specified data.
-     * @param ptr           A pointer to the byte sequence to produce a hash from.
-     * @param length        The length of the data being supplied.
-     * @return              A hash value.
-     */
-    auto xxh64(const void *ptr, std::size_t length) -> hashing::value;
+    std::string str = "Giraffe";
+    hashing::value expected = 0xC09228325DE7E875;
+    test::equal(hashing::xxh64(str.c_str(), str.size()), expected);
 }
-
