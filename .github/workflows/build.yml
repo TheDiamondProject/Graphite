@@ -17,11 +17,9 @@ jobs:
         env:
           CC: ${{ matrix.env.CC }}
           CXX: ${{ matrix.env.CXX }}
-        run: |
-          ./.github/actions/build.sh
+        run: ./.github/actions/build.sh
       - name: Test
-        run: |
-          ctest
+        run: ctest
 
   macOS:
     name: Build on macOS
@@ -36,8 +34,7 @@ jobs:
         run: |
           ./.github/actions/build.sh
       - name: Test
-        run: |
-          ctest
+        run: ctest
 
   windows:
     name: Build on Windows
@@ -69,5 +66,4 @@ jobs:
         run: |
           ./.github/actions/build.sh
       - name: Test
-        run: |
-          ctest
+        run: ctest

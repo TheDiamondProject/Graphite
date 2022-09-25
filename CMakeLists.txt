@@ -46,9 +46,9 @@ add_library(Testing ${testing_sources})
 file(GLOB_RECURSE graphiteTest_sources
 	Tests/*.cpp
 )
-add_executable(GraphiteTestRunner ${graphiteTest_sources})
-target_link_libraries(GraphiteTestRunner Graphite Testing)
-target_include_directories(GraphiteTestRunner PUBLIC "${PROJECT_SOURCE_DIR}/Tests")
+add_executable(Graphite_TestRunner ${graphiteTest_sources})
+target_link_libraries(Graphite_TestRunner Graphite Testing)
+target_include_directories(Graphite_TestRunner PUBLIC "${PROJECT_SOURCE_DIR}/Tests")
 
 enable_testing()
 include("CTestTestfile.cmake")
