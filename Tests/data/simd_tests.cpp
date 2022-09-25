@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "test.hpp"
+#include <libTesting/testing.hpp>
 #include <libGraphite/data/simd.hpp>
 
 // MARK: - SIMD Capacity Expansion
@@ -26,17 +26,17 @@
 #if __x86_64__
 
 TEST("[x64] Verify SIMD capacity expansion with alignment width of 16-bytes") {
-    assert_equal(graphite::data::simd::expand_capacity(0), 0, "Expanded capacity from 0 bytes should remain the same.");
-    assert_equal(graphite::data::simd::expand_capacity(8), 16, "Expanded capacity from 8 bytes should expand to 16 bytes.");
-    assert_equal(graphite::data::simd::expand_capacity(16), 16, "Expanded capacity from 16 bytes should remain the same.");
+    test::equal(graphite::data::simd::expand_capacity(0), 0, "Expanded capacity from 0 bytes should remain the same.");
+    test::equal(graphite::data::simd::expand_capacity(8), 16, "Expanded capacity from 8 bytes should expand to 16 bytes.");
+    test::equal(graphite::data::simd::expand_capacity(16), 16, "Expanded capacity from 16 bytes should remain the same.");
 };
 
 #elif __arm64__
 
 TEST("[ARM64] Verify SIMD capacity expansion with alignment width of 8-bytes") {
-    assert_equal(graphite::data::simd::expand_capacity(0), 0, "Expanded capacity from 0 bytes should remain the same.");
-    assert_equal(graphite::data::simd::expand_capacity(2), 8, "Expanded capacity from 2 bytes should expand to 8 bytes.");
-    assert_equal(graphite::data::simd::expand_capacity(8), 8, "Expanded capacity from 2 bytes should remain the same.");
+    test::equal(graphite::data::simd::expand_capacity(0), 0, "Expanded capacity from 0 bytes should remain the same.");
+    test::equal(graphite::data::simd::expand_capacity(2), 8, "Expanded capacity from 2 bytes should expand to 8 bytes.");
+    test::equal(graphite::data::simd::expand_capacity(8), 8, "Expanded capacity from 2 bytes should remain the same.");
 };
 
 #endif

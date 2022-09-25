@@ -31,18 +31,23 @@ endif()
 
 # libGraphite
 include_directories("${PROJECT_SOURCE_DIR}")
-
 file(GLOB_RECURSE graphite_sources
 	libGraphite/*.cpp
 ) 
 add_library(Graphite ${graphite_sources})
+
+# libTesting
+file(GLOB_RECURSE testing_sources
+	libTesting/*.cpp
+)
+add_library(Testing ${testing_sources})
 
 # libGraphite Tests
 file(GLOB_RECURSE graphiteTest_sources
 	Tests/*.cpp
 )
 add_executable(GraphiteTestRunner ${graphiteTest_sources})
-target_link_libraries(GraphiteTestRunner Graphite)
+target_link_libraries(GraphiteTestRunner Graphite Testing)
 target_include_directories(GraphiteTestRunner PUBLIC "${PROJECT_SOURCE_DIR}/Tests")
 
 

@@ -18,19 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "test.hpp"
+#include <libTesting/testing.hpp>
 #include <libGraphite/data/data.hpp>
 
 // MARK: - data::block construction tests
 
 TEST("Construct data::block with a power of 2 capacity") {
     graphite::data::block block(64);
-    assert_equal(block.raw_size(), 64, "Raw size of block was expected to be 64");
-    assert_equal(block.size(), 64, "Size of block was expected to be 64.");
+    test::equal(block.raw_size(), 64, "Raw size of block was expected to be 64");
+    test::equal(block.size(), 64, "Size of block was expected to be 64.");
+
+    test::equal(54, 11, "Expected values to be equal");
 };
 
 TEST("Construct data::block with a none power of 2 capacity") {
     graphite::data::block block(43);
-    assert_equal(block.raw_size(), 48, "Raw size of block was expected to be 48. Got " + std::to_string(block.raw_size()));
-    assert_equal(block.size(), 43, "Size of block was expected to be 43. Got " + std::to_string(block.size()));
+    test::equal(block.raw_size(), 48, "Raw size of block was expected to be 48. Got " + std::to_string(block.raw_size()));
+    test::equal(block.size(), 43, "Size of block was expected to be 43. Got " + std::to_string(block.size()));
 };
