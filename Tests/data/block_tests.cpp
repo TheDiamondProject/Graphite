@@ -21,16 +21,26 @@
 #include <libTesting/testing.hpp>
 #include <libGraphite/data/data.hpp>
 
-// MARK: - data::block construction tests
+// MARK: - Construction Tests
 
-TEST("ConstructDataBlock_Power2Capacity") {
+TEST(dataBlock_constructWithPowerOfTwoCapacity_sizeIsCorrect) {
     graphite::data::block block(64);
     test::equal(block.raw_size(), 64, "Raw size of block was expected to be 64");
     test::equal(block.size(), 64, "Size of block was expected to be 64.");
 };
 
-TEST("ConstructDataBlock_NonePower2Capacity") {
+TEST(dataBlock_constructWithCapacity_rawSizeIsAdjustedCorrectly) {
     graphite::data::block block(43);
     test::equal(block.raw_size(), 48, "Raw size of block was expected to be 48. Got " + std::to_string(block.raw_size()));
     test::equal(block.size(), 43, "Size of block was expected to be 43. Got " + std::to_string(block.size()));
 };
+
+TEST(dataBlock_construct_defaultByteOrderIsCorrect) {
+    graphite::data::block block(8);
+    test::equal(block.byte_order(), graphite::data::byte_order::msb, "Data Blocks should have a default byte order of MSB.");
+}
+
+TEST(dataBlock_construct_usingLSBByteOrder_assignsCorrectly) {
+    graphite::data::block block(8, graphite::data::byte_order::lsb);
+    test::equal(block.byte_order(), graphite::data::byte_order::lsb, "Data Blocks should have a default byte order of LSB.");
+}

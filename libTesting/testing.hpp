@@ -23,7 +23,7 @@
 #include <string>
 #include <type_traits>
 
-typedef void(*test_function_t)(const std::string&);
+typedef void(*test_function_t)();
 
 /**
  * Register a new unit test.
@@ -34,19 +34,19 @@ typedef void(*test_function_t)(const std::string&);
  */
 auto register_unit_test(const std::string& test_name, test_function_t fn) -> void;
 
-#define TEST_SYMBOL(a,b)                X_TEST_SYMBOL(a, b)
-#define X_TEST_SYMBOL(a,b)              a##b
+#define XSTR(_s)    STR(_s)
+#define STR(_s)     #_s
 
 /*
  * Unit Tests need to be setup and registered when the binary undergoes its initial
  * static construction as it launches. Unit tests should be declared using the TEST()
  * macro and specifying a plain English name to describe the purpose of the test.
  */
-#define TEST(_name)     auto TEST_SYMBOL(test_, __LINE__)(const std::string&) -> void;                  \
-                        __attribute__((constructor)) auto TEST_SYMBOL(test_stub_, __LINE__)() -> void { \
-                            register_unit_test((_name), TEST_SYMBOL(test_, __LINE__));                  \
-                        }                                                                               \
-                        auto TEST_SYMBOL(test_, __LINE__)(const std::string& test_name) -> void
+#define TEST(_name)     auto _name () -> void;                             \
+                        __attribute__((constructor)) auto _name##_trampoline() -> void {    \
+                            register_unit_test(XSTR(_name), _name);                         \
+                        }                                                                   \
+                        auto _name () -> void
 
 // MARK: - Test Assertions
 

@@ -1,0 +1,6 @@
+test_suite(Graphite
+    dataBlock_constructWithPowerOfTwoCapacity_sizeIsCorrect
+    dataBlock_constructWithCapacity_rawSizeIsAdjustedCorrectly
+    dataBlock_construct_defaultByteOrderIsCorrect
+    dataBlock_construct_usingLSBByteOrder_assignsCorrectly
+)

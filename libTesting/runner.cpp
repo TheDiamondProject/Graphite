@@ -95,7 +95,7 @@ auto main(int argc, const char *argv[]) -> int
 
         // Execute the test...
         it.result = test_case::result::passed;
-        it.impl(it.name);
+        it.impl();
         test_suite::instance().tests_run++;
 
         // Report the result to the host
