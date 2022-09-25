@@ -20,6 +20,7 @@
 
 #include <string>
 #include <vector>
+#include <unordered_set>
 #include <iostream>
 #include <libTesting/testing.hpp>
 
@@ -61,14 +62,36 @@ struct test_suite
 
 auto main(int argc, const char *argv[]) -> int
 {
+    // Build a list of the desired tests to be run.
+    bool test_logs = true;
+    std::unordered_set<std::string> enabled_tests;
+    if (argc > 1) {
+        for (auto i = 1; i < argc; ++i) {
+            if (std::string(argv[i]) == "-s") {
+                test_logs = false;
+                continue;
+            }
+            enabled_tests.emplace(argv[i]);
+        }
+    }
+
     // Process each of the test cases.
     std::uint32_t test_number = 0;
     for (auto it : test_suite::instance().tests) {
+        if (!enabled_tests.empty()) {
+            const auto& flag = enabled_tests.find(it.name);
+            if (flag == enabled_tests.end()) {
+                continue;
+            }
+        }
+
         test_number++;
         test_suite::instance().current_test = &it;
 
-        std::cout << "[" << test_number << "/" << test_suite::instance().test_count << "] "
-                  << it.name << "... ";
+        if (test_logs) {
+            std::cout << "[" << test_number << "/" << test_suite::instance().test_count << "] "
+                      << it.name << "... ";
+        }
 
         // Execute the test...
         it.result = test_case::result::passed;
@@ -77,18 +100,24 @@ auto main(int argc, const char *argv[]) -> int
 
         // Report the result to the host
         if (it.result == test_case::result::not_run) {
-            std::cout << "Not Run" << std::endl;
+            if (test_logs) {
+                std::cout << "Not Run" << std::endl;
+            }
         }
         else if (it.result == test_case::result::failed) {
-            std::cout << "Failed" << std::endl;
+            if (test_logs) {
+                std::cout << "Failed" << std::endl;
+            }
             test_suite::instance().tests_failed++;
         }
         else if (it.result == test_case::result::passed) {
-            std::cout << "Passed" << std::endl;
+            if (test_logs) {
+                std::cout << "Passed" << std::endl;
+            }
             test_suite::instance().tests_passed++;
         }
 
-        if (!it.reasons.empty()) {
+        if (!it.reasons.empty() && test_logs) {
             for (const auto& reason : it.reasons) {
                 std::cout << "\t" << reason.file << " - L" << reason.line << std::endl;
                 if (!reason.text.empty()) {
@@ -105,9 +134,11 @@ auto main(int argc, const char *argv[]) -> int
     }
 
     // Construct a report about tests passed/failed
-    std::cout << std::endl;
-    std::cout << test_suite::instance().tests_passed << " tests passed." << std::endl;
-    std::cout << test_suite::instance().tests_failed << " tests failed." << std::endl;
+    if (enabled_tests.empty() && test_logs) {
+        std::cout << std::endl;
+        std::cout << test_suite::instance().tests_passed << " tests passed." << std::endl;
+        std::cout << test_suite::instance().tests_failed << " tests failed." << std::endl;
+    }
 
     // Return the result of the tests to the host.
     return (test_suite::instance().tests_failed > 0) ? 1 : 0;

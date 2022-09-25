@@ -23,15 +23,13 @@
 
 // MARK: - data::block construction tests
 
-TEST("Construct data::block with a power of 2 capacity") {
+TEST("ConstructDataBlock_Power2Capacity") {
     graphite::data::block block(64);
     test::equal(block.raw_size(), 64, "Raw size of block was expected to be 64");
     test::equal(block.size(), 64, "Size of block was expected to be 64.");
-
-    test::equal(54, 11, "Expected values to be equal");
 };
 
-TEST("Construct data::block with a none power of 2 capacity") {
+TEST("ConstructDataBlock_NonePower2Capacity") {
     graphite::data::block block(43);
     test::equal(block.raw_size(), 48, "Raw size of block was expected to be 48. Got " + std::to_string(block.raw_size()));
     test::equal(block.size(), 43, "Size of block was expected to be 43. Got " + std::to_string(block.size()));
