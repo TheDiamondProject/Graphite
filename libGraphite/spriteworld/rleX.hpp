@@ -56,15 +56,14 @@ namespace graphite::spriteworld
         auto data() -> data::block;
 
     private:
-        enum class opcode : std::uint8_t
+        enum opcode : std::uint8_t
         {
-            eof = 0x00,
-            set_luma = 0x01,
-            set_cr = 0x02,
-            set_cb = 0x03,
-            set_alpha = 0x04,
-            advance = 0x05,
-            short_advance = 0x06,
+            index = 0b00 << 6,
+            diff  = 0b01 << 6,
+            luma  = 0b10 << 6,
+            run   = 0b11 << 6,
+            rgb   = 0b11111110,
+            rgba  = 0b11111111,
         };
 
         rsrc::resource::identifier m_id { 0 };
@@ -80,5 +79,8 @@ namespace graphite::spriteworld
         auto decode(data::reader& reader) -> void;
 
         [[nodiscard]] auto surface_offset(std::int32_t frame, std::int32_t offset) -> std::uint64_t;
+        
+        static auto compress(const quickdraw::surface& uncompressed, data::writer &writer) -> std::size_t;
+        static inline auto hash_color(const quickdraw::color color) -> std::uint8_t;
     };
 }
