@@ -1,15 +1,19 @@
 enable_testing()
 
+set(LIB_TESTING_PATH ${CMAKE_CURRENT_LIST_DIR})
+
 if(NOT DEFINED CMAKE_OUTPUT_PATH)
     set(CMAKE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin)
 endif()
 
 # libTesting
 function(build_testing_library)
+    message(${LIB_TESTING_PATH})
     file(GLOB_RECURSE testing_sources
-        ${CMAKE_SOURCE_DIR}/libTesting/*.cpp
+        ${LIB_TESTING_PATH}/../libTesting/*.cpp
     )
     add_library(Testing ${testing_sources})
+    target_include_directories(Testing PUBLIC ${LIB_TESTING_PATH}/..)
 endfunction()
 
 function(add_testing_target name dir)
