@@ -54,6 +54,25 @@ test_suite(Graphite
             size_castToDifferentType_retainsSameValue
 
         # Rect
+            rect_constructUsingEqualValues
+            rect_constructUsingSeparateValues
+            rect_constructUsingPointAndSize
+            rect_constructUsingReader_quickdraw
+            rect_constructUsingReader_macintosh
+            rect_readRectFromReader
+            rect_encodeInToWriter_quickdraw
+            rect_encodeInToWriter_macintosh
+            rect_assignmentOperator_copyRect
+            rect_assignmentOperator_moveRect
+            rect_equalsOperator_shouldBeEqual
+            rect_equalsOperator_shouldNotBeEqual
+            rect_notEqualsOperator_shouldNotBeEqual
+            rect_notEqualsOperator_shouldBeEqual
+            rect_addRect_returnsExpectedRect
+            rect_subtractRect_returnsExpectedRect
+            rect_multiplyRect_returnsExpectedRect
+            rect_divideRect_returnsExpectedRect
+            rect_castToDifferentType_retainsSameValue
 
     # Utility Functions
         # XXHash Hashing
