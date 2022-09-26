@@ -28,26 +28,50 @@
 
 namespace graphite::quickdraw
 {
+    /**
+     * Represents a size of a 2D area on a surface.
+     * @tparam T    The type being used for the Width and Height values of a size.
+     *              This can be any arithmetic type.
+     */
     template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
     struct size
     {
     public:
+        /**
+         * The width of the size.
+         */
         T width { 0 };
+
+        /**
+         * The height of the size.
+         */
         T height { 0 };
 
         size() = default;
+
+        /**
+         * Construct a size where the width and height dimensions are equal.
+         * @param v     The value to set both of the width and height dimensions to.
+         */
         explicit size(T v) : width(v), height(v) {}
+
+        /**
+         * Construct a size.
+         * @param width     The value of the width dimension.
+         * @param height    The value of the height dimension.
+         */
         size(T width, T height) : width(width), height(height) {}
+
         size(const size&) = default;
         size(size&&) noexcept = default;
 
-        explicit size(data::reader& reader)
-        {
-            height = read_component(reader);
-            width = read_component(reader);
-        }
-
-        size(data::reader& reader, coding_type type)
+        /**
+         * Construct a size, reading the width and height dimensions from the specified data reader.
+         * Defaults to using the QuickDraw ordering for dimensions (height and then width)
+         * @param reader    The data reader to read the width and height dimensions from.
+         * @param type      The coding type (dimension ordering) to use when reading the dimensions.
+         */
+        explicit size(data::reader& reader, coding_type type = coding_type::quickdraw)
         {
             switch (type) {
                 case coding_type::macintosh: {
@@ -63,14 +87,24 @@ namespace graphite::quickdraw
             }
         }
 
-        static auto read(data::reader& reader, coding_type type) -> size { return { reader, type }; }
-
-        auto encode(data::writer& writer) -> void
+        /**
+         * Construct a size, reading the width and height dimensions from the specified data reader.
+         * @param reader    The data reader to read the width and height dimensions from.
+         * @param type      The coding type (dimension ordering) to use when reading the dimensions.
+         * @return          A size with the width and height dimensions read from the reader.
+         */
+        static auto read(data::reader& reader, coding_type type) -> size
         {
-            encode(writer, coding_type::quickdraw);
+            return size(reader, type);
         }
 
-        auto encode(data::writer& writer, coding_type type) -> void
+        /**
+         * Write the width and height coordinates of the size into the provided data writer, using the specified coding
+         * type.
+         * @param writer    The data writer to write the width and height dimensions to.
+         * @param type      The coding type (dimension ordering) to use when writing the dimensions.
+         */
+        auto encode(data::writer& writer, coding_type type = coding_type::quickdraw) -> void
         {
             switch (type) {
                 case coding_type::macintosh: {
@@ -92,17 +126,22 @@ namespace graphite::quickdraw
         auto operator==(const size& s) const -> bool { return width == s.width && height == s.height; }
         auto operator!=(const size& s) const -> bool { return width != s.width && height != s.height; }
 
-        auto operator+(const size& s) const -> size { return { width + s.width, height + s.height }; }
-        auto operator-(const size& s) const -> size { return { width - s.width, height - s.height }; }
+        auto operator+(const size& s) const -> size { return size(width + s.width, height + s.height); }
+        auto operator-(const size& s) const -> size { return size(width - s.width, height - s.height); }
 
-        template<typename U, typename std::enable_if<std::is_convertible<T, U>::value>>
-        auto operator*(U v) const -> size { return { width * static_cast<T>(v), height * static_cast<T>(v) }; }
+        template<typename U, typename std::enable_if<std::is_convertible<T, U>::value>::type* = nullptr>
+        auto operator*(U v) const -> size { return size(width * static_cast<T>(v), height * static_cast<T>(v)); }
 
-        template<typename U, typename std::enable_if<std::is_convertible<T, U>::value>>
-        auto operator/(U v) const -> size { return { width / static_cast<T>(v), height / static_cast<T>(v) }; }
+        template<typename U, typename std::enable_if<std::is_convertible<T, U>::value>::type* = nullptr>
+        auto operator/(U v) const -> size { return size(width / static_cast<T>(v), height / static_cast<T>(v)); }
 
-        template<typename U, typename std::enable_if<std::is_convertible<T, U>::value>>
-        auto cast() const -> size<U> { return { static_cast<U>(width), static_cast<U>(height) }; }
+        /**
+         * Cast the typename of the size to a different compatible type.
+         * @tparam U    The new arithmetic type in which to cast to.
+         * @return      A size using the new arithmetic type.
+         */
+        template<typename U, typename std::enable_if<std::is_convertible<T, U>::value>::type* = nullptr>
+        auto cast() const -> size<U> { return size<U>(static_cast<U>(width), static_cast<U>(height)); }
 
     private:
         static auto read_component(data::reader& reader) -> T { return reader.read_integer<T>(); }

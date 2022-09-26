@@ -34,6 +34,25 @@ test_suite(Graphite
             point_castToDifferentType_retainsSameValue
 
         # Size
+            size_constructUsingEqualDimensions
+            size_constructUsingSeparateDimensions
+            size_constructUsingReader_quickdraw
+            size_constructUsingReader_macintosh
+            size_readSizeFromReader
+            size_encodeInToWriter_quickdraw
+            size_encodeInToWriter_macintosh
+            size_assignmentOperator_copySize
+            size_assignmentOperator_moveSize
+            size_equalsOperator_shouldBeEqual
+            size_equalsOperator_shouldNotBeEqual
+            size_notEqualsOperator_shouldNotBeEqual
+            size_notEqualsOperator_shouldBeEqual
+            size_addSize_returnsExpectedSize
+            size_subtractSize_returnsExpectedSize
+            size_multiplySize_returnsExpectedSize
+            size_divideSize_returnsExpectedSize
+            size_castToDifferentType_retainsSameValue
+
         # Rect
 
     # Utility Functions
