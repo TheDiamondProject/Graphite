@@ -37,7 +37,9 @@ file(GLOB_RECURSE graphite_sources
 add_library(Graphite ${graphite_sources})
 
 # Unit Tests
-include(libTesting/testing.cmake)
-build_testing_library()
-add_testing_target(Graphite ${CMAKE_SOURCE_DIR}/Tests)
-include("GraphiteTests.cmake")
+if (EXISTS libTesting/testing.cmake)
+	include(libTesting/testing.cmake)
+	build_testing_library()
+	add_testing_target(Graphite ${CMAKE_SOURCE_DIR}/Tests)
+	include("GraphiteTests.cmake")
+endif()
