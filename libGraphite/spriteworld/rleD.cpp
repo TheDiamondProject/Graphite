@@ -173,7 +173,7 @@ auto graphite::spriteworld::rleD::decode(data::reader &reader) -> void
 
     // Create the surface in which all frame will be draw to, and other working variables required to parse and decode
     // the RLE data correctly.
-    m_surface = quickdraw::surface(m_grid_size.width * m_frame_size.width, m_grid_size.height * m_frame_size.height, quickdraw::colors::clear());
+    m_surface = quickdraw::surface(m_grid_size.width * m_frame_size.width, m_grid_size.height * m_frame_size.height);
 
     rleD::opcode opcode = opcode::eof;
     std::uint64_t position = 0;

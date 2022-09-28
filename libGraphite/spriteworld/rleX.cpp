@@ -326,7 +326,7 @@ auto graphite::spriteworld::rleX::decode(data::reader &reader) -> void
 
     // Create the surface in which all frames will be drawn to, and other working variables required to parse and
     // decode the RLE data correctly.
-    m_surface = quickdraw::surface(dim * m_frame_size.width, dim * m_frame_size.height, quickdraw::colors::clear());
+    m_surface = quickdraw::surface(dim * m_frame_size.width, dim * m_frame_size.height);
 
     std::uint32_t current_frame = 0;
     std::uint32_t count = 0;

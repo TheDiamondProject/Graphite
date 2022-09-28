@@ -22,6 +22,7 @@
 #include <fstream>
 #include <iostream>
 #include <cassert>
+#include <cstring>
 #include "libGraphite/data/data.hpp"
 #include "libGraphite/data/simd.hpp"
 
@@ -291,21 +292,7 @@ __attribute__((optnone)) auto graphite::data::block::copy_from(const block &sour
     m_extended = source.m_extended;
 
     std::size_t len = std::min(source.size(), size());
-    std::size_t n = 0;
-    while (n < len) {
-        if ((reinterpret_cast<uintptr_t>(source_ptr) & simd::alignment_width) || (len - n) < simd::fields_length) {
-            *dest_ptr = *source_ptr;
-            ++dest_ptr;
-            ++source_ptr;
-            n += simd::field_size;
-        }
-        else {
-            *reinterpret_cast<simd::wide_type *>(dest_ptr) = *reinterpret_cast<simd::wide_type *>(source_ptr);
-            dest_ptr += simd::field_count;
-            source_ptr += simd::field_count;
-            n += simd::alignment_width;
-        }
-    }
+    memcpy(dest_ptr, source_ptr, len);
 }
 
 // MARK: - Operations
@@ -320,16 +307,12 @@ auto graphite::data::block::increase_size_to(std::size_t new_size) -> void
 
 auto graphite::data::block::clear() -> void
 {
-    set((uint32_t)0);
+    set((uint8_t)0, size());
 }
 
 auto graphite::data::block::set(uint8_t value, std::size_t bytes, block::position start) -> void
 {
-    union simd::value v;
-    for (unsigned char & byte : v.bytes) {
-        byte = value;
-    }
-    simd::set(get<std::uint32_t *>(start), size() - start, v, bytes);
+    memset(get<std::uint8_t *>(start), value, bytes);
 }
 
 __attribute__((optnone)) auto graphite::data::block::set(uint16_t value, std::size_t bytes, block::position start) -> void
