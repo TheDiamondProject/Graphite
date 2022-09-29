@@ -80,5 +80,7 @@ namespace graphite::spriteworld
         auto decode(data::reader& reader) -> void;
 
         [[nodiscard]] auto surface_offset(std::int32_t frame, std::int32_t offset) -> std::uint64_t;
+        
+        static auto compress(const data::block& uncompressed, data::writer &writer) -> std::size_t;
     };
 }
