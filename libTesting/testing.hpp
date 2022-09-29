@@ -147,4 +147,35 @@ namespace test
             }
         }
     }
+
+    template<typename T, typename std::enable_if<std::is_base_of<std::exception, T>::value>::type* = nullptr>
+    static auto does_throw(const std::function<auto()->void>& fn, const std::string& reason = "", const char *file = __builtin_FILE(), int line = __builtin_LINE()) -> void
+    {
+        bool should_fail = true;
+
+        try {
+            fn();
+        }
+        catch (const T& e) {
+            should_fail = false;
+        }
+        catch (...) {
+            // Still fail but warn?
+            fail("Unexpected exception was reached.", file, line);
+        }
+
+        if (should_fail) {
+            fail(reason, file, line);
+        }
+    }
+
+    static auto does_not_throw(const std::function<auto()->void>& fn, const std::string& reason = "", const char *file = __builtin_FILE(), int line = __builtin_LINE()) -> void
+    {
+        try {
+            fn();
+        }
+        catch (...) {
+            fail(reason, file, line);
+        }
+    }
 }
