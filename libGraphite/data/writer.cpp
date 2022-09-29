@@ -57,21 +57,7 @@ auto graphite::data::writer::expand_storage(std::size_t amount) -> void
     // NOTE: We only allow resizing of data objects that we own.
     assert(m_owns_data);
 
-    // Construct a new data object with the appropriate new size, and copy in the old data.
-    auto required_size = size() + amount;
-    if (required_size < m_data->raw_size()) {
-        const_cast<class block *>(m_data)->increase_size_to(required_size);
-    }
-    else {
-        auto allocation_size = size() + std::max(size(), amount);
-        auto new_data = new class block(required_size, std::max(allocation_size, required_size), m_data->byte_order());
-        new_data->set(static_cast<uint32_t>(0), allocation_size);
-        new_data->copy_from(*m_data);
-
-        // Replace the old data with the new object.
-        delete m_data;
-        m_data = new_data;
-    }
+    const_cast<class block *>(m_data)->increase_size_to(size() + amount);
 
 }
 

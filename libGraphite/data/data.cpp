@@ -300,7 +300,8 @@ __attribute__((optnone)) auto graphite::data::block::copy_from(const block &sour
 auto graphite::data::block::increase_size_to(std::size_t new_size) -> void
 {
     if (new_size > m_raw_size) {
-        throw std::runtime_error("Attempted to increase size of data::block beyond allowed range.");
+        m_raw_size = std::max(m_data_size * 2, new_size);
+        m_raw = m_data = realloc(m_raw, m_raw_size);
     }
     m_data_size = new_size;
 }
