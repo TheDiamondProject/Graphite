@@ -27,7 +27,7 @@ graphite::quickdraw::surface::surface(const quickdraw::size<std::int16_t> &size)
       m_row_bytes(size.width * constants::color_width),
       m_data(new data::block(size.width * size.height * constants::color_width))
 {
-    m_data->set(static_cast<std::uint32_t>(0), m_data->size());
+    m_data->clear();
 }
 
 graphite::quickdraw::surface::surface(std::int16_t width, std::int16_t height)
@@ -35,7 +35,7 @@ graphite::quickdraw::surface::surface(std::int16_t width, std::int16_t height)
       m_row_bytes(width * constants::color_width),
       m_data(new data::block(width * height * constants::color_width))
 {
-    m_data->set(static_cast<std::uint32_t>(0), m_data->size());
+    m_data->clear();
 }
 
 graphite::quickdraw::surface::surface(const quickdraw::size<std::int16_t>& size, union color color)
@@ -157,5 +157,5 @@ auto graphite::quickdraw::surface::set(std::uint32_t offset, union color color) 
 
 auto graphite::quickdraw::surface::clear() -> void
 {
-    m_data->set(colors::clear().value, m_data->size());
+    m_data->clear();
 }
