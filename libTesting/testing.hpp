@@ -22,6 +22,8 @@
 
 #include <string>
 #include <type_traits>
+#include <chrono>
+#include <iostream>
 
 typedef void(*test_function_t)();
 
@@ -177,5 +179,23 @@ namespace test
         catch (...) {
             fail(reason, file, line);
         }
+    }
+
+    static auto measure(const std::function<auto()->void>& fn, const std::string& name = "", const char *file = __builtin_FILE(), int line = __builtin_LINE()) -> void
+    {
+        auto start = std::chrono::high_resolution_clock::now();
+        fn();
+        auto elapsed = std::chrono::high_resolution_clock::now() - start;
+
+        // Report the time
+        std::int64_t microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+        std::string report;
+
+        if (!name.empty()) {
+            report += name + ": ";
+        }
+
+        report += std::to_string(microseconds) + "µs";
+        std::cout << report << std::endl;
     }
 }
