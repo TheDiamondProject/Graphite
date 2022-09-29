@@ -24,7 +24,7 @@ function(add_testing_target name dir)
 endfunction()
 
 function(test target name)
-    add_test(NAME ${name} COMMAND ${CMAKE_OUTPUT_PATH}/${target}_TestRunner -s ${name})
+    add_test(NAME ${name} COMMAND ${CMAKE_OUTPUT_PATH}/${target}_TestRunner ${name})
 endfunction()
 
 function(test_suite target list)
