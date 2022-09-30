@@ -164,3 +164,13 @@ auto graphite::rsrc::manager::find(const std::string &type_code, const std::stri
         }
     }));
 }
+
+// MARK: - Tear Down
+
+auto graphite::rsrc::manager::tear_down() -> void
+{
+    for (const auto& file : m_files) {
+        delete file.second;
+    }
+    m_files = {};
+}

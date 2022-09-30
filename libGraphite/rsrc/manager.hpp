@@ -41,6 +41,8 @@ namespace graphite::rsrc
 
         static auto shared_manager() -> manager&;
 
+        auto tear_down() -> void;
+
         auto import_file(class file *file) -> class file *;
         auto import_file(const std::string& path) -> class file *;
 
