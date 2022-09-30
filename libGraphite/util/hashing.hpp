@@ -25,10 +25,16 @@
 namespace graphite::hashing
 {
     /**
-     * A hash value.
+     * A 64-bit hash value.
      * This type definition is intended to help provide semantic context.
      */
-    typedef std::uint64_t value;
+    typedef std::uint64_t value64;
+
+    /**
+     * A 32-bit hash value.
+     * This type definition is intended to help provide semantic context.
+     */
+    typedef std::uint32_t value32;
 
     /**
      * Produce a hash value using the 64-bit variant of the XXHash algorithm, using the specified data.
@@ -36,6 +42,14 @@ namespace graphite::hashing
      * @param length        The length of the data being supplied.
      * @return              A hash value.
      */
-    auto xxh64(const void *ptr, std::size_t length) -> hashing::value;
+    auto xxh64(const void *ptr, std::size_t length) -> hashing::value64;
+
+    /**
+     * Produce a hash value using the 32-bit variant of the XXHash algorithm, using the specified data.
+     * @param ptr           A pointer to the byte sequence to produce a hash from.
+     * @param length        The length of the data being supplied.
+     * @return              A hash value.
+     */
+    auto xxh32(const void *ptr, std::size_t length) -> hashing::value32;
 }
 

@@ -23,15 +23,22 @@
 
 // MARK: - Constants
 
-struct uint64_unaligned { uint64_t v; } __attribute__((packed));
-struct uint32_unaligned { uint32_t v; } __attribute__((packed));
+struct uint64_unaligned { std::uint64_t v; } __attribute__((packed));
+struct uint32_unaligned { std::uint32_t v; } __attribute__((packed));
 
-static uint64_t xxhash64_seed = 0;
-static uint64_t xxhash64_p1 = 11400714785074694791ULL;
-static uint64_t xxhash64_p2 = 14029467366897019727ULL;
-static uint64_t xxhash64_p3 = 1609587929392839161ULL;
-static uint64_t xxhash64_p4 = 9650029242287828579ULL;
-static uint64_t xxhash64_p5 = 2870177450012600261ULL;
+static std::uint64_t xxhash64_seed = 0;
+static std::uint64_t xxhash64_p1 = 11400714785074694791ULL;
+static std::uint64_t xxhash64_p2 = 14029467366897019727ULL;
+static std::uint64_t xxhash64_p3 = 1609587929392839161ULL;
+static std::uint64_t xxhash64_p4 = 9650029242287828579ULL;
+static std::uint64_t xxhash64_p5 = 2870177450012600261ULL;
+
+static std::uint32_t xxhash32_seed = 0;
+static std::uint32_t xxhash32_p1 = 2654435761U;
+static std::uint32_t xxhash32_p2 = 2246822519U;
+static std::uint32_t xxhash32_p3 = 3266489917U;
+static std::uint32_t xxhash32_p4 = 668265263U;
+static std::uint32_t xxhash32_p5 = 374761393U;
 
 #define ROTL32(x,r) (((x) << (r)) | ((x) >> (32 - (r))))
 #define ROTL64(x,r) (((x) << (r)) | ((x) >> (64 - (r))))
@@ -40,7 +47,7 @@ static uint64_t xxhash64_p5 = 2870177450012600261ULL;
 
 // MARK: - XXHash64
 
-auto graphite::hashing::xxh64(const void *src, std::size_t length) -> hashing::value
+auto graphite::hashing::xxh64(const void *src, std::size_t length) -> hashing::value64
 {
     uint64_t h64 { 0 };
     auto ptr = const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(src));
@@ -137,4 +144,70 @@ auto graphite::hashing::xxh64(const void *src, std::size_t length) -> hashing::v
     h64 ^= h64 >> 32;
 
     return h64;
+}
+
+
+auto graphite::hashing::xxh32(const void *src, std::size_t length) -> value32
+{
+    uint32_t h32 { 0 };
+    auto ptr = const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(src));
+    auto end = ptr + length;
+
+    if (length >= 16) {
+        uint8_t *limit = end - 16;
+        uint32_t v2 = xxhash32_seed + xxhash32_p2;
+        uint32_t v1 = v2 + xxhash32_p1;
+        uint32_t v3 = xxhash32_seed;
+        uint32_t v4 = xxhash32_seed - xxhash32_p1;
+
+        do {
+            v1 += UNALGINED32(ptr) * xxhash32_p2;
+            ptr += 4;
+            v1 = ROTL32(v1, 13);
+            v1 *= xxhash32_p1;
+
+            v2 += UNALGINED32(ptr) * xxhash32_p2;
+            ptr += 4;
+            v2 = ROTL32(v2, 13);
+            v2 *= xxhash32_p1;
+
+            v3 += UNALGINED32(ptr) * xxhash32_p2;
+            ptr += 4;
+            v3 = ROTL32(v3, 13);
+            v3 *= xxhash32_p1;
+
+            v4 += UNALGINED32(ptr) * xxhash32_p2;
+            ptr += 4;
+            v4 = ROTL32(v4, 13);
+            v4 *= xxhash32_p1;
+        }
+        while (ptr <= limit);
+
+        h32 = ROTL32(v1, 1) + ROTL32(v2, 7) + ROTL32(v3, 12) + ROTL32(v4, 18);
+    }
+    else {
+        h32 = xxhash32_seed + xxhash32_p5;
+    }
+
+    h32 += length;
+
+    while (ptr+4 <= end) {
+        h32 += UNALGINED32(ptr) * xxhash32_p3;
+        h32 = ROTL32(h32, 17) * xxhash32_p4;
+        ptr += 4;
+    }
+
+    while (ptr < end) {
+        h32 += *ptr * xxhash32_p5;
+        h32 = ROTL32(h32, 11) * xxhash32_p1;
+        ++ptr;
+    }
+
+    h32 ^= h32 >> 15;
+    h32 *= xxhash32_p2;
+    h32 ^= h32 >> 13;
+    h32 *= xxhash32_p3;
+    h32 ^= h32 >> 16;
+
+    return h32;
 }
