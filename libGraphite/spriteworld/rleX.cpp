@@ -162,6 +162,7 @@ auto graphite::spriteworld::rleX::decode(data::reader &reader) -> void
 
     std::uint32_t offset = 0;
     std::uint32_t right_bound = 0;
+    std::uint32_t frame_bound = 0;
     std::uint32_t pitch = m_surface.size().width - m_frame_size.width;
 
     auto rect = frame_rect(0);
@@ -173,6 +174,7 @@ auto graphite::spriteworld::rleX::decode(data::reader &reader) -> void
         for (auto ch = 0; ch < 4; ++ch) {
             offset = (rect.origin.y * m_surface.size().width) + rect.origin.x;
             right_bound = offset + m_frame_size.width;
+            frame_bound = right_bound + m_frame_size.height * m_surface.size().width;
             auto pack_size = reader.read_long();
             auto pack = reader.read_data(pack_size).get<std::uint8_t *>();
             auto pack_offset = 0;
@@ -183,11 +185,18 @@ auto graphite::spriteworld::rleX::decode(data::reader &reader) -> void
                     // Copy bytes
                     run++;
                     if (pack_offset + run > pack_size) {
-                        throw std::runtime_error("Insufficient data for rlëX resource: " + std::to_string(m_id) + ", " + m_name);
+                        throw std::runtime_error("Invalid data for rlëX resource: " + std::to_string(m_id) + ", " + m_name);
                     }
-                    for (auto i = 0; i < run; ++i) {
-                        raw[offset*4 + ch] = pack[pack_offset++];
-                        if (++offset >= right_bound) {
+                    while (run > 0) {
+                        if (offset >= frame_bound) {
+                            throw std::runtime_error("Invalid data for rlëX resource: " + std::to_string(m_id) + ", " + m_name);
+                        }
+                        auto r = std::min(run, right_bound - offset);
+                        for (auto i = 0; i < r; ++i) {
+                            raw[(offset++)*4 + ch] = pack[pack_offset++];
+                        }
+                        run -= r;
+                        if (offset == right_bound) {
                             offset += pitch;
                             right_bound = offset + m_frame_size.width;
                         }
@@ -199,19 +208,26 @@ auto graphite::spriteworld::rleX::decode(data::reader &reader) -> void
                     if (run >= 0x70) {
                         // 2 byte count
                         if (pack_offset == pack_size) {
-                            throw std::runtime_error("Insufficient data for rlëX resource: " + std::to_string(m_id) + ", " + m_name);
+                            throw std::runtime_error("Invalid data for rlëX resource: " + std::to_string(m_id) + ", " + m_name);
                         }
                         // Combine 4 low bits with next byte
                         run = (run & 0x0F) << 8 | pack[pack_offset++];
                     }
                     run++;
                     if (pack_offset == pack_size) {
-                        throw std::runtime_error("Insufficient data for rlëX resource: " + std::to_string(m_id) + ", " + m_name);
+                        throw std::runtime_error("Invalid data for rlëX resource: " + std::to_string(m_id) + ", " + m_name);
                     }
                     auto value = pack[pack_offset++];
-                    for (auto i = 0; i < run; ++i) {
-                        raw[offset*4 + ch] = value;
-                        if (++offset >= right_bound) {
+                    while (run > 0) {
+                        if (offset >= frame_bound) {
+                            throw std::runtime_error("Invalid data for rlëX resource: " + std::to_string(m_id) + ", " + m_name);
+                        }
+                        auto r = std::min(run, right_bound - offset);
+                        for (auto i = 0; i < r; ++i) {
+                            raw[(offset++)*4 + ch] = value;
+                        }
+                        run -= r;
+                        if (offset == right_bound) {
                             offset += pitch;
                             right_bound = offset + m_frame_size.width;
                         }
