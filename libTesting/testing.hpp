@@ -60,6 +60,22 @@ namespace test
      */
     auto fail(const std::string &reason = "", const char *file = __builtin_FILE(), int line = __builtin_LINE()) -> void;
 
+    template<typename T, typename std::enable_if<std::is_pointer<T>::value>::type* = nullptr>
+    static auto is_null(T ptr, const std::string& reason = "", const char *file = __builtin_FILE(), int line = __builtin_LINE()) -> void
+    {
+        if (ptr != nullptr) {
+            fail(reason, file, line);
+        }
+    }
+
+    template<typename T, typename std::enable_if<std::is_pointer<T>::value>::type* = nullptr>
+    static auto not_null(T ptr, const std::string& reason = "", const char *file = __builtin_FILE(), int line = __builtin_LINE()) -> void
+    {
+        if (ptr == nullptr) {
+            fail(reason, file, line);
+        }
+    }
+
     template<typename T, typename U, typename std::enable_if<std::is_convertible<T, U>::value>::type* = nullptr>
     static auto equal(const T& lhs, const U& rhs, const std::string& reason = "", const char *file = __builtin_FILE(), int line = __builtin_LINE()) -> void
     {
