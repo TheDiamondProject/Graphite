@@ -24,6 +24,7 @@
 #include <type_traits>
 #include <chrono>
 #include <iostream>
+#include <functional>
 
 typedef void(*test_function_t)();
 
