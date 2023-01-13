@@ -75,7 +75,7 @@ auto graphite::spriteworld::rleX::frame_count() const -> std::size_t
 
 auto graphite::spriteworld::rleX::data() -> data::block
 {
-    data::writer writer;
+    data::writer writer(data::byte_order::msb);
     encode(writer);
     return std::move(*const_cast<data::block *>(writer.data()));
 }
@@ -135,176 +135,8 @@ auto graphite::spriteworld::rleX::surface_offset(std::int32_t frame, std::int32_
 
 // MARK: - Decoding
 
-static inline auto rleX_calculate_sprite_geometry(
-    graphite::spriteworld::rleX *sprite,
-    graphite::quickdraw::surface& surface,
-    graphite::quickdraw::rect<std::int16_t>& rect,
-    std::uint32_t& offset,
-    std::uint32_t& right_offset_bound,
-    std::uint32_t& pitch,
-    std::uint32_t& frame
-) -> void {
-    rect = sprite->frame_rect(frame);
-    offset = (rect.origin.y * surface.size().width) + rect.origin.x;
-    right_offset_bound = offset + rect.size.width;
-    pitch = surface.size().width - rect.size.width;
-}
-
-static inline auto rleX_draw_color(
-    graphite::quickdraw::surface& surface,
-    union graphite::quickdraw::ycbcr& color,
-    graphite::quickdraw::rect<std::int16_t>& rect,
-    std::uint32_t& offset,
-    std::uint32_t& right_offset_bound,
-    std::uint32_t& pitch,
-    std::uint32_t count
-) -> void {
-    auto rgb = graphite::quickdraw::rgb(color);
-    for (auto i = 0; i < count; ++i) {
-        surface.set(offset, rgb);
-        if (++offset >= right_offset_bound) {
-            offset += pitch;
-            right_offset_bound = offset + rect.size.width;
-        }
-    }
-}
-
-static auto rleX_opcode_handler_eof(
-    graphite::spriteworld::rleX *sprite,
-    graphite::quickdraw::surface& surface,
-    graphite::data::reader& reader,
-    graphite::quickdraw::rect<std::int16_t>& rect,
-    std::uint32_t& offset,
-    std::uint32_t& right_offset_bound,
-    std::uint32_t& pitch,
-    std::uint32_t& frame,
-    std::uint16_t frame_count,
-    bool& completed,
-    union graphite::quickdraw::ycbcr& color
-) -> void {
-    if (++frame >= frame_count) {
-        completed = true;
-        return;
-    }
-    rleX_calculate_sprite_geometry(sprite, surface, rect, offset, right_offset_bound, pitch, frame);
-}
-
-static auto rleX_opcode_handler_set_luma(
-    graphite::spriteworld::rleX *sprite,
-    graphite::quickdraw::surface& surface,
-    graphite::data::reader& reader,
-    graphite::quickdraw::rect<std::int16_t>& rect,
-    std::uint32_t& offset,
-    std::uint32_t& right_offset_bound,
-    std::uint32_t& pitch,
-    std::uint32_t& frame,
-    std::uint16_t frame_count,
-    bool& completed,
-    union graphite::quickdraw::ycbcr& color
-) -> void {
-    color.components.y = reader.read_byte();
-}
-
-static auto rleX_opcode_handler_set_cr(
-    graphite::spriteworld::rleX *sprite,
-    graphite::quickdraw::surface& surface,
-    graphite::data::reader& reader,
-    graphite::quickdraw::rect<std::int16_t>& rect,
-    std::uint32_t& offset,
-    std::uint32_t& right_offset_bound,
-    std::uint32_t& pitch,
-    std::uint32_t& frame,
-    std::uint16_t frame_count,
-    bool& completed,
-    union graphite::quickdraw::ycbcr& color
-) -> void {
-    color.components.cr = reader.read_byte();
-}
-
-static auto rleX_opcode_handler_set_cb(
-    graphite::spriteworld::rleX *sprite,
-    graphite::quickdraw::surface& surface,
-    graphite::data::reader& reader,
-    graphite::quickdraw::rect<std::int16_t>& rect,
-    std::uint32_t& offset,
-    std::uint32_t& right_offset_bound,
-    std::uint32_t& pitch,
-    std::uint32_t& frame,
-    std::uint16_t frame_count,
-    bool& completed,
-    union graphite::quickdraw::ycbcr& color
-) -> void {
-    color.components.cb = reader.read_byte();
-}
-
-static auto rleX_opcode_handler_set_alpha(
-    graphite::spriteworld::rleX *sprite,
-    graphite::quickdraw::surface& surface,
-    graphite::data::reader& reader,
-    graphite::quickdraw::rect<std::int16_t>& rect,
-    std::uint32_t& offset,
-    std::uint32_t& right_offset_bound,
-    std::uint32_t& pitch,
-    std::uint32_t& frame,
-    std::uint16_t frame_count,
-    bool& completed,
-    union graphite::quickdraw::ycbcr& color
-) -> void {
-    color.components.alpha = reader.read_byte();
-}
-
-static auto rleX_opcode_handler_advance(
-    graphite::spriteworld::rleX *sprite,
-    graphite::quickdraw::surface& surface,
-    graphite::data::reader& reader,
-    graphite::quickdraw::rect<std::int16_t>& rect,
-    std::uint32_t& offset,
-    std::uint32_t& right_offset_bound,
-    std::uint32_t& pitch,
-    std::uint32_t& frame,
-    std::uint16_t frame_count,
-    bool& completed,
-    union graphite::quickdraw::ycbcr& color
-) -> void {
-    auto count = reader.read_long();
-    rleX_draw_color(surface, color, rect, offset, right_offset_bound, pitch, count);
-}
-
-static auto rleX_opcode_handler_short_advance(
-    graphite::spriteworld::rleX *sprite,
-    graphite::quickdraw::surface& surface,
-    graphite::data::reader& reader,
-    graphite::quickdraw::rect<std::int16_t>& rect,
-    std::uint32_t& offset,
-    std::uint32_t& right_offset_bound,
-    std::uint32_t& pitch,
-    std::uint32_t& frame,
-    std::uint16_t frame_count,
-    bool& completed,
-    union graphite::quickdraw::ycbcr& color
-) -> void {
-    auto count = reader.read_byte();
-    rleX_draw_color(surface, color, rect, offset, right_offset_bound, pitch, static_cast<std::uint32_t>(count));
-}
-
-typedef void(*rleX_opcode_handler)(
-    graphite::spriteworld::rleX*,
-    graphite::quickdraw::surface&,
-    graphite::data::reader&,
-    graphite::quickdraw::rect<std::int16_t>&,
-    std::uint32_t&,
-    std::uint32_t&,
-    std::uint32_t&,
-    std::uint32_t&,
-    std::uint16_t,
-    bool&,
-    union graphite::quickdraw::ycbcr&
-);
-
 auto graphite::spriteworld::rleX::decode(data::reader &reader) -> void
 {
-    reader.change_byte_order(data::byte_order::lsb);
-
     // Read the header of the RLE information. This will tell us what we need to do in order to actually
     // decode the frame.
     m_frame_size = quickdraw::size<std::int16_t>::read(reader, quickdraw::coding_type::macintosh);
@@ -328,51 +160,92 @@ auto graphite::spriteworld::rleX::decode(data::reader &reader) -> void
     // decode the RLE data correctly.
     m_surface = quickdraw::surface(dim * m_frame_size.width, dim * m_frame_size.height, quickdraw::colors::clear());
 
-    std::uint32_t current_frame = 0;
-    std::uint32_t count = 0;
-    std::uint32_t current_offset = 0;
-    std::uint32_t right_bound = 0;
-    std::uint32_t pitch = 0;
+    quickdraw::color *offset;
+    quickdraw::color *right_bound;
+    quickdraw::color *frame_bound;
+    std::uint32_t pitch = m_surface.size().width - m_frame_size.width;
 
-    bool completed_last_frame = false;
-    auto frame = frame_rect(0);
+    auto rect = frame_rect(0);
+    auto raw = m_surface.raw().get<quickdraw::color *>();
 
-    union quickdraw::ycbcr yuv {
-        .components.y = 0,
-        .components.cb = 128,
-        .components.cr = 128,
-        .components.alpha = 255
-    };
-
-    // NOTE: This is a very _hot_ code path and thus we need to squeeze out as much performance as possible.
-    // Build a lookup table of opcodes, in order to reduce the number of comparisons.
-    /* quickdraw::surface&, data::reader&, union quickdraw::ycbcr&, std::int32_t&, std::uint32_t&, quickdraw::rect<std::int16_t>& */
-    rleX_opcode_handler opcode_lut[] = {
-        rleX_opcode_handler_eof,
-        rleX_opcode_handler_set_luma,
-        rleX_opcode_handler_set_cr,
-        rleX_opcode_handler_set_cb,
-        rleX_opcode_handler_set_alpha,
-        rleX_opcode_handler_advance,
-        rleX_opcode_handler_short_advance
-    };
-
-    rleX_calculate_sprite_geometry(this, m_surface, frame, current_offset, right_bound, pitch, current_frame);
-
-    while (!completed_last_frame) {
-        opcode_lut[reader.read_byte()](
-            this,
-            m_surface,
-            reader,
-            frame,
-            current_offset,
-            right_bound,
-            pitch,
-            current_frame,
-            m_frame_count,
-            completed_last_frame,
-            yuv
-        );
+    
+    for (auto frame = 0; frame < m_frame_count; ++frame) {
+        rect = this->frame_rect(frame);
+        offset = raw + (rect.origin.y * m_surface.size().width) + rect.origin.x;
+        right_bound = offset + m_frame_size.width;
+        frame_bound = right_bound + m_frame_size.height * m_surface.size().width;
+        auto data_size = reader.read_long();
+        auto data = reader.read_data(data_size).get<std::uint8_t *>();
+        // The 8-byte end marker means we don't need to worry about reading past the end
+        auto data_end = data + data_size - 8;
+        
+        // Decompress the QOI data
+        quickdraw::color index[64] = {0};
+        auto px = quickdraw::colors::black();
+        while (data < data_end) {
+            auto op = *data++;
+            
+            if (op == opcode::rgb) {
+                px.components.red   = *data++;
+                px.components.green = *data++;
+                px.components.blue  = *data++;
+                index[hash_color(px)] = px;
+            }
+            else if (op == opcode::rgba) {
+                px = *(quickdraw::color *)data;
+                data += 4;
+                index[hash_color(px)] = px;
+            }
+            else if ((op & 0xC0) == opcode::index) {
+                px = index[op & 0x3F];
+            }
+            else if ((op & 0xC0) == opcode::diff) {
+                px.components.red   += ((op >> 4) & 0x03) - 2;
+                px.components.green += ((op >> 2) & 0x03) - 2;
+                px.components.blue  += ( op       & 0x03) - 2;
+                index[hash_color(px)] = px;
+            }
+            else if ((op & 0xC0) == opcode::luma) {
+                auto op2 = *data++;
+                auto dg = (op & 0x3F) - 32;
+                px.components.red   += dg - 8 + ((op2 >> 4) & 0x0F);
+                px.components.green += dg;
+                px.components.blue  += dg - 8 + ( op2       & 0x0F);
+                index[hash_color(px)] = px;
+            }
+            else if ((op & 0xC0) == opcode::run) {
+                auto run = (op & 0x3F) + 1;
+                while (run > 0) {
+                    if (offset == right_bound) {
+                        if (offset == frame_bound) {
+                            throw std::runtime_error("Invalid data for rlëX resource: " + std::to_string(m_id) + ", " + m_name);
+                        }
+                        offset += pitch;
+                        right_bound = offset + m_frame_size.width;
+                    }
+                    auto limit = std::min(offset + run, right_bound);
+                    run -= limit - offset;
+                    // We don't need to write zero pixels
+                    if (px.value != 0) {
+                        while (offset < limit) {
+                            *offset++ = px;
+                        }
+                    } else {
+                        offset = limit;
+                    }
+                }
+                continue;
+            }
+            
+            if (offset == right_bound) {
+                if (offset == frame_bound) {
+                    throw std::runtime_error("Invalid data for rlëX resource: " + std::to_string(m_id) + ", " + m_name);
+                }
+                offset += pitch;
+                right_bound = offset + m_frame_size.width;
+            }
+            *offset++ = px;
+        }
     }
 }
 
@@ -380,8 +253,6 @@ auto graphite::spriteworld::rleX::decode(data::reader &reader) -> void
 
 auto graphite::spriteworld::rleX::encode(data::writer &writer) -> void
 {
-    writer.change_byte_order(data::byte_order::lsb);
-
     // Write out the header
     m_frame_size.encode(writer, quickdraw::coding_type::macintosh);
     writer.write_short(m_bpp);
@@ -393,69 +264,102 @@ auto graphite::spriteworld::rleX::encode(data::writer &writer) -> void
 
     // Write out the RLE frames
     for (auto f = 0; f < m_frame_count; ++f) {
-        auto frame = frame_rect(f);
+        auto pos = writer.position();
+        writer.write_long(0);
+        auto size = compress(frame_surface(f), writer);
+        writer.set_position(pos);
+        writer.write_long(size);
+        writer.move(size);
+    }
+}
 
-        union quickdraw::ycbcr yuv {
-            .components.y = 0,
-            .components.cb = 128,
-            .components.cr = 128,
-            .components.alpha = 255
-        };
+auto graphite::spriteworld::rleX::hash_color(const quickdraw::color color) -> std::uint8_t
+{
+    return (color.components.red   * 3 +
+            color.components.green * 5 +
+            color.components.blue  * 7 +
+            color.components.alpha * 11) % 64;
+}
 
-        std::uint32_t count = 0;
+auto graphite::spriteworld::rleX::compress(const quickdraw::surface& frame, data::writer &writer) -> std::size_t
+{
+    // Compress data using QOI format (https://qoiformat.org)
+    const auto pos = writer.position();
+    auto offset = 0;
+    auto end = frame.size().width * frame.size().height;
+    // Trim trailing zero pixels, leaving no more than one
+    // This is technically invalid but would still be handled by most decoders
+    if (frame.at(end - 1).value == 0) {
+        while (end > 1 && frame.at(end - 2).value == 0) {
+            end--;
+        }
+    }
+    
+    // Index of previously seen colors
+    quickdraw::color index[64] = {0};
+    // Starting color is always black
+    auto px = quickdraw::colors::black();
 
-        for (std::int16_t y = 0; y < frame.size.height; ++y) {
-            for (std::int16_t x = 0; x < frame.size.width; ++x) {
-                auto next_yuv = quickdraw::ycbcr(m_surface.at(frame.origin.x + x, frame.origin.y + y));
-
-                if (next_yuv.value != yuv.value) {
-                    if (count > 0) {
-                        if (count < 256) {
-                            writer.write_enum(opcode::short_advance);
-                            writer.write_byte(count);
-                        } else {
-                            writer.write_enum(opcode::advance);
-                            writer.write_long(count);
-                        }
-                        count = 0;
-                    }
-
-                    if (next_yuv.components.y != yuv.components.y) {
-                        writer.write_enum(rleX::opcode::set_luma);
-                        writer.write_byte(next_yuv.components.y);
-                    }
-
-                    if (next_yuv.components.cr != yuv.components.cr) {
-                        writer.write_enum(rleX::opcode::set_cr);
-                        writer.write_byte(next_yuv.components.cr);
-                    }
-
-                    if (next_yuv.components.cb != yuv.components.cb) {
-                        writer.write_enum(rleX::opcode::set_cb);
-                        writer.write_byte(next_yuv.components.cb);
-                    }
-
-                    if (next_yuv.components.alpha != yuv.components.alpha) {
-                        writer.write_enum(rleX::opcode::set_alpha);
-                        writer.write_byte(next_yuv.components.alpha);
-                    }
-
-                    yuv.value = next_yuv.value;
-                }
-
-                count++;
+    while (offset < end) {
+        auto run = 0;
+        while (run < 62 && offset < end && frame.at(offset) == px) {
+            run++;
+            offset++;
+        }
+        if (run > 0) {
+            writer.write_byte(opcode::run | run-1);
+            continue;
+        }
+        
+        auto prev = px;
+        px = frame.at(offset++);
+        
+        auto hash = hash_color(px);
+        if (index[hash] == px) {
+            writer.write_byte(opcode::index | hash);
+            continue;
+        }
+        index[hash] = px;
+        
+        if (px.components.alpha == prev.components.alpha) {
+            int8_t dr = px.components.red   - prev.components.red;
+            int8_t dg = px.components.green - prev.components.green;
+            int8_t db = px.components.blue  - prev.components.blue;
+            int8_t dg_r = dr - dg;
+            int8_t dg_b = db - dg;
+            
+            if (
+                dr > -3 && dr < 2 &&
+                dg > -3 && dg < 2 &&
+                db > -3 && db < 2
+            ) {
+                writer.write_byte(opcode::diff | (dr + 2) << 4 | (dg + 2) << 2 | (db + 2));
+            }
+            else if (
+                dg_r >  -9 && dg_r <  8 &&
+                dg   > -33 && dg   < 32 &&
+                dg_b >  -9 && dg_b <  8
+            ) {
+                writer.write_byte(opcode::luma    | (dg   + 32));
+                writer.write_byte((dg_r + 8) << 4 | (dg_b +  8));
+            }
+            else {
+                writer.write_byte(opcode::rgb);
+                writer.write_byte(px.components.red);
+                writer.write_byte(px.components.green);
+                writer.write_byte(px.components.blue);
             }
         }
-
-        if (count < 256) {
-            writer.write_enum(opcode::short_advance);
-            writer.write_byte(count);
-        }
         else {
-            writer.write_enum(opcode::advance);
-            writer.write_long(count);
+            writer.write_byte(opcode::rgba);
+            writer.write_byte(px.components.red);
+            writer.write_byte(px.components.green);
+            writer.write_byte(px.components.blue);
+            writer.write_byte(px.components.alpha);
         }
-
-        writer.write_enum(opcode::eof);
     }
+    
+    // 8-byte end marker
+    writer.write_quad(1);
+    return writer.position() - pos;
 }
