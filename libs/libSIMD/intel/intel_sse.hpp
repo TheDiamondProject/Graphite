@@ -23,6 +23,7 @@
 #if (__x86_64__)
 #include <xmmintrin.h>
 #include <cmath>
+#include <complex>
 
 // MARK: - Types
 typedef __m128_u f32x4;
