@@ -27,12 +27,12 @@ set(CMAKE_CXX_STANDARD 20)
 
 ########################################################################################################################
 ## libSIMD
-file(GLOB_RECURSE libSound_Sources
+file(GLOB_RECURSE libSoundCore_Sources
     *.cpp
 )
 
-add_library(Sound ${libSound_Sources})
-target_link_libraries(Sound SIMD Data ResourceCore)
-target_include_directories(Sound PUBLIC
+add_library(SoundCore ${libSoundCore_Sources})
+target_link_libraries(SoundCore SIMD Data ResourceCore)
+target_include_directories(SoundCore PUBLIC
     ${PROJECT_LIBS_DIR}
 )

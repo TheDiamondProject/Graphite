@@ -25,9 +25,9 @@
 #include <libData/writer.hpp>
 #include <libData/reader.hpp>
 #include <libResourceCore/structure/instance.hpp>
-#include <libSound/codec/descriptor.hpp>
+#include <libSoundCore/codec/descriptor.hpp>
 
-namespace sound::format
+namespace sound_core::format
 {
     struct sound
     {

@@ -19,12 +19,12 @@
 // SOFTWARE.
 
 #include <limits>
-#include <libSound/codec/ima4/ima4.hpp>
+#include <libSoundCore/codec/ima4/ima4.hpp>
 #include <libData/writer.hpp>
 
 // MARK: - Look Up Tables
 
-namespace sound::codec::ima4::lut
+namespace sound_core::codec::ima4::lut
 {
     constexpr std::int8_t index_table[16] = {
         -1, -1, -1, -1, 2, 4, 6, 8,
@@ -46,14 +46,14 @@ namespace sound::codec::ima4::lut
 
 // MARK: - Construction
 
-sound::codec::ima4::sound::sound(const codec::descriptor &descriptor, data::reader &reader)
+sound_core::codec::ima4::sound::sound(const codec::descriptor &descriptor, data::reader &reader)
 {
     decode(descriptor, reader);
 }
 
 // MARK: - Decoder
 
-auto sound::codec::ima4::sound::decode(const codec::descriptor &descriptor, data::reader &reader) -> void
+auto sound_core::codec::ima4::sound::decode(const codec::descriptor &descriptor, data::reader &reader) -> void
 {
     // TODO: This is relying on hard-coded constants and really shouldn't.
     // Determine the best way to calculate these values in the future.
@@ -122,12 +122,12 @@ auto sound::codec::ima4::sound::decode(const codec::descriptor &descriptor, data
 
 // MARK: - Accessors
 
-auto sound::codec::ima4::sound::samples() const -> const data::block&
+auto sound_core::codec::ima4::sound::samples() const -> const data::block&
 {
     return m_samples;
 }
 
-auto sound::codec::ima4::sound::descriptor() const -> const codec::descriptor &
+auto sound_core::codec::ima4::sound::descriptor() const -> const codec::descriptor &
 {
     return m_descriptor;
 }

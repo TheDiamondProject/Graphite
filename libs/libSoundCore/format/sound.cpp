@@ -20,13 +20,13 @@
 
 #include <cstdint>
 #include <stdexcept>
-#include <libSound/format/sound.hpp>
-#include <libSound/codec/descriptor.hpp>
-#include <libSound/codec/ima4/ima4.hpp>
+#include <libSoundCore/format/sound.hpp>
+#include <libSoundCore/codec/descriptor.hpp>
+#include <libSoundCore/codec/ima4/ima4.hpp>
 
 // MARK: - Constants / Enumerations
 
-namespace sound::format
+namespace sound_core::format
 {
     enum bitrate : std::uint32_t
     {
@@ -131,7 +131,7 @@ namespace sound::format
 
 // MARK: - Internal Helper Types
 
-namespace sound::format
+namespace sound_core::format
 {
     struct sound_command
     {
@@ -204,20 +204,20 @@ namespace sound::format
 
 // MARK: - Construction
 
-resource_core::format::sound::sound(const data::block &data, resource_core::identifier id, const std::string &name)
+sound_core::format::sound::sound(const data::block &data, resource_core::identifier id, const std::string &name)
     : m_id(id), m_name(name)
 {
     data::reader reader(&data);
     decode(reader);
 }
 
-resource_core::format::sound::sound(data::reader &reader, resource_core::identifier id, const std::string &name)
+sound_core::format::sound::sound(data::reader &reader, resource_core::identifier id, const std::string &name)
     : m_id(id), m_name(name)
 {
     decode(reader);
 }
 
-resource_core::format::sound::sound(std::uint32_t sample_rate, std::uint8_t sample_bits, const std::vector<std::vector<std::uint32_t>> &sample_data)
+sound_core::format::sound::sound(std::uint32_t sample_rate, std::uint8_t sample_bits, const std::vector<std::vector<std::uint32_t>> &sample_data)
 {
     m_descriptor.sample_rate = sample_rate;
     m_descriptor.bit_width = sample_bits;
@@ -241,7 +241,7 @@ resource_core::format::sound::sound(std::uint32_t sample_rate, std::uint8_t samp
     m_samples = std::move(*const_cast<data::block *>(writer.data()));
 }
 
-sound::format::sound::sound(std::uint32_t sample_rate, std::uint8_t sample_bits, const data::block& sample_data)
+sound_core::format::sound::sound(std::uint32_t sample_rate, std::uint8_t sample_bits, const data::block& sample_data)
 {
     m_descriptor.sample_rate = sample_rate;
     m_descriptor.bit_width = sample_bits;
@@ -250,7 +250,7 @@ sound::format::sound::sound(std::uint32_t sample_rate, std::uint8_t sample_bits,
 
 // MARK: - Decoding
 
-auto sound::format::sound::decode(data::reader &reader) -> void
+auto sound_core::format::sound::decode(data::reader &reader) -> void
 {
     auto sound_format = reader.read_signed_short();
 
@@ -405,71 +405,71 @@ auto sound::format::sound::decode(data::reader &reader) -> void
 
 // MARK: - Accessors
 
-auto sound::format::sound::samples() const -> const data::block&
+auto sound_core::format::sound::samples() const -> const data::block&
 {
     return m_samples;
 }
 
-auto sound::format::sound::codec_descriptor() const -> const codec::descriptor&
+auto sound_core::format::sound::codec_descriptor() const -> const codec::descriptor&
 {
     return m_descriptor;
 }
 
-auto sound::format::sound::sample_rate() const -> std::uint32_t
+auto sound_core::format::sound::sample_rate() const -> std::uint32_t
 {
     return m_descriptor.sample_rate;
 }
 
-auto sound::format::sound::channels() const -> std::uint16_t
+auto sound_core::format::sound::channels() const -> std::uint16_t
 {
     return m_descriptor.channels;
 }
 
-auto sound::format::sound::bit_width() const -> std::uint8_t
+auto sound_core::format::sound::bit_width() const -> std::uint8_t
 {
     return m_descriptor.bit_width;
 }
 
-auto sound::format::sound::bytes_per_frame() const -> std::uint32_t
+auto sound_core::format::sound::bytes_per_frame() const -> std::uint32_t
 {
     return m_descriptor.bytes_per_frame;
 }
 
-auto sound::format::sound::frames_per_packet() const -> std::uint32_t
+auto sound_core::format::sound::frames_per_packet() const -> std::uint32_t
 {
     return m_descriptor.frames_per_packet;
 }
 
-auto sound::format::sound::bytes_per_packet() const -> std::uint32_t
+auto sound_core::format::sound::bytes_per_packet() const -> std::uint32_t
 {
     return m_descriptor.bytes_per_packet;
 }
 
-auto sound::format::sound::packet_count() const -> std::uint32_t
+auto sound_core::format::sound::packet_count() const -> std::uint32_t
 {
     return m_descriptor.packet_count;
 }
 
-auto sound::format::sound::format_id() const -> std::uint32_t
+auto sound_core::format::sound::format_id() const -> std::uint32_t
 {
     return m_descriptor.format_id;
 }
 
-auto sound::format::sound::format_flags() const -> std::uint32_t
+auto sound_core::format::sound::format_flags() const -> std::uint32_t
 {
     return m_descriptor.format_flags;
 }
 
 // MARK: - Decoding
 
-auto sound::format::sound::data() -> data::block
+auto sound_core::format::sound::data() -> data::block
 {
     data::writer writer;
     encode(writer);
     return std::move(*const_cast<data::block*>(writer.data()));
 }
 
-auto sound::format::sound::encode(data::writer &writer) -> void
+auto sound_core::format::sound::encode(data::writer &writer) -> void
 {
     // TODO: Implement this...
 }

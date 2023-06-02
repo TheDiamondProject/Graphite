@@ -20,22 +20,24 @@
 
 #pragma once
 
-#include <cstdint>
+#include <libData/reader.hpp>
+#include <libSoundCore/codec/descriptor.hpp>
 
-namespace sound::codec
+namespace sound_core::codec::ima4
 {
-    struct descriptor
+    struct sound
     {
-        std::uint32_t sample_rate { 0 };
-        std::uint32_t channels { 0 };
-        std::uint32_t format_id { 0 };
-        std::uint32_t format_flags { 0 };
-        std::uint32_t bit_width { 0 };
-        std::uint32_t bytes_per_frame { 0 };
-        std::uint32_t frames_per_packet { 0 };
-        std::uint32_t bytes_per_packet { 0 };
-        std::uint32_t packet_count { 0 };
+    public:
+        sound(const codec::descriptor& descriptor, data::reader& reader);
 
-        descriptor() = default;
+        [[nodiscard]] auto samples() const -> const data::block&;
+        [[nodiscard]] auto descriptor() const -> const codec::descriptor&;
+
+    private:
+        data::block m_samples;
+        codec::descriptor m_descriptor;
+
+        auto decode(const codec::descriptor& descriptor, data::reader& reader) -> void;
     };
+
 }
