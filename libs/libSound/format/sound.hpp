@@ -24,7 +24,7 @@
 #include <libData/block.hpp>
 #include <libData/writer.hpp>
 #include <libData/reader.hpp>
-#include <libResource/structure/instance.hpp>
+#include <libResourceCore/structure/instance.hpp>
 #include <libSound/codec/descriptor.hpp>
 
 namespace sound::format
@@ -35,8 +35,8 @@ namespace sound::format
         static auto type_code() -> std::string { return "snd "; }
 
     public:
-        explicit sound(const data::block& data, resource::identifier id = 0, const std::string& name = "");
-        explicit sound(data::reader& reader, resource::identifier id = 0, const std::string& name = "");
+        explicit sound(const data::block& data, resource_core::identifier id = 0, const std::string& name = "");
+        explicit sound(data::reader& reader, resource_core::identifier id = 0, const std::string& name = "");
         explicit sound(std::uint32_t sample_rate, std::uint8_t sample_bits, const data::block& sample_data);
         explicit sound(std::uint32_t sample_rate, std::uint8_t sample_bits, const std::vector<std::vector<std::uint32_t>>& sample_data);
 
@@ -57,7 +57,7 @@ namespace sound::format
         [[nodiscard]] auto format_flags() const -> std::uint32_t;
 
     private:
-        resource::identifier m_id { resource::default_resource_id };
+        resource_core::identifier m_id { resource_core::default_resource_id };
         std::string m_name;
         codec::descriptor m_descriptor;
         data::block m_samples;

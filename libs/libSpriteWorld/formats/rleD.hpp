@@ -22,7 +22,7 @@
 
 #include <string>
 #include <vector>
-#include <libResource/structure/instance.hpp>
+#include <libResourceCore/structure/instance.hpp>
 #include <libQuickdraw/surface/surface.hpp>
 #include <libQuickdraw/type/rect.hpp>
 
@@ -36,7 +36,7 @@ namespace spriteworld
     public:
         rleD() = default;
         rleD(const quickdraw::size<std::int16_t>& size, std::uint16_t frame_count);
-        explicit rleD(const data::block& data, resource::identifier id = 0, const std::string& name = "");
+        explicit rleD(const data::block& data, resource_core::identifier id = 0, const std::string& name = "");
         explicit rleD(data::reader& reader);
 
         ~rleD() = default;
@@ -64,7 +64,7 @@ namespace spriteworld
             pixel_run = 0x04,
         };
 
-        resource::identifier m_id { 0 };
+        resource_core::identifier m_id { 0 };
         std::string m_name;
         std::vector<quickdraw::rect<std::int16_t>> m_frames;
         quickdraw::surface m_surface;

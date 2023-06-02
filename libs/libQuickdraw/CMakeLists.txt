@@ -32,7 +32,7 @@ file(GLOB_RECURSE libQuickDraw_Sources
 )
 
 add_library(QuickDraw ${libQuickDraw_Sources})
-target_link_libraries(QuickDraw SIMD Data Resource)
+target_link_libraries(QuickDraw SIMD Data ResourceCore)
 target_include_directories(QuickDraw PUBLIC
     ${PROJECT_LIBS_DIR}
 )

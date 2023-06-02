@@ -23,7 +23,7 @@
 
 // MARK: - Construction
 
-toolbox::font::outline_font::outline_font(const data::block &data, resource::identifier id, const std::string &name)
+toolbox::font::outline_font::outline_font(const data::block &data, resource_core::identifier id, const std::string &name)
     : m_id(id), m_name(name)
 {
     m_ttf = data;

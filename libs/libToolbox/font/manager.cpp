@@ -20,9 +20,9 @@
 
 #include <libToolbox/font/manager.hpp>
 #include <libToolbox/font/sfnt.hpp>
-#include <libResource/manager.hpp>
-#include <libResource/structure/instance.hpp>
-#include <libResource/result.hpp>
+#include <libResourceCore/manager.hpp>
+#include <libResourceCore/structure/instance.hpp>
+#include <libResourceCore/result.hpp>
 
 // MARK: - Singleton
 
@@ -36,7 +36,7 @@ auto toolbox::font::manager::shared_manager() -> manager &
 
 auto toolbox::font::manager::update_font_table() -> void
 {
-    auto sfnt_resources = ::resource::manager::shared_manager().find<outline_font>();
+    auto sfnt_resources = ::resource_core::manager::shared_manager().find<outline_font>();
     for (const auto& res : sfnt_resources) {
         auto font_name = res.name();
         auto it = m_fonts.find(font_name);

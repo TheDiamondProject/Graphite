@@ -23,7 +23,7 @@
 #include <string>
 #include <limits>
 #include <libData/reader.hpp>
-#include <libResource/structure/instance.hpp>
+#include <libResourceCore/structure/instance.hpp>
 #include <libQuickdraw/type/rect.hpp>
 
 namespace toolbox
@@ -57,7 +57,7 @@ namespace toolbox
 
     public:
         dialog_item_list() = default;
-        explicit dialog_item_list(const data::block& data, resource::identifier id = 0, const std::string& name = "");
+        explicit dialog_item_list(const data::block& data, resource_core::identifier id = 0, const std::string& name = "");
         explicit dialog_item_list(data::reader& reader);
 
         auto encode(data::writer& writer) -> void;
@@ -70,7 +70,7 @@ namespace toolbox
         auto end() -> std::vector<struct item>::iterator { return m_items.end(); }
 
     private:
-        resource::identifier m_id { INT64_MIN };
+        resource_core::identifier m_id { resource_core::auto_resource_id };
         std::string m_name;
         std::vector<struct item> m_items;
 

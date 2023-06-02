@@ -48,7 +48,7 @@ spriteworld::rleD::rleD(const quickdraw::size<std::int16_t>& size, std::uint16_t
     m_surface = quickdraw::surface(m_grid_size.width * m_frame_size.width, m_grid_size.height * m_frame_size.height);
 }
 
-spriteworld::rleD::rleD(const data::block& data, resource::identifier id, const std::string& name)
+spriteworld::rleD::rleD(const data::block& data, resource_core::identifier id, const std::string& name)
     : m_id(id), m_name(name)
 {
     data::reader reader(&data);

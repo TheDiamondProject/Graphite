@@ -35,7 +35,7 @@ namespace quickdraw
 
     public:
         color_icon() = default;
-        explicit color_icon(const data::block& data, resource::identifier id = 0, const std::string& name = "");
+        explicit color_icon(const data::block& data, resource_core::identifier id = 0, const std::string& name = "");
         explicit color_icon(data::reader& reader);
         explicit color_icon(quickdraw::surface& surface);
 
@@ -45,7 +45,7 @@ namespace quickdraw
         auto data() -> data::block;
 
     private:
-        resource::identifier m_id { resource::auto_resource_id };
+        resource_core::identifier m_id { resource_core::auto_resource_id };
         std::string m_name;
         quickdraw::pixmap m_pixmap;
         std::uint32_t m_mask_base_address { 0 };

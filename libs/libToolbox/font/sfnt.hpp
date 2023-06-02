@@ -25,7 +25,7 @@
 #include <vector>
 #include <array>
 #include <libData/reader.hpp>
-#include <libResource/structure/instance.hpp>
+#include <libResourceCore/structure/instance.hpp>
 
 namespace toolbox::font
 {
@@ -36,13 +36,13 @@ namespace toolbox::font
 
     public:
         outline_font() = default;
-        explicit outline_font(const data::block& data, resource::identifier = 0, const std::string& name = "");
+        explicit outline_font(const data::block& data, resource_core::identifier = 0, const std::string& name = "");
         explicit outline_font(data::reader& reader);
 
         [[nodiscard]] auto ttf_data() const -> const data::block&;
 
     private:
-        resource::identifier m_id { resource::auto_resource_id };
+        resource_core::identifier m_id { resource_core::auto_resource_id };
         std::string m_name;
         data::block m_ttf;
 

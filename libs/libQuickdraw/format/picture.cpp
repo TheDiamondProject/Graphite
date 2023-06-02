@@ -34,7 +34,7 @@ namespace quickdraw::constants
 
 // MARK: - Construction
 
-quickdraw::picture::picture(const data::block &data, resource::identifier id, const std::string &name)
+quickdraw::picture::picture(const data::block &data, resource_core::identifier id, const std::string &name)
     : m_id(id), m_name(name)
 {
     data::reader reader(&data);

@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include <libResource/structure/instance.hpp>
+#include <libResourceCore/structure/instance.hpp>
 #include <libData/reader.hpp>
 #include <libQuickdraw/color/color.hpp>
 
@@ -64,7 +64,7 @@ namespace quickdraw
 
     public:
         color_lookup_table() = default;
-        explicit color_lookup_table(const data::block& data, resource::identifier id = 0, const std::string& name = "");
+        explicit color_lookup_table(const data::block& data, resource_core::identifier id = 0, const std::string& name = "");
         explicit color_lookup_table(data::reader& reader);
 
         [[nodiscard]] auto size() const -> size_type;
@@ -81,7 +81,7 @@ namespace quickdraw
         auto encode(data::writer& writer) -> void;
 
     private:
-        resource::identifier m_id;
+        resource_core::identifier m_id;
         std::string m_name;
         std::uint32_t m_seed;
         enum flags m_flags { pixmap };

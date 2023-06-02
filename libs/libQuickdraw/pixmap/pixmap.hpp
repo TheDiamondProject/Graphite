@@ -68,7 +68,7 @@ namespace quickdraw
 
         pixmap() = default;
         explicit pixmap(const rect<std::int16_t>& frame, bool rgb555 = false);
-        explicit pixmap(const data::block& data, resource::identifier id = 0, const std::string& name = "");
+        explicit pixmap(const data::block& data, resource_core::identifier id = 0, const std::string& name = "");
         explicit pixmap(data::reader& reader);
         pixmap(const pixmap&) noexcept = default;
 

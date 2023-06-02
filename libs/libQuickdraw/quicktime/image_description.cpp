@@ -20,7 +20,7 @@
 
 #include <libQuickdraw/quicktime/image_description.hpp>
 #include <libQuickdraw/format/picture.hpp>
-#include <libResource/manager.hpp>
+#include <libResourceCore/manager.hpp>
 #include <libQuickdraw/quicktime/raw.hpp>
 #include <libQuickdraw/quicktime/animation.hpp>
 #include <libQuickdraw/quicktime/planar.hpp>
@@ -53,7 +53,7 @@ quicktime::image_description::image_description(data::reader &reader)
     if (clut == 0) {
         m_clut = reader.read<quickdraw::color_lookup_table>();
     } else if (clut > 0) {
-        if (auto resource = resource::manager::shared_manager().find<quickdraw::color_lookup_table>(clut)) {
+        if (auto resource = resource_core::manager::shared_manager().find<quickdraw::color_lookup_table>(clut)) {
             m_clut = quickdraw::color_lookup_table(resource->data());
         }
         else {

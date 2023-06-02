@@ -204,20 +204,20 @@ namespace sound::format
 
 // MARK: - Construction
 
-sound::format::sound::sound(const data::block &data, resource::identifier id, const std::string &name)
+resource_core::format::sound::sound(const data::block &data, resource_core::identifier id, const std::string &name)
     : m_id(id), m_name(name)
 {
     data::reader reader(&data);
     decode(reader);
 }
 
-sound::format::sound::sound(data::reader &reader, resource::identifier id, const std::string &name)
+resource_core::format::sound::sound(data::reader &reader, resource_core::identifier id, const std::string &name)
     : m_id(id), m_name(name)
 {
     decode(reader);
 }
 
-sound::format::sound::sound(std::uint32_t sample_rate, std::uint8_t sample_bits, const std::vector<std::vector<std::uint32_t>> &sample_data)
+resource_core::format::sound::sound(std::uint32_t sample_rate, std::uint8_t sample_bits, const std::vector<std::vector<std::uint32_t>> &sample_data)
 {
     m_descriptor.sample_rate = sample_rate;
     m_descriptor.bit_width = sample_bits;

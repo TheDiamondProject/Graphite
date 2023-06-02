@@ -35,7 +35,7 @@ namespace toolbox::font
         {
             std::string name;
             descriptor m_bitmap_descriptor;
-            std::unordered_map<resource::instance::identifier_hash, bitmapped_font> m_bitmaps;
+            std::unordered_map<resource_core::instance::identifier_hash, bitmapped_font> m_bitmaps;
             data::block ttf;
         };
 

@@ -32,7 +32,7 @@ file(GLOB_RECURSE libSpriteWorld_Sources
 )
 
 add_library(SpriteWorld ${libSpriteWorld_Sources})
-target_link_libraries(SpriteWorld SIMD Data Resource QuickDraw)
+target_link_libraries(SpriteWorld SIMD Data ResourceCore QuickDraw)
 target_include_directories(SpriteWorld PUBLIC
     ${PROJECT_LIBS_DIR}
 )

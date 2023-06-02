@@ -23,7 +23,7 @@
 #include <string>
 #include <vector>
 #include <libData/reader.hpp>
-#include <libResource/structure/instance.hpp>
+#include <libResourceCore/structure/instance.hpp>
 
 namespace toolbox
 {
@@ -36,7 +36,7 @@ namespace toolbox
 
     public:
         string_list() = default;
-        explicit string_list(const data::block& data, resource::identifier id = 0, const std::string& name = "");
+        explicit string_list(const data::block& data, resource_core::identifier id = 0, const std::string& name = "");
 
         [[nodiscard]] auto string_count() const -> std::size_t;
         [[nodiscard]] auto at(std::uint32_t idx) const -> std::string;
@@ -45,7 +45,7 @@ namespace toolbox
         auto end() noexcept -> iterator;
 
     private:
-        resource::identifier m_id { 0 };
+        resource_core::identifier m_id { 0 };
         std::string m_name;
         std::vector<std::string> m_strings;
 

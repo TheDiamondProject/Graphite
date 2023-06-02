@@ -23,7 +23,7 @@
 #include <string>
 #include <libQuickdraw/surface/surface.hpp>
 #include <libQuickdraw/type/rect.hpp>
-#include <libResource/structure/instance.hpp>
+#include <libResourceCore/structure/instance.hpp>
 
 namespace quickdraw
 {
@@ -34,7 +34,7 @@ namespace quickdraw
 
     public:
         picture() = default;
-        explicit picture(const data::block& data, resource::identifier id = 0, const std::string& name = "");
+        explicit picture(const data::block& data, resource_core::identifier id = 0, const std::string& name = "");
         explicit picture(data::reader& reader);
         explicit picture(quickdraw::surface& surface);
 
@@ -92,7 +92,7 @@ namespace quickdraw
         };
 
     private:
-        resource::identifier m_id { 0 };
+        resource_core::identifier m_id { 0 };
         std::string m_name;
         quickdraw::surface m_surface;
         rect<std::int16_t> m_frame;

@@ -36,7 +36,7 @@ quickdraw::pixmap::pixmap(const rect<std::int16_t>& frame, bool rgb555)
 {
 }
 
-quickdraw::pixmap::pixmap(const data::block &data, resource::identifier id, const std::string &name)
+quickdraw::pixmap::pixmap(const data::block &data, resource_core::identifier id, const std::string &name)
 {
     data::reader reader(&data);
     decode(reader);

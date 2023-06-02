@@ -23,7 +23,7 @@
 #include <string>
 #include <limits>
 #include <libData/reader.hpp>
-#include <libResource/structure/instance.hpp>
+#include <libResourceCore/structure/instance.hpp>
 #include <libQuickdraw/type/rect.hpp>
 
 namespace toolbox
@@ -35,7 +35,7 @@ namespace toolbox
 
     public:
         dialog() = default;
-        explicit dialog(const data::block& data, resource::identifier id = 0, const std::string& name = "");
+        explicit dialog(const data::block& data, resource_core::identifier id = 0, const std::string& name = "");
         explicit dialog(data::reader& reader);
 
         [[nodiscard]] auto bounds() const -> quickdraw::rect<std::int16_t>;
@@ -43,7 +43,7 @@ namespace toolbox
         [[nodiscard]] auto visible() const -> bool;
         [[nodiscard]] auto go_away() const -> bool;
         [[nodiscard]] auto ref_con() const -> std::int32_t;
-        [[nodiscard]] auto interface_list() const -> resource::identifier;
+        [[nodiscard]] auto interface_list() const -> resource_core::identifier;
         [[nodiscard]] auto auto_position() const -> std::uint16_t;
         [[nodiscard]] auto title() const -> std::string;
 
@@ -52,7 +52,7 @@ namespace toolbox
         auto set_visible(bool visible) -> void;
         auto set_go_away(bool go_away) -> void;
         auto set_ref_con(std::int32_t ref_con) -> void;
-        auto set_interface_list(resource::identifier id) -> void;
+        auto set_interface_list(resource_core::identifier id) -> void;
         auto set_auto_position(std::uint16_t position) -> void;
         auto set_title(const std::string& title) -> void;
 
@@ -60,7 +60,7 @@ namespace toolbox
         auto data() -> data::block;
 
     private:
-        resource::identifier m_id { resource::auto_resource_id };
+        resource_core::identifier m_id { resource_core::auto_resource_id };
         std::string m_name;
         std::string m_title;
         quickdraw::rect<std::int16_t> m_bounds;
@@ -68,7 +68,7 @@ namespace toolbox
         bool m_visible { true };
         bool m_go_away { true };
         std::int32_t m_ref_con { 0 };
-        resource::identifier m_ditl_id { 0 };
+        resource_core::identifier m_ditl_id { 0 };
         std::uint16_t m_auto_position { 0 };
 
         auto decode(data::reader& reader) -> void;

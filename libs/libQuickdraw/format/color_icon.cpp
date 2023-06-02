@@ -27,7 +27,7 @@
 
 // MARK: - Construction
 
-quickdraw::color_icon::color_icon(const data::block &data, resource::identifier id, const std::string &name)
+quickdraw::color_icon::color_icon(const data::block &data, resource_core::identifier id, const std::string &name)
     : m_id(id), m_name(name)
 {
     data::reader reader(&data);

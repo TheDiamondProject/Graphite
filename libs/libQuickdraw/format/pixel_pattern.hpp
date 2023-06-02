@@ -35,7 +35,7 @@ namespace quickdraw
 
     public:
         pixel_pattern() = default;
-        explicit pixel_pattern(const data::block& data, resource::identifier id = 0, const std::string& name = "");
+        explicit pixel_pattern(const data::block& data, resource_core::identifier id = 0, const std::string& name = "");
         explicit pixel_pattern(data::reader& reader);
         explicit pixel_pattern(surface& surface);
 
@@ -45,7 +45,7 @@ namespace quickdraw
         auto data() -> data::block;
 
     private:
-        resource::identifier m_id;
+        resource_core::identifier m_id;
         std::string m_name;
         std::uint16_t m_pat_type;
         std::uint32_t m_pmap_base_address;

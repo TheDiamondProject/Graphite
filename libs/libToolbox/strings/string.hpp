@@ -6,7 +6,7 @@
 
 #include <string>
 #include <libData/reader.hpp>
-#include <libResource/structure/instance.hpp>
+#include <libResourceCore/structure/instance.hpp>
 
 namespace toolbox
 {
@@ -17,13 +17,13 @@ namespace toolbox
 
     public:
         string() = default;
-        explicit string(const data::block &data, resource::identifier id = 0, const std::string& name = "");
+        explicit string(const data::block &data, resource_core::identifier id = 0, const std::string& name = "");
 
         [[nodiscard]] auto value() const -> const std::string&;
         [[nodiscard]] auto data() const -> const data::block&;
 
     private:
-        resource::identifier m_id {};
+        resource_core::identifier m_id { resource_core::auto_resource_id };
         std::string m_name;
         std::string m_str;
         data::block m_data;

@@ -32,7 +32,7 @@ file(GLOB_RECURSE libSound_Sources
 )
 
 add_library(Sound ${libSound_Sources})
-target_link_libraries(Sound SIMD Data Resource)
+target_link_libraries(Sound SIMD Data ResourceCore)
 target_include_directories(Sound PUBLIC
     ${PROJECT_LIBS_DIR}
 )

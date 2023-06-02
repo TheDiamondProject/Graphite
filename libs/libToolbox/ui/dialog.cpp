@@ -23,7 +23,7 @@
 
 // MARK: - Construction
 
-toolbox::dialog::dialog(const data::block &data, resource::identifier id, const std::string &name)
+toolbox::dialog::dialog(const data::block &data, resource_core::identifier id, const std::string &name)
     : m_id(id), m_name(name)
 {
     data::reader reader(&data);
@@ -62,7 +62,7 @@ auto toolbox::dialog::ref_con() const -> std::int32_t
     return m_ref_con;
 }
 
-auto toolbox::dialog::interface_list() const -> resource::identifier
+auto toolbox::dialog::interface_list() const -> resource_core::identifier
 {
     return m_ditl_id;
 }
@@ -102,7 +102,7 @@ auto toolbox::dialog::set_ref_con(std::int32_t ref_con) -> void
     m_ref_con = ref_con;
 }
 
-auto toolbox::dialog::set_interface_list(resource::identifier id) -> void
+auto toolbox::dialog::set_interface_list(resource_core::identifier id) -> void
 {
     m_ditl_id = id;
 }

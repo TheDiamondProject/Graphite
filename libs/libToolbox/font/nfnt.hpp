@@ -22,7 +22,7 @@
 
 #include <libData/block.hpp>
 #include <libData/reader.hpp>
-#include <libResource/structure/instance.hpp>
+#include <libResourceCore/structure/instance.hpp>
 
 namespace toolbox::font
 {
@@ -33,11 +33,11 @@ namespace toolbox::font
 
     public:
         bitmapped_font() = default;
-        explicit bitmapped_font(const data::block& data, resource::identifier id = 0, const std::string& name = "");
+        explicit bitmapped_font(const data::block& data, resource_core::identifier id = 0, const std::string& name = "");
         explicit bitmapped_font(data::reader& reader);
 
     private:
-        resource::identifier m_id { INT64_MIN };
+        resource_core::identifier m_id { resource_core::auto_resource_id };
         std::string m_name;
 
         std::int16_t m_font_type { 0 };

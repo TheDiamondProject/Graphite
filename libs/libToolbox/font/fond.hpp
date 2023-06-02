@@ -25,7 +25,7 @@
 #include <vector>
 #include <array>
 #include <libData/reader.hpp>
-#include <libResource/structure/instance.hpp>
+#include <libResourceCore/structure/instance.hpp>
 
 namespace toolbox::font
 {
@@ -36,7 +36,7 @@ namespace toolbox::font
 
     public:
         descriptor() = default;
-        explicit descriptor(const data::block& data, resource::identifier = 0, const std::string& name = "");
+        explicit descriptor(const data::block& data, resource_core::identifier = 0, const std::string& name = "");
         explicit descriptor(data::reader& reader);
 
     private:
@@ -67,7 +67,7 @@ namespace toolbox::font
             std::vector<struct kern> kerns;
         };
 
-        resource::identifier m_id { resource::auto_resource_id };
+        resource_core::identifier m_id { resource_core::auto_resource_id };
         std::string m_name;
         bool m_fixed { false };
         std::uint16_t m_family_id { 0 };

@@ -22,7 +22,7 @@
 
 #include <string>
 #include <vector>
-#include <libResource/structure/instance.hpp>
+#include <libResourceCore/structure/instance.hpp>
 #include <libQuickdraw/surface/surface.hpp>
 #include <libQuickdraw/type/rect.hpp>
 
@@ -40,7 +40,7 @@ namespace spriteworld
     public:
         rleX() = default;
         rleX(const quickdraw::size<std::int16_t>& size, std::uint16_t frame_count);
-        explicit rleX(const data::block& data, resource::identifier id = 0, const std::string& name = "");
+        explicit rleX(const data::block& data, resource_core::identifier id = 0, const std::string& name = "");
         explicit rleX(data::reader& reader);
 
         ~rleX() = default;
@@ -68,7 +68,7 @@ namespace spriteworld
             short_advance = 0x06,
         };
 
-        resource::identifier m_id { 0 };
+        resource_core::identifier m_id { 0 };
         std::string m_name;
         std::vector<quickdraw::rect<std::int16_t>> m_frames;
         quickdraw::surface m_surface;
