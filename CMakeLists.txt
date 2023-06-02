@@ -29,6 +29,8 @@ if (APPLE)
 	set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64")
 endif()
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse2 -mavx -msse4.1")
+
 set(PROJECT_LIBS_DIR ${CMAKE_CURRENT_LIST_DIR}/libs)
 
 # Libraries
