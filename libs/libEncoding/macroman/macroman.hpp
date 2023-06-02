@@ -20,6 +20,8 @@
 
 #include <string>
 #include <vector>
+#include <cstdint>
+#include <cstdlib>
 
 #if !defined(ENCODING_MACROMAN)
 #define ENCODING_MACROMAN
@@ -30,13 +32,13 @@ namespace encoding::mac_roman {
      * Convert a sequence of bytes into a UTF-8 string, translating them from a
      * Mac OS Roman encoding.
      */
-    auto to_utf8(const std::vector<uint8_t>& bytes) -> std::string;
+    auto to_utf8(const std::vector<std::uint8_t>& bytes) -> std::string;
 
     /**
      * Convert a UTF-8 encoded string into a sequence of bytes containing a Mac OS
      * Roman encoded string.
      */
-    auto from_utf8(const std::string& str) -> std::vector<uint8_t>;
+    auto from_utf8(const std::string& str) -> std::vector<std::uint8_t>;
 
 }
 

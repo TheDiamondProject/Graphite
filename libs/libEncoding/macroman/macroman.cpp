@@ -24,7 +24,7 @@
 
 // MARK: - Encoding Tables
 
-static uint16_t cp_table[0x100] =
+static std::uint16_t cp_table[0x100] =
 {
     // Standard ASCII
     0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007,
@@ -72,13 +72,13 @@ namespace unicode
     struct hint
     {
     public:
-        uint8_t m_mask;
-        uint8_t m_lead;
-        uint32_t m_beg;
-        uint32_t m_end;
-        size_t m_bits;
+        std::uint8_t m_mask;
+        std::uint8_t m_lead;
+        std::uint32_t m_beg;
+        std::uint32_t m_end;
+        std::size_t m_bits;
 
-        hint(uint8_t mask, uint8_t lead, uint32_t beg, uint32_t end, size_t bits)
+        hint(std::uint8_t mask, std::uint8_t lead, std::uint32_t beg, std::uint32_t end, std::size_t bits)
                 : m_mask(mask), m_lead(lead), m_beg(beg), m_end(end), m_bits(bits)
         {
 
@@ -102,9 +102,9 @@ namespace unicode
 
 // MARK: - Conversion Functions
 
-auto encoding::mac_roman::from_utf8(const std::string &str) -> std::vector<uint8_t>
+auto encoding::mac_roman::from_utf8(const std::string &str) -> std::vector<std::uint8_t>
 {
-    std::vector<uint8_t> mac_roman_bytes;
+    std::vector<std::uint8_t> mac_roman_bytes;
     
     // Convert back to a C-String for easier processing here...
     const char *s = str.c_str();
@@ -116,7 +116,7 @@ auto encoding::mac_roman::from_utf8(const std::string &str) -> std::vector<uint8
         // Determine the length of the current character, and then condense it down
         // into a single codepoint, which can then be mapped to a MacRoman value.
         size_t n = 0;
-        auto ch = static_cast<uint8_t>(s[i]);
+        auto ch = static_cast<std::uint8_t>(s[i]);
         for (auto hint : utf8) {
             if ((ch & ~hint.m_mask) == hint.m_lead) {
                 break;
@@ -130,7 +130,7 @@ auto encoding::mac_roman::from_utf8(const std::string &str) -> std::vector<uint8
         }
         
         auto shift = utf8[0].m_bits * (n - 1);
-        uint32_t codepoint = (s[i++] & utf8[n].m_mask) << shift;
+        std::uint32_t codepoint = (s[i++] & utf8[n].m_mask) << shift;
         for (auto j = 1; j < n; ++i, ++j) {
             shift -= utf8[0].m_bits;
             codepoint |= ((char)s[i] & utf8[0].m_mask) << shift;
@@ -148,7 +148,7 @@ auto encoding::mac_roman::from_utf8(const std::string &str) -> std::vector<uint8
     return mac_roman_bytes;
 }
 
-auto encoding::mac_roman::to_utf8(const std::vector<uint8_t>& bytes) -> std::string
+auto encoding::mac_roman::to_utf8(const std::vector<std::uint8_t>& bytes) -> std::string
 {
     std::string result;
     
@@ -160,8 +160,8 @@ auto encoding::mac_roman::to_utf8(const std::vector<uint8_t>& bytes) -> std::str
         
         // Get the codepoint and determine the length of the UTF8 scalar.
         auto cp = cp_table[c];
-        
-        size_t n = 0;
+
+        std::size_t n = 0;
         for (auto hint : utf8) {
             if ((cp >= hint.m_beg) && (cp <= hint.m_end)) {
                 break;
