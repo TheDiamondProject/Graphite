@@ -1,15 +1,15 @@
-# Copyright (c) 2020 Tom Hancocks
-# 
+# Copyright (c) 2023 Tom Hancocks
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -18,33 +18,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-cmake_minimum_required(VERSION 3.0)
-
-project(Graphite CXX)
-
-set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/bin)
-set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
-set(CMAKE_CXX_STANDARD 20)
-if (APPLE)
-	set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64")
-endif()
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse2 -mavx -msse4.1")
-
-set(PROJECT_LIBS_DIR ${CMAKE_CURRENT_LIST_DIR}/libs)
-
-# Libraries
-add_subdirectory(${PROJECT_LIBS_DIR}/libSIMD)
-add_subdirectory(${PROJECT_LIBS_DIR}/libHashing)
-add_subdirectory(${PROJECT_LIBS_DIR}/libEncoding)
-add_subdirectory(${PROJECT_LIBS_DIR}/libData)
-add_subdirectory(${PROJECT_LIBS_DIR}/libResource)
-add_subdirectory(${PROJECT_LIBS_DIR}/libQuickdraw)
-add_subdirectory(${PROJECT_LIBS_DIR}/libSound)
-add_subdirectory(${PROJECT_LIBS_DIR}/libToolbox)
 
 ########################################################################################################################
+## libTesting
+include(${PROJECT_SOURCE_DIR}/libs/libTesting/testing.cmake)
+build_testing_library()
 
-enable_testing()
-add_subdirectory(tests)
+########################################################################################################################
+## Preparation
 
+set(TESTS ${PROJECT_SOURCE_DIR}/tests)
+add_test_target(Hashing ${TESTS}/libs/libHashing)
