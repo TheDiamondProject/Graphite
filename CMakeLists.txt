@@ -41,6 +41,7 @@ add_subdirectory(${PROJECT_LIBS_DIR}/libData)
 add_subdirectory(${PROJECT_LIBS_DIR}/libResourceCore)
 add_subdirectory(${PROJECT_LIBS_DIR}/libQuickdraw)
 add_subdirectory(${PROJECT_LIBS_DIR}/libSoundCore)
+add_subdirectory(${PROJECT_LIBS_DIR}/libSpriteWorld)
 add_subdirectory(${PROJECT_LIBS_DIR}/libToolbox)
 
 ########################################################################################################################

@@ -22,6 +22,7 @@
 
 #if (__x86_64__)
 #include <xmmintrin.h>
+#include <math.h>
 #include <cmath>
 #include <complex>
 
@@ -29,7 +30,6 @@
 typedef __m128_u f32x4;
 
 // MARK: - Hints
-
 namespace simd
 {
     
@@ -126,7 +126,7 @@ namespace simd
         else {
             f32x4 v = a;
             for (auto i = 0; i < 4; ++i) {
-                v[i] = std::powf(v[i], exp);
+                v[i] = ::powf(v[i], exp);
             }
             return v;
         }
@@ -146,7 +146,7 @@ namespace simd
     {
         f32x4 v = a;
         for (auto i = 0; i < 4; ++i) {
-            v[i] = std::sinf(v[i]);
+            v[i] = ::sinf(v[i]);
         }
         return v;
     }
@@ -155,7 +155,7 @@ namespace simd
     {
         f32x4 v = a;
         for (auto i = 0; i < 4; ++i) {
-            v[i] = std::cosf(v[i]);
+            v[i] = ::cosf(v[i]);
         }
         return v;
     }

@@ -32,7 +32,7 @@ file(GLOB_RECURSE libToolbox_Sources
 )
 
 add_library(ToolBox ${libToolbox_Sources})
-target_link_libraries(ToolBox SIMD Data ResourceCore Graphite)
+target_link_libraries(ToolBox SIMD Data ResourceCore)
 target_include_directories(ToolBox PUBLIC
     ${PROJECT_LIBS_DIR}
 )

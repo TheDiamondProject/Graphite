@@ -37,6 +37,10 @@ auto toolbox::font::manager::shared_manager() -> manager &
 auto toolbox::font::manager::update_font_table() -> void
 {
     auto sfnt_resources = ::resource_core::manager::shared_manager().find<outline_font>();
+    if (sfnt_resources.size() == 0) {
+        return;
+    }
+
     for (const auto& res : sfnt_resources) {
         auto font_name = res.name();
         auto it = m_fonts.find(font_name);
