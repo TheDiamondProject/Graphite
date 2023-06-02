@@ -1,15 +1,15 @@
-# Copyright (c) 2020 Tom Hancocks
-# 
+# Copyright (c) 2023 Tom Hancocks
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -18,32 +18,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.0.0 FATAL_ERROR)
 
-project(Graphite CXX)
-
-set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/bin)
-set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
+########################################################################################################################
+## Project
+project(Graphite LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
-if (APPLE)
-	set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64")
-endif()
 
-set(PROJECT_LIBS_DIR ${CMAKE_CURRENT_LIST_DIR}/libs)
+########################################################################################################################
+## libSIMD
+file(GLOB_RECURSE libHashing_Sources
+    *.cpp
+)
 
-# Libraries
-add_subdirectory(${PROJECT_LIBS_DIR}/libSIMD)
-add_subdirectory(${PROJECT_LIBS_DIR}/libHashing)
-add_subdirectory(${PROJECT_LIBS_DIR}/libEncoding)
-add_subdirectory(${PROJECT_LIBS_DIR}/libData)
-add_subdirectory(${PROJECT_LIBS_DIR}/libResource)
-add_subdirectory(${PROJECT_LIBS_DIR}/libQuickDraw)
-add_subdirectory(${PROJECT_LIBS_DIR}/libSound)
-add_subdirectory(${PROJECT_LIBS_DIR}/libToolbox)
-
-# Unit Tests
-if (EXISTS ${PROJECT_LIBS_DIR}/libTesting/testing.cmake)
-	include(${PROJECT_LIBS_DIR}/libTesting/testing.cmake)
-#	add_testing_target(Graphite ${CMAKE_CURRENT_LIST_DIR}/Tests)
-#	include("GraphiteTests.cmake")
-endif()
+add_library(Hashing ${libHashing_Sources})
+target_include_directories(Hashing PUBLIC
+    ${PROJECT_LIBS_DIR}
+)
