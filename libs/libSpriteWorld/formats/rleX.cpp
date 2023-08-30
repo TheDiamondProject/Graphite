@@ -338,10 +338,12 @@ auto spriteworld::rleX::decode(data::reader &reader) -> void
     auto frame = frame_rect(0);
 
     union quickdraw::ycbcr yuv {
-        .components.y = 0,
-        .components.cb = 128,
-        .components.cr = 128,
-        .components.alpha = 255
+        .components = {
+            .y = 0,
+            .cb = 128,
+            .cr = 128,
+            .alpha = 255
+        },
     };
 
     // NOTE: This is a very _hot_ code path and thus we need to squeeze out as much performance as possible.
@@ -396,10 +398,12 @@ auto spriteworld::rleX::encode(data::writer &writer) -> void
         auto frame = frame_rect(f);
 
         union quickdraw::ycbcr yuv {
-            .components.y = 0,
-            .components.cb = 128,
-            .components.cr = 128,
-            .components.alpha = 255
+            .components = {
+                .y = 0,
+                .cb = 128,
+                .cr = 128,
+                .alpha = 255
+            },
         };
 
         std::uint32_t count = 0;

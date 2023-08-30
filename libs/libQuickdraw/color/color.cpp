@@ -84,10 +84,12 @@ auto quickdraw::ycbcr(const union color& rgb) -> union ycbcr
     std::uint8_t cr_clamped = std::clamp<std::uint8_t>(cr, 0, 255);
 
     return (union ycbcr) {
-        .components.y  = y_clamped,
-        .components.cb = cb_clamped,
-        .components.cr = cr_clamped,
-        .components.alpha = rgb.components.alpha
+        .components = {
+            .y = y_clamped,
+            .cb = cb_clamped,
+            .cr = cr_clamped,
+            .alpha = rgb.components.alpha
+        },
     };
 }
 

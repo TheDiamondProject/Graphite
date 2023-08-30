@@ -124,7 +124,7 @@ namespace data
         template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
         auto write_integer(T value, std::size_t count = 1, std::size_t size = sizeof(T)) -> void
         {
-            auto swapped = swap(value, native_byte_order(), m_data->byte_order());
+            std::uint64_t swapped = swap(value, native_byte_order(), m_data->byte_order());
 
             ensure_required_space(position(), size * count);
             auto ptr = m_data->template get<uint8_t *>(position());
@@ -148,7 +148,7 @@ namespace data
                 }
             }
 
-            move(size * count);
+            move(static_cast<std::uint32_t>(size * count));
         }
 
         template<typename E, typename std::enable_if<std::is_enum<E>::value>::type* = nullptr>

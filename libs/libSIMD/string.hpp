@@ -33,6 +33,7 @@ namespace simd::string
     {
 #if !USE_TARGET_MEMORY_FUNCTIONS
         // TODO: Implement
+        return src;
 #else
         return reinterpret_cast<T>(::memcpy(dst, src, n));
 #endif
