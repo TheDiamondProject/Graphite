@@ -145,7 +145,7 @@ namespace simd
             return vmulq_f32(a, a);
         }
         else {
-            vector_float4 v = a;
+            f32x4 v = a;
             for (auto i = 0; i < 4; ++i) {
                 v[i] = std::powf(v[i], exp);
             }
@@ -168,7 +168,7 @@ namespace simd
     SIMD_FUNCTION
     static inline auto sin(f32x4 a) -> f32x4
     {
-        vector_float4 v = a;
+        f32x4 v = a;
         for (auto i = 0; i < 4; ++i) {
             v[i] = std::sinf(v[i]);
         }
@@ -178,7 +178,7 @@ namespace simd
     SIMD_FUNCTION
     static inline auto cos(f32x4 a) -> f32x4
     {
-        vector_float4 v = a;
+        f32x4 v = a;
         for (auto i = 0; i < 4; ++i) {
             v[i] = std::cosf(v[i]);
         }
@@ -204,7 +204,6 @@ namespace simd
     {
         return vmaxq_f32(a, b);
     }
-
 }
 
 #endif
