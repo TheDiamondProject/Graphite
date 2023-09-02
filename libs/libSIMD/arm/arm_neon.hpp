@@ -121,8 +121,10 @@ namespace simd
     SIMD_FUNCTION
     static inline auto round(f32x4 a) -> f32x4
     {
-        auto r = vaddq_f32(a, vdupq_n_f32(0.5f));
-        return vreinterpretq_f32_s32(vreinterpretq_s32_f32(r));
+        auto r = vcvtq_n_s32_f32(a, 1);
+        r = vsraq_n_s32(r, r, 31);
+        r = vrshrq_n_s32(r, 1);
+        return vcvtq_f32_s32(r);
     }
 
     SIMD_FUNCTION
