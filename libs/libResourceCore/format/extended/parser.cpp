@@ -26,6 +26,14 @@
 #include <libResourceCore/structure/type.hpp>
 #include <libResourceCore/structure/instance.hpp>
 
+// MARK: - Constants
+
+namespace resource_core::format::extended::constants::defaults
+{
+    constexpr std::uint32_t signature = 'RSRX';
+    constexpr std::uint32_t version = 1;
+}
+
 // MARK: - Parsing
 
 auto resource_core::format::extended::parse(data::reader &reader, file &file) -> bool
@@ -33,7 +41,10 @@ auto resource_core::format::extended::parse(data::reader &reader, file &file) ->
     std::vector<struct type *> types;
 
     // 1. Resource Preamble
-    if (reader.read_quad(0, data::reader::mode::peek) != 1) {
+    if (reader.read_long(0, data::reader::mode::peek) != constants::defaults::signature) {
+        return false;
+    }
+    if (reader.read_long(4, data::reader::mode::peek) != constants::defaults::version) {
         return false;
     }
 

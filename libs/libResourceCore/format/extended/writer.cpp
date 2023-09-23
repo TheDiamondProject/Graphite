@@ -30,7 +30,8 @@
 
 namespace resource_core::format::extended::constants::defaults
 {
-    constexpr std::uint64_t version = 1;
+    constexpr std::uint32_t signature = 'RSRX';
+    constexpr std::uint32_t version = 1;
     constexpr std::uint64_t data_offset = 256;
     constexpr std::uint64_t map_offset = 0;
     constexpr std::uint64_t data_length = 0;
@@ -61,7 +62,8 @@ auto resource_core::format::extended::write(file &file, const std::string &path)
     auto data_length = constants::defaults::data_length;
     auto map_length = constants::defaults::map_length;
 
-    writer.write_quad(constants::defaults::version);
+    writer.write_long(constants::defaults::signature);
+    writer.write_long(constants::defaults::version);
     writer.write_quad(data_offset);
     writer.write_quad(map_offset);
     writer.write_quad(data_length);
