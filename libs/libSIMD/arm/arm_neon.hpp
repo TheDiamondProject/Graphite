@@ -67,13 +67,13 @@ namespace simd
     SIMD_FUNCTION
     static inline auto vector_slice_lower(f32x4 a) -> f32x4
     {
-        return vcombine_f32(vrev64_f32(vget_low_f32(a)), vrev64_f32(vget_low_f32(a)));
+        return vcombine_f32(vget_low_f32(a), vget_low_f32(a));
     }
 
     SIMD_FUNCTION
     static inline auto vector_slice_upper(f32x4 a) -> f32x4
     {
-        return vcombine_f32(vrev64_f32(vget_high_f32(a)), vrev64_f32(vget_high_f32(a)));
+        return vcombine_f32(vget_high_f32(a), vget_high_f32(a));
     }
 
     SIMD_FUNCTION
