@@ -124,7 +124,7 @@ namespace data
         template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
         auto write_integer(T value, std::size_t count = 1, std::size_t size = sizeof(T)) -> void
         {
-            std::uint64_t swapped = swap(value, native_byte_order(), m_data->byte_order());
+            T swapped = swap(value, native_byte_order(), m_data->byte_order());
 
             ensure_required_space(position(), size * count);
             auto ptr = m_data->template get<uint8_t *>(position());
