@@ -65,6 +65,14 @@ namespace simd
         inline auto set(int i, float v) -> float32& { m_values[i] = v; return *this; }
 
         // MARK: - Operators
+        inline auto operator==(const float32& other) const -> bool
+        {
+            return (m_values[0] == other.m_values[0])
+                && (m_values[1] == other.m_values[1])
+                && (m_values[2] == other.m_values[2])
+                && (m_values[3] == other.m_values[3]);
+        }
+
         inline auto operator+ (const float32& other) const -> float32 { return float32(simd::add(m_values, other.m_values)); }
         inline auto operator+ (float f) const -> float32 { return float32(simd::add(m_values, simd::single_value_vector(f))); }
         inline auto operator+=(const float32& other) -> float32& { m_values = simd::add(m_values, other.m_values); return *this; }

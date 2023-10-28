@@ -130,7 +130,7 @@ namespace simd
     SIMD_FUNCTION
     static inline auto floor(f32x4 a) -> f32x4
     {
-        return vreinterpretq_f32_s32(vreinterpretq_s32_f32(a));
+        return vrndmq_f32(a);
     }
 
     SIMD_FUNCTION
