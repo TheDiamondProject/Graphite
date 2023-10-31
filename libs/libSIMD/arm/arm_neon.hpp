@@ -61,7 +61,7 @@ namespace simd
     SIMD_FUNCTION
     static inline auto vector_shuffle_lower_higher(f32x4 a, f32x4 b) -> f32x4
     {
-        return vcombine_f32(vget_high_f32(b), vget_low_f32(a));
+        return vcombine_f32(vget_low_f32(a), vget_high_f32(b));
     }
 
     SIMD_FUNCTION
